@@ -78,9 +78,10 @@ export async function uploadAgreementPdf(projectId: string, formData: FormData) 
     .getPublicUrl(path)
 
   const { data: { user } } = await supabase.auth.getUser()
+  const adminClient = createAdminClient()
 
   // Upsert agreement row
-  const { error } = await supabase.from("agreements").upsert(
+  const { error } = await adminClient.from("agreements").upsert(
     {
       project_id: projectId,
       pdf_url: publicUrl,
