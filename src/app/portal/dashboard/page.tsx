@@ -39,7 +39,7 @@ export default async function DashboardPage() {
       .from("documents")
       .select("*")
       .eq("project_id", projectId)
-      .eq("doc_type", "timeline")
+      .in("doc_type", ["timeline", "tech_flow"])
       .eq("is_client_visible", true)
       .order("uploaded_at", { ascending: false }),
     supabase
