@@ -37,7 +37,7 @@ export function StepAgreement({ projectId, agreement }: StepAgreementProps) {
     const formData = new FormData()
     formData.append("file", file)
 
-    const result = await uploadSignature(projectId, file)
+    const result = await uploadSignature(projectId, formData)
     setUploading(false)
     if (result.error) {
       setError(result.error)

@@ -26,7 +26,9 @@ export function StepProfile({ projectId, templates, existingResponses }: StepPro
 
   const handleFileUpload = async (templateId: string, file: File) => {
     setFileUploading((prev) => ({ ...prev, [templateId]: true }))
-    const result = await uploadFormFile(projectId, templateId, file)
+    const formData = new FormData()
+    formData.append("file", file)
+    const result = await uploadFormFile(projectId, templateId, formData)
     setFileUploading((prev) => ({ ...prev, [templateId]: false }))
     if (result.error) {
       setError(result.error)

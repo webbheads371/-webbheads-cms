@@ -38,7 +38,10 @@ export async function agreeToAgreement(projectId: string) {
   return { error: null }
 }
 
-export async function uploadSignature(projectId: string, file: File) {
+export async function uploadSignature(projectId: string, formData: FormData) {
+  const file = formData.get("file") as File
+  if (!file) return { error: "No signature file uploaded", url: null }
+
   const supabase = createClient()
   const adminClient = createAdminClient()
   const ext = file.name.split(".").pop()
@@ -72,8 +75,11 @@ export async function uploadPaymentScreenshot(
   paymentRequestId: string,
   projectId: string,
   requestType: "advance" | "final",
-  file: File
+  formData: FormData
 ) {
+  const file = formData.get("file") as File
+  if (!file) return { error: "No screenshot file uploaded" }
+
   const supabase = createClient()
   const adminClient = createAdminClient()
   const ext = file.name.split(".").pop()
@@ -143,8 +149,11 @@ export async function submitProfileForm(
 export async function uploadFormFile(
   projectId: string,
   templateId: string,
-  file: File
+  formData: FormData
 ) {
+  const file = formData.get("file") as File
+  if (!file) return { error: "No file uploaded", url: null }
+
   const adminClient = createAdminClient()
   const path = `form-uploads/${projectId}/${templateId}/${file.name}`
 

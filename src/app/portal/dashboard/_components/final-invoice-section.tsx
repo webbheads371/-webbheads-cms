@@ -23,7 +23,9 @@ export function FinalInvoiceSection({ projectId, paymentRequest, bankSettings }:
     if (!file) return
     setUploading(true)
     setError(null)
-    const result = await uploadPaymentScreenshot(paymentRequest.id, projectId, "final", file)
+    const formData = new FormData()
+    formData.append("file", file)
+    const result = await uploadPaymentScreenshot(paymentRequest.id, projectId, "final", formData)
     setUploading(false)
     if (result.error) {
       setError(result.error)

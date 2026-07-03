@@ -38,7 +38,10 @@ export function StepPayment({
     setUploading(true)
     setError(null)
 
-    const result = await uploadPaymentScreenshot(paymentRequest.id, projectId, "advance", file)
+    const formData = new FormData()
+    formData.append("file", file)
+
+    const result = await uploadPaymentScreenshot(paymentRequest.id, projectId, "advance", formData)
     setUploading(false)
     if (result.error) {
       setError(result.error)

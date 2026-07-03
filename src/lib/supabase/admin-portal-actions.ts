@@ -61,7 +61,10 @@ export async function resetClientPortalPassword(userId: string) {
 
 // ─── Upload agreement PDF (admin) ─────────────────────────────────────────────
 
-export async function uploadAgreementPdf(projectId: string, file: File) {
+export async function uploadAgreementPdf(projectId: string, formData: FormData) {
+  const file = formData.get("file") as File
+  if (!file) return { error: "No file uploaded" }
+
   const supabase = createClient()
   const path = `agreements/${projectId}/agreement.pdf`
 
