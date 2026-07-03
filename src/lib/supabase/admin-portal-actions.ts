@@ -329,3 +329,52 @@ export async function updateClientType(clientId: string, clientType: string) {
   revalidatePath(`/clients/${clientId}`)
   return { error: null }
 }
+
+// ─── Upload project document ──────────────────────────────────────────────────
+
+export async function uploadProjectDocument(
+  projectId: string,
+  docType: string,
+  title: string,
+  formData: FormData
+) {
+  const file = formData.get("file") as File
+  if (!file) return { error: "No file uploaded" }
+
+  const adminClient = createAdminClient()
+  const ext = file.name.split(".").pop()
+  const timestamp = Date.now()
+  const path = `documents/${projectId}/${timestamp}_${file.name}`
+
+  // Upload file to storage
+  const { error: uploadError } = await adminClient.storage
+    .from("client-uploads")
+    .upload(path, file, { upsert: true })
+  if (uploadError) return { error: uploadError.message }
+
+  // Get public URL
+  const { data: { publicUrl } } = adminClient.storage
+    .from("client-uploads")
+    .getPublicUrl(path)
+
+  // Insert document row
+  const { error } = await adminClient.from("documents").insert({
+    project_id: projectId,
+    doc_type: docType,
+    title: title,
+    url: publicUrl,
+    is_client_visible: true,
+  })
+  if (error) return { error: error.message }
+
+  // Insert activity log
+  await adminClient.from("activity_log").insert({
+    project_id: projectId,
+    action: "document_uploaded",
+    detail: { doc_type: docType, title: title },
+  })
+
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath("/portal/dashboard")
+  return { error: null }
+}

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
-import { useSupabase } from "@/hooks/use-supabase"
+import { uploadProjectDocument } from "@/lib/supabase/admin-portal-actions"
 import { Plus, ExternalLink } from "lucide-react"
 import type { Document } from "@/types"
 
@@ -40,29 +40,36 @@ const docTypeLabels: Record<string, string> = {
 export function DocumentsTab({ documents, projectId }: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const supabase = useSupabase()
 
   async function handleAddDocument(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    setError(null)
     setLoading(true)
+
     const form = e.currentTarget
-    const formData = new FormData(form)
-    const data = {
-      project_id: projectId,
-      doc_type: formData.get("doc_type") as string,
-      title: formData.get("title") as string,
-      url: (formData.get("url") as string) || null,
+    const formFields = new FormData(form)
+    const file = formFields.get("file") as File
+    
+    if (!file || file.size === 0) {
+      setError("Please select a file to upload.")
+      setLoading(false)
+      return
     }
 
-    const { error } = await supabase.from("documents").insert(data)
-    if (!error) {
-      await supabase.from("activity_log").insert({
-        project_id: projectId,
-        action: "document_uploaded",
-        detail: { doc_type: data.doc_type, title: data.title },
-      })
+    const docType = formFields.get("doc_type") as string
+    const title = formFields.get("title") as string
+
+    const uploadFormData = new FormData()
+    uploadFormData.append("file", file)
+
+    const result = await uploadProjectDocument(projectId, docType, title, uploadFormData)
+    if (result.error) {
+      setError(result.error)
+    } else {
       setOpen(false)
+      form.reset()
       router.refresh()
     }
     setLoading(false)
@@ -71,7 +78,7 @@ export function DocumentsTab({ documents, projectId }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setError(null) }}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
@@ -80,8 +87,9 @@ export function DocumentsTab({ documents, projectId }: Props) {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add Document Link</DialogTitle>
+              <DialogTitle>Add Document & Upload File</DialogTitle>
             </DialogHeader>
+            {error && <div className="p-2 mb-2 text-sm text-red-600 bg-red-50 rounded">{error}</div>}
             <form onSubmit={handleAddDocument} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="doc_type">Document Type *</Label>
@@ -103,11 +111,11 @@ export function DocumentsTab({ documents, projectId }: Props) {
                 <Input id="title" name="title" placeholder="e.g. Signed Agreement - ABC Traders" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="url">Link (Google Drive / Docs URL)</Label>
-                <Input id="url" name="url" type="url" placeholder="https://drive.google.com/..." />
+                <Label htmlFor="file">File Upload *</Label>
+                <Input id="file" name="file" type="file" required />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Adding..." : "Add Document"}
+                {loading ? "Uploading..." : "Upload & Add Document"}
               </Button>
             </form>
           </DialogContent>
