@@ -14,7 +14,7 @@ import { PageHeader } from "@/components/page-header"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { useSupabase } from "@/hooks/use-supabase"
 import { StageStepper } from "./stage-stepper"
-import type { Project, PipelineStage, ProjectChecklistItem, Payment, Document, ActivityLog, Staff } from "@/types"
+import type { Project, PipelineStage, ProjectChecklistItem, Payment, Document, ActivityLog, Staff, Agreement, PaymentRequest, FormResponse, ProjectStatusUpdate } from "@/types"
 
 const ChecklistPanel = dynamic(() => import("./checklist-panel").then((m) => ({ default: m.ChecklistPanel })), { ssr: false })
 const PaymentsTab = dynamic(() => import("./payments-tab").then((m) => ({ default: m.PaymentsTab })), { ssr: false })
