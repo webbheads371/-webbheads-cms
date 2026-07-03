@@ -1,12 +1,9 @@
 import { redirect } from "next/navigation"
 import { getCurrentClientUser } from "@/lib/supabase/server"
 import { createClient } from "@/lib/supabase/server"
-import { TimelineSection } from "./_components/timeline-section"
-import { FinalInvoiceSection } from "./_components/final-invoice-section"
-import { HandlesSection } from "./_components/handles-section"
-import { StatusFeed } from "./_components/status-feed"
+import { DashboardClientTabs } from "./_components/dashboard-client-tabs"
 import { ChangePasswordForm } from "./_components/change-password-form"
-import type { Document, PaymentRequest, BankSettings, ProjectStatusUpdate } from "@/types"
+import type { Document, PaymentRequest, BankSettings, ProjectStatusUpdate, FormTemplate, FormResponse } from "@/types"
 
 export default async function DashboardPage() {
   const clientUser = await getCurrentClientUser()
@@ -14,10 +11,15 @@ export default async function DashboardPage() {
 
   const supabase = createClient()
 
-  // Fetch project
+  // Fetch project with tech lead and content lead details
   const { data: project } = await supabase
     .from("projects")
-    .select("*")
+    .select(`
+      *,
+      client:clients(*),
+      tech_lead:staff!tech_lead_id(full_name, email),
+      content_lead:staff!content_lead_id(full_name, email)
+    `)
     .eq("client_id", clientUser.client_id)
     .single()
 
@@ -30,25 +32,24 @@ export default async function DashboardPage() {
 
   // Fetch all needed data in parallel
   const [
-    { data: timelineDocs },
-    { data: finalPayment },
+    { data: documents },
+    { data: paymentRequests },
     { data: bankSettings },
     { data: statusUpdates },
+    { data: formResponses },
+    { data: allTemplates },
   ] = await Promise.all([
     supabase
       .from("documents")
       .select("*")
       .eq("project_id", projectId)
-      .in("doc_type", ["timeline", "tech_flow"])
       .eq("is_client_visible", true)
       .order("uploaded_at", { ascending: false }),
     supabase
       .from("payment_requests")
       .select("*")
       .eq("project_id", projectId)
-      .eq("request_type", "final")
-      .eq("released", true)
-      .single(),
+      .order("created_at", { ascending: true }),
     supabase
       .from("bank_settings")
       .select("*")
@@ -60,13 +61,23 @@ export default async function DashboardPage() {
       .eq("project_id", projectId)
       .eq("visible_to_client", true)
       .order("posted_at", { ascending: false }),
+    supabase
+      .from("form_responses")
+      .select("*")
+      .eq("project_id", projectId),
+    supabase
+      .from("form_templates")
+      .select("*")
+      .order("sort_order", { ascending: true }),
   ])
 
-  const hasAnySections =
-    (timelineDocs && timelineDocs.length > 0) ||
-    finalPayment ||
-    project.handles_collected ||
-    (statusUpdates && statusUpdates.length > 0)
+  // Filter form templates to match client type
+  const clientType = project.client?.client_type ?? "both"
+  const formTemplates = (allTemplates ?? []).filter((t) => {
+    if (t.scope === "general") return true
+    if (clientType === "both") return true
+    return t.scope === clientType
+  })
 
   return (
     <div className="dashboard-layout">
@@ -74,7 +85,7 @@ export default async function DashboardPage() {
         <div>
           <h1 className="dashboard-title">Your Project Dashboard</h1>
           <p className="dashboard-subtitle">
-            Track your project progress in real time. Sections appear as your project advances.
+            Track your project updates, manage payments, credentials, and documents in one place.
           </p>
         </div>
         <div className="flex-shrink-0 flex justify-end">
@@ -82,39 +93,16 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {!hasAnySections && (
-        <div className="dashboard-holding-card">
-          <div className="dashboard-holding-icon">⏳</div>
-          <h2>We&apos;re getting started on your project!</h2>
-          <p>
-            Thank you for completing onboarding. Our team will share your project timeline and
-            updates here as work progresses. You&apos;ll see sections appear automatically — no
-            refresh needed.
-          </p>
-        </div>
-      )}
-
-      <div className="dashboard-sections">
-        {/* Timeline — always shown (even empty) once in dashboard */}
-        <TimelineSection documents={(timelineDocs ?? []) as Document[]} />
-
-        {/* Final Invoice — only shown when released */}
-        {finalPayment && (
-          <FinalInvoiceSection
-            projectId={projectId}
-            paymentRequest={finalPayment as PaymentRequest}
-            bankSettings={bankSettings as BankSettings | null}
-          />
-        )}
-
-        {/* Handles collected — only shown when Admin marks it */}
-        {project.handles_collected && project.handles_collected_at && (
-          <HandlesSection handlesCollectedAt={project.handles_collected_at} />
-        )}
-
-        {/* Status feed — shown if any updates exist */}
-        <StatusFeed updates={(statusUpdates ?? []) as ProjectStatusUpdate[]} />
-      </div>
+      <DashboardClientTabs
+        project={project}
+        paymentRequests={(paymentRequests ?? []) as PaymentRequest[]}
+        bankSettings={bankSettings as BankSettings | null}
+        statusUpdates={(statusUpdates ?? []) as ProjectStatusUpdate[]}
+        documents={documents ?? []}
+        formTemplates={(formTemplates ?? []) as FormTemplate[]}
+        formResponses={(formResponses ?? []) as FormResponse[]}
+      />
     </div>
   )
 }
+

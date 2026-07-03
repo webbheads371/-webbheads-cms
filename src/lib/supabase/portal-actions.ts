@@ -136,8 +136,29 @@ export async function submitProfileForm(
   responses: { template_id: string; value: string }[]
 ) {
   const supabase = createClient()
+  const adminClient = createAdminClient()
 
-  // Upsert all form responses
+  // Authenticate user & check project authorization
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "Unauthorized" }
+
+  const { data: clientUser } = await adminClient
+    .from("client_users")
+    .select("client_id")
+    .eq("id", user.id)
+    .single()
+  if (!clientUser) return { error: "Unauthorized" }
+
+  const { data: project } = await adminClient
+    .from("projects")
+    .select("client_id")
+    .eq("id", projectId)
+    .single()
+  if (!project || project.client_id !== clientUser.client_id) {
+    return { error: "Unauthorized" }
+  }
+
+  // Upsert all form responses using adminClient to bypass RLS write restriction
   const upsertData = responses.map((r) => ({
     project_id: projectId,
     template_id: r.template_id,
@@ -145,21 +166,28 @@ export async function submitProfileForm(
     submitted_at: new Date().toISOString(),
   }))
 
-  const { error: upsertError } = await supabase
+  const { error: upsertError } = await adminClient
     .from("form_responses")
     .upsert(upsertData, { onConflict: "project_id,template_id" })
   if (upsertError) return { error: upsertError.message }
 
   // Mark profile as submitted
-  const adminClient = createAdminClient()
   const { error } = await adminClient
     .from("projects")
     .update({ profile_submitted_at: new Date().toISOString() })
     .eq("id", projectId)
   if (error) return { error: error.message }
 
+  // Insert activity log to notify admins
+  await adminClient.from("activity_log").insert({
+    project_id: projectId,
+    action: "profile_updated",
+    detail: { message: "Client updated credentials/onboarding details" },
+  })
+
   revalidatePath("/portal")
   revalidatePath("/portal/onboarding")
+  revalidatePath("/portal/dashboard")
   return { error: null }
 }
 

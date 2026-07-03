@@ -15,7 +15,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
       <header className="portal-header">
         <div className="portal-header-inner">
           <div className="portal-brand">
-            <span className="portal-brand-icon">W</span>
+            <img src="/logo.png" alt="WebbHeads Logo" className="h-8 w-8 rounded-lg object-contain bg-black" />
             <span className="portal-brand-name">WebbHeads</span>
           </div>
           <div className="portal-header-right">

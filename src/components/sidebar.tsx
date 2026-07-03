@@ -58,9 +58,12 @@ export function Sidebar() {
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="p-6 border-b">
-          <h1 className="text-lg font-bold tracking-tight">WebbHeads CMS</h1>
-          <p className="text-xs text-muted-foreground mt-1">Staff Portal</p>
+        <div className="p-6 border-b flex items-center gap-3">
+          <img src="/logo.png" alt="WebbHeads Logo" className="h-9 w-9 rounded-lg object-contain bg-black p-0.5 shadow-sm" />
+          <div>
+            <h1 className="text-base font-bold tracking-tight leading-none">WebbHeads</h1>
+            <p className="text-xs text-muted-foreground mt-1">Staff Portal</p>
+          </div>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">

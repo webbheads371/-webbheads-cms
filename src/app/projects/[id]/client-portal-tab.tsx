@@ -5,6 +5,7 @@ import {
   markHandlesCollected,
   releaseFinalInvoice,
   postStatusUpdate,
+  saveProjectPocSettings,
 } from "@/lib/supabase/admin-portal-actions"
 import type { Project, PaymentRequest, ProjectStatusUpdate } from "@/types"
 
@@ -12,6 +13,7 @@ interface ClientPortalTabProps {
   project: Project
   paymentRequests: PaymentRequest[]
   statusUpdates: ProjectStatusUpdate[]
+  documents: any[]
 }
 
 function OnboardingStepStatus({ label, done }: { label: string; done: boolean }) {
@@ -28,12 +30,22 @@ function OnboardingStepStatus({ label, done }: { label: string; done: boolean })
   )
 }
 
-export function ClientPortalTab({ project, paymentRequests, statusUpdates }: ClientPortalTabProps) {
+export function ClientPortalTab({ project, paymentRequests, statusUpdates, documents }: ClientPortalTabProps) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
   const [statusMessage, setStatusMessage] = useState("")
   const [visibleToClient, setVisibleToClient] = useState(true)
   const [localUpdates, setLocalUpdates] = useState(statusUpdates)
+
+  // Extract initial POC info from documents
+  const initialEmail = documents.find((d) => d.doc_type === "poc_email")?.title ?? ""
+  const initialWhatsapp = documents.find((d) => d.doc_type === "poc_whatsapp")?.title ?? ""
+  const initialPhone = documents.find((d) => d.doc_type === "poc_phone")?.title ?? ""
+
+  const [pocEmail, setPocEmail] = useState(initialEmail)
+  const [pocWhatsapp, setPocWhatsapp] = useState(initialWhatsapp)
+  const [pocPhone, setPocPhone] = useState(initialPhone)
 
   const advancePayment = paymentRequests.find((p) => p.request_type === "advance")
   const finalPayment = paymentRequests.find((p) => p.request_type === "final")
@@ -79,9 +91,25 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates }: Cli
     })
   }
 
+  const handleSavePoc = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError(null)
+    setSuccess(false)
+    startTransition(async () => {
+      const result = await saveProjectPocSettings(project.id, pocEmail, pocWhatsapp, pocPhone)
+      if (result.error) {
+        setError(result.error)
+      } else {
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 3000)
+      }
+    })
+  }
+
   return (
     <div className="tab-panel">
       {error && <div className="error-banner">{error}</div>}
+      {success && <div className="success-banner">✓ Point of contact details saved successfully!</div>}
 
       {/* Onboarding Progress */}
       <div className="tab-section">
@@ -101,6 +129,55 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates }: Cli
             done={!!project.profile_submitted_at}
           />
         </div>
+      </div>
+
+      {/* Point of Contact Settings */}
+      <div className="tab-section">
+        <h3 className="tab-section-title">Point of Contact Details</h3>
+        <form onSubmit={handleSavePoc} className="bank-settings-form">
+          <div className="form-grid-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="form-field">
+              <label className="form-label" htmlFor="poc-email">Company Email</label>
+              <input
+                id="poc-email"
+                type="email"
+                value={pocEmail}
+                onChange={(e) => setPocEmail(e.target.value)}
+                className="form-input"
+                placeholder="e.g. support@webbheads.com"
+              />
+            </div>
+            <div className="form-field">
+              <label className="form-label" htmlFor="poc-whatsapp">WhatsApp Number</label>
+              <input
+                id="poc-whatsapp"
+                type="text"
+                value={pocWhatsapp}
+                onChange={(e) => setPocWhatsapp(e.target.value)}
+                className="form-input"
+                placeholder="e.g. 919999999999 (with country code)"
+              />
+            </div>
+            <div className="form-field">
+              <label className="form-label" htmlFor="poc-phone">Phone Number</label>
+              <input
+                id="poc-phone"
+                type="text"
+                value={pocPhone}
+                onChange={(e) => setPocPhone(e.target.value)}
+                className="form-input"
+                placeholder="e.g. +919999999999"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={isPending}
+            className="btn-primary btn-sm"
+          >
+            {isPending ? "Saving..." : "Save POC Details"}
+          </button>
+        </form>
       </div>
 
       {/* Admin Controls */}
@@ -126,7 +203,8 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates }: Cli
               >
                 Mark as Collected
               </button>
-            )}
+            )
+            }
           </div>
 
           {/* Release final invoice */}
@@ -213,3 +291,4 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates }: Cli
     </div>
   )
 }
+

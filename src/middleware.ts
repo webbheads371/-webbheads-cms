@@ -33,6 +33,11 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
+  // Allow logo.png to bypass auth checks so it loads on the login page
+  if (pathname === "/logo.png") {
+    return response
+  }
+
   // Not logged in → redirect to /login (except login page itself)
   if (!user && pathname !== "/login") {
     return NextResponse.redirect(new URL("/login", request.url))

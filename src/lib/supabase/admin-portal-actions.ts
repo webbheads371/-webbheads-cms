@@ -378,3 +378,119 @@ export async function uploadProjectDocument(
   revalidatePath("/portal/dashboard")
   return { error: null }
 }
+
+// ─── Save Project POC Settings ──────────────────────────────────────────────────
+
+export async function saveProjectPocSettings(
+  projectId: string,
+  email: string,
+  whatsapp: string,
+  phone: string
+) {
+  const adminClient = createAdminClient()
+
+  // 1. Process Email
+  const emailUrl = email ? `mailto:${email}` : ""
+  const { data: existingEmail } = await adminClient
+    .from("documents")
+    .select("id")
+    .eq("project_id", projectId)
+    .eq("doc_type", "poc_email")
+    .maybeSingle()
+
+  if (existingEmail) {
+    if (email) {
+      await adminClient
+        .from("documents")
+        .update({ url: emailUrl, title: email })
+        .eq("id", existingEmail.id)
+    } else {
+      await adminClient
+        .from("documents")
+        .delete()
+        .eq("id", existingEmail.id)
+    }
+  } else if (email) {
+    await adminClient.from("documents").insert({
+      project_id: projectId,
+      doc_type: "poc_email",
+      title: email,
+      url: emailUrl,
+      is_client_visible: true
+    })
+  }
+
+  // 2. Process WhatsApp
+  const whatsappUrl = whatsapp ? `https://wa.me/${whatsapp.replace(/\D/g, "")}` : ""
+  const { data: existingWhatsapp } = await adminClient
+    .from("documents")
+    .select("id")
+    .eq("project_id", projectId)
+    .eq("doc_type", "poc_whatsapp")
+    .maybeSingle()
+
+  if (existingWhatsapp) {
+    if (whatsapp) {
+      await adminClient
+        .from("documents")
+        .update({ url: whatsappUrl, title: whatsapp })
+        .eq("id", existingWhatsapp.id)
+    } else {
+      await adminClient
+        .from("documents")
+        .delete()
+        .eq("id", existingWhatsapp.id)
+    }
+  } else if (whatsapp) {
+    await adminClient.from("documents").insert({
+      project_id: projectId,
+      doc_type: "poc_whatsapp",
+      title: whatsapp,
+      url: whatsappUrl,
+      is_client_visible: true
+    })
+  }
+
+  // 3. Process Phone
+  const phoneUrl = phone ? `tel:${phone.replace(/\D/g, "")}` : ""
+  const { data: existingPhone } = await adminClient
+    .from("documents")
+    .select("id")
+    .eq("project_id", projectId)
+    .eq("doc_type", "poc_phone")
+    .maybeSingle()
+
+  if (existingPhone) {
+    if (phone) {
+      await adminClient
+        .from("documents")
+        .update({ url: phoneUrl, title: phone })
+        .eq("id", existingPhone.id)
+    } else {
+      await adminClient
+        .from("documents")
+        .delete()
+        .eq("id", existingPhone.id)
+    }
+  } else if (phone) {
+    await adminClient.from("documents").insert({
+      project_id: projectId,
+      doc_type: "poc_phone",
+      title: phone,
+      url: phoneUrl,
+      is_client_visible: true
+    })
+  }
+
+  // Insert activity log
+  await adminClient.from("activity_log").insert({
+    project_id: projectId,
+    action: "poc_updated",
+    detail: { email, whatsapp, phone },
+  })
+
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath("/portal/dashboard")
+  return { error: null }
+}
+
