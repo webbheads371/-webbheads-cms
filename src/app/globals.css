@@ -1,0 +1,659 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* =========================================
+   Phase 2: Client Portal & Admin Styles
+   ========================================= */
+
+/* Portal Shell & Layout */
+.portal-shell {
+  @apply min-h-screen bg-muted/20 flex flex-col;
+}
+.portal-header {
+  @apply sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60;
+}
+.portal-header-inner {
+  @apply container flex h-16 items-center justify-between;
+}
+.portal-brand {
+  @apply flex items-center gap-2 text-lg font-semibold tracking-tight;
+}
+.portal-brand-icon {
+  @apply flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold;
+}
+.portal-header-right {
+  @apply flex items-center gap-4;
+}
+.portal-user-name {
+  @apply text-sm text-muted-foreground hidden sm:inline-block;
+}
+.portal-logout-btn {
+  @apply text-sm font-medium text-muted-foreground hover:text-foreground transition-colors;
+}
+.portal-main {
+  @apply flex-1 container py-8 max-w-5xl mx-auto;
+}
+.portal-holding {
+  @apply flex flex-col items-center justify-center py-20 text-center space-y-4 max-w-md mx-auto;
+}
+.portal-holding h1 {
+  @apply text-2xl font-bold tracking-tight;
+}
+.portal-holding p {
+  @apply text-muted-foreground;
+}
+
+/* Wizard Stepper (Mode A) */
+.wizard-layout {
+  @apply grid md:grid-cols-[240px_1fr] gap-8 items-start;
+}
+.wizard-card {
+  @apply bg-card border rounded-xl shadow-sm p-6 md:p-10;
+}
+.wizard-stepper {
+  @apply flex flex-col gap-6 sticky top-24;
+}
+.wizard-step-item {
+  @apply relative flex items-start gap-4;
+}
+.wizard-step-circle {
+  @apply relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold bg-background transition-colors;
+}
+.wizard-step-done {
+  @apply border-primary bg-primary text-primary-foreground;
+}
+.wizard-step-active {
+  @apply border-primary text-primary;
+}
+.wizard-step-upcoming {
+  @apply border-muted text-muted-foreground;
+}
+.wizard-step-label {
+  @apply mt-1 text-sm font-medium transition-colors;
+}
+.wizard-step-label-done {
+  @apply text-foreground;
+}
+.wizard-step-label-active {
+  @apply text-foreground font-semibold;
+}
+.wizard-step-label-upcoming {
+  @apply text-muted-foreground;
+}
+.wizard-step-connector {
+  @apply absolute left-4 top-8 -ml-px h-[calc(100%+1rem)] w-[2px] bg-border;
+}
+.wizard-connector-done {
+  @apply bg-primary;
+}
+.wizard-step-content {
+  @apply flex flex-col gap-6;
+}
+.wizard-step-title {
+  @apply text-2xl font-bold tracking-tight;
+}
+.wizard-step-subtitle {
+  @apply text-muted-foreground text-lg;
+}
+.wizard-step-actions {
+  @apply mt-8 pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4;
+}
+.wizard-step-hint {
+  @apply text-sm text-muted-foreground text-center sm:text-left;
+}
+
+/* Specific Wizard Steps */
+.welcome-icon {
+  @apply text-5xl mb-2;
+}
+.welcome-highlights {
+  @apply flex flex-col gap-4 mt-6;
+}
+.welcome-highlight-item {
+  @apply flex items-start gap-4 p-4 rounded-lg bg-accent/50;
+}
+.welcome-highlight-icon {
+  @apply text-2xl;
+}
+.agreement-pdf-container {
+  @apply aspect-[1/1.414] w-full max-h-[600px] border rounded-lg overflow-hidden bg-muted;
+}
+.agreement-pdf-frame {
+  @apply w-full h-full;
+}
+.agreement-checkbox-row {
+  @apply flex items-center gap-3 p-4 rounded-lg bg-accent/50 border;
+}
+.agreement-checkbox {
+  @apply h-5 w-5 rounded border-input text-primary focus:ring-primary;
+}
+.agreement-checkbox-label {
+  @apply font-medium text-foreground flex-1 cursor-pointer;
+}
+.signature-upload-section {
+  @apply mt-8;
+}
+.signature-upload-title {
+  @apply text-lg font-semibold;
+}
+.signature-upload-hint {
+  @apply text-sm text-muted-foreground mb-4;
+}
+.signature-preview {
+  @apply flex items-center gap-6 p-4 border rounded-lg bg-accent/30;
+}
+.signature-img {
+  @apply h-16 object-contain;
+}
+.signature-img-sm {
+  @apply h-10 object-contain bg-white rounded px-2;
+}
+
+/* Payment & Final Invoice */
+.payment-amount-card {
+  @apply flex flex-col border rounded-xl overflow-hidden divide-y;
+}
+.payment-amount-row {
+  @apply flex justify-between items-center p-4 bg-background;
+}
+.payment-advance-row {
+  @apply bg-accent/30;
+}
+.payment-amount-label {
+  @apply font-medium text-muted-foreground;
+}
+.payment-amount-value {
+  @apply font-semibold;
+}
+.payment-amount-highlight {
+  @apply text-xl font-bold text-primary;
+}
+.payment-bank-card {
+  @apply flex flex-col md:flex-row gap-6 p-6 border rounded-xl bg-card mt-6;
+}
+.payment-bank-left {
+  @apply flex flex-col items-center gap-4 shrink-0;
+}
+.payment-qr-image {
+  @apply w-40 h-40 object-cover border rounded-lg bg-white p-2;
+}
+.payment-upi-id {
+  @apply flex flex-col items-center;
+}
+.payment-upi-label {
+  @apply text-xs text-muted-foreground uppercase tracking-wider font-semibold;
+}
+.payment-upi-value {
+  @apply text-sm font-medium;
+}
+.payment-bank-right {
+  @apply flex-1 flex flex-col justify-center gap-3 md:border-l md:pl-6;
+}
+.payment-bank-row {
+  @apply flex flex-col;
+}
+.payment-bank-label {
+  @apply text-xs text-muted-foreground uppercase tracking-wider font-semibold;
+}
+.payment-upload-section {
+  @apply mt-8;
+}
+.payment-upload-title {
+  @apply text-lg font-semibold;
+}
+.payment-upload-hint {
+  @apply text-sm text-muted-foreground mb-4;
+}
+.payment-status-card {
+  @apply flex items-start gap-4 p-5 border rounded-xl mt-4;
+}
+.payment-status-icon {
+  @apply text-2xl;
+}
+.payment-status-submitted {
+  @apply bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-950/30 dark:border-amber-900/50 dark:text-amber-200;
+}
+.payment-status-rejected {
+  @apply bg-red-50 border-red-200 text-red-900 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-200;
+}
+.payment-status-approved {
+  @apply bg-green-50 border-green-200 text-green-900 dark:bg-green-950/30 dark:border-green-900/50 dark:text-green-200;
+}
+
+/* File Upload UI */
+.file-upload-area {
+  @apply relative flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl border-border bg-muted/50 hover:bg-muted/80 transition-colors cursor-pointer text-center gap-2;
+}
+.file-upload-area-sm {
+  @apply p-4 flex-row gap-3 text-sm;
+}
+.file-upload-input {
+  @apply absolute inset-0 opacity-0 cursor-pointer w-full h-full;
+}
+.file-upload-icon {
+  @apply text-3xl text-muted-foreground;
+}
+
+/* Dashboard (Mode B) */
+.dashboard-layout {
+  @apply flex flex-col gap-10;
+}
+.dashboard-header {
+  @apply flex flex-col gap-2;
+}
+.dashboard-title {
+  @apply text-3xl font-bold tracking-tight;
+}
+.dashboard-subtitle {
+  @apply text-muted-foreground text-lg;
+}
+.dashboard-holding-card {
+  @apply flex flex-col items-center justify-center p-12 border rounded-xl bg-card text-center gap-4;
+}
+.dashboard-holding-icon {
+  @apply text-4xl;
+}
+.dashboard-sections {
+  @apply flex flex-col gap-12;
+}
+.dashboard-section {
+  @apply flex flex-col gap-6;
+}
+.dashboard-section-title {
+  @apply flex items-center gap-2 text-2xl font-semibold border-b pb-4;
+}
+.dashboard-empty-state {
+  @apply flex flex-col items-center justify-center p-10 border border-dashed rounded-xl bg-muted/30 text-center gap-2;
+}
+.dashboard-empty-hint {
+  @apply text-sm text-muted-foreground;
+}
+.timeline-docs-list {
+  @apply grid sm:grid-cols-2 gap-4;
+}
+.timeline-doc-card {
+  @apply flex items-center justify-between p-4 border rounded-xl bg-card hover:border-primary/50 hover:shadow-sm transition-all;
+}
+.timeline-doc-icon {
+  @apply text-2xl mr-4;
+}
+.timeline-doc-date {
+  @apply block text-sm text-muted-foreground mt-0.5;
+}
+.timeline-doc-arrow {
+  @apply text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all;
+}
+.handles-card {
+  @apply flex items-start gap-4 p-6 border rounded-xl bg-green-50/50 dark:bg-green-950/20;
+}
+.handles-icon {
+  @apply text-2xl;
+}
+.handles-date {
+  @apply block text-sm text-muted-foreground mt-2;
+}
+.status-feed {
+  @apply relative border-l-2 border-muted ml-4 pl-6 flex flex-col gap-8;
+}
+.status-feed-item {
+  @apply relative;
+}
+.status-feed-dot {
+  @apply absolute -left-[33px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-primary;
+}
+.status-feed-line {
+  @apply hidden; /* Used pseudo-element approach instead */
+}
+.status-feed-content {
+  @apply flex flex-col gap-1;
+}
+.status-feed-message {
+  @apply text-foreground font-medium;
+}
+.status-feed-date {
+  @apply text-sm text-muted-foreground;
+}
+
+/* Forms & UI Helpers */
+.form-grid-2col {
+  @apply grid sm:grid-cols-2 gap-6;
+}
+.form-field {
+  @apply flex flex-col gap-2;
+}
+.form-field-span2 {
+  @apply sm:col-span-2;
+}
+.form-label {
+  @apply text-sm font-medium text-foreground;
+}
+.form-input, .form-textarea, .form-select {
+  @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+}
+.form-textarea {
+  @apply min-h-[100px];
+}
+.form-checkbox-row {
+  @apply flex items-center gap-3 p-3 border rounded-md;
+}
+.form-checkbox-inline {
+  @apply flex flex-row items-center gap-2;
+}
+.form-checkbox {
+  @apply h-4 w-4 rounded border-input;
+}
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2;
+}
+.btn-secondary {
+  @apply inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2;
+}
+.btn-danger {
+  @apply inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 px-4 py-2;
+}
+.btn-success {
+  @apply inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-600 text-white hover:bg-green-700 h-10 px-4 py-2;
+}
+.btn-ghost {
+  @apply inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2;
+}
+.btn-large {
+  @apply h-12 px-8 text-base;
+}
+.btn-sm {
+  @apply h-9 px-3 text-xs;
+}
+.badge {
+  @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent;
+}
+.badge-blue {
+  @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200;
+}
+.badge-purple {
+  @apply bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200;
+}
+.badge-orange {
+  @apply bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200;
+}
+.badge-gray {
+  @apply bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200;
+}
+.badge-success {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+}
+.badge-pending {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
+}
+.error-banner {
+  @apply p-4 mt-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-red-900/30 dark:text-red-200;
+}
+.success-banner {
+  @apply p-4 mt-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-green-900/30 dark:text-green-200;
+}
+.info-banner {
+  @apply p-4 text-sm text-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/30 dark:text-blue-200;
+}
+.link {
+  @apply text-primary hover:underline font-medium;
+}
+
+/* Admin Tabs & Pages */
+.page-container {
+  @apply p-8 max-w-7xl mx-auto flex flex-col gap-8;
+}
+.page-header-wrapper {
+  @apply flex flex-col gap-2;
+}
+.page-title {
+  @apply text-3xl font-bold tracking-tight;
+}
+.page-subtitle {
+  @apply text-muted-foreground;
+}
+.settings-page {
+  @apply p-8 max-w-4xl mx-auto flex flex-col gap-8;
+}
+.settings-card {
+  @apply bg-card border rounded-xl shadow-sm p-6;
+}
+.tab-panel {
+  @apply flex flex-col gap-8 py-6;
+}
+.tab-section {
+  @apply flex flex-col gap-4;
+}
+.tab-section-title {
+  @apply text-lg font-semibold border-b pb-2;
+}
+.tab-section-subtitle {
+  @apply text-sm font-medium text-muted-foreground uppercase tracking-wider;
+}
+
+/* Bank Settings */
+.qr-upload-row {
+  @apply flex flex-wrap items-center gap-6;
+}
+.qr-preview-img {
+  @apply h-24 w-24 object-cover border rounded bg-white p-1;
+}
+
+/* Form Builder */
+.form-templates-list {
+  @apply flex flex-col gap-3 mt-4;
+}
+.form-template-row {
+  @apply flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/30 transition-colors;
+}
+.form-template-row-left {
+  @apply flex items-center gap-4;
+}
+.form-template-sort {
+  @apply flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground;
+}
+.form-template-info {
+  @apply flex flex-col gap-1.5;
+}
+.form-template-label {
+  @apply font-medium;
+}
+.form-template-meta {
+  @apply flex flex-wrap items-center gap-2;
+}
+.form-template-row-actions {
+  @apply flex items-center gap-2;
+}
+.form-template-edit-card {
+  @apply p-6 border-2 border-primary/20 bg-accent/10 rounded-xl my-4 flex flex-col gap-6;
+}
+.form-actions {
+  @apply flex items-center gap-3 pt-4 border-t;
+}
+
+/* Payment Queue */
+.payment-queue-list {
+  @apply flex flex-col gap-4;
+}
+.payment-queue-card {
+  @apply p-6 border rounded-xl bg-card shadow-sm flex flex-col gap-4;
+}
+.payment-queue-card-header {
+  @apply flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b pb-4;
+}
+.payment-queue-info {
+  @apply flex flex-col gap-1;
+}
+.payment-queue-client {
+  @apply text-lg;
+}
+.payment-queue-contact {
+  @apply text-muted-foreground;
+}
+.payment-queue-project {
+  @apply text-sm text-muted-foreground;
+}
+.payment-queue-right {
+  @apply flex flex-col items-end gap-2;
+}
+.payment-queue-amount {
+  @apply text-xl font-bold;
+}
+.payment-queue-date {
+  @apply text-sm text-muted-foreground;
+}
+.payment-queue-screenshot-link {
+  @apply inline-flex flex-col gap-2 items-start mt-2;
+}
+.payment-queue-screenshot {
+  @apply h-40 rounded-lg border object-cover bg-muted;
+}
+.payment-queue-actions {
+  @apply flex flex-wrap items-center gap-3 pt-4 border-t;
+}
+.payment-reject-form {
+  @apply flex w-full items-center gap-3;
+}
+
+/* Admin Form Responses Tab */
+.form-responses-list {
+  @apply flex flex-col gap-6;
+}
+.form-response-item {
+  @apply flex flex-col gap-2 p-4 border rounded-lg bg-card;
+}
+.form-response-label {
+  @apply text-sm font-semibold flex items-center;
+}
+.form-response-value {
+  @apply text-base mt-1 p-3 bg-muted/30 rounded-md whitespace-pre-wrap;
+}
+.form-response-date {
+  @apply text-xs text-muted-foreground mt-2;
+}
+
+/* Admin Agreement Tab */
+.agreement-admin-view {
+  @apply flex flex-col gap-4;
+}
+.agreement-admin-status-row {
+  @apply flex items-center justify-between p-3 border rounded bg-muted/30;
+}
+.agreement-status-grid {
+  @apply grid sm:grid-cols-2 gap-4 mt-2;
+}
+.agreement-status-item {
+  @apply flex flex-col gap-3 p-4 border rounded-lg bg-card;
+}
+.agreement-status-label {
+  @apply text-sm font-medium text-muted-foreground;
+}
+.agreement-signature-preview {
+  @apply flex items-center gap-3;
+}
+
+/* Admin Client Portal Tab */
+.onboarding-steps-list {
+  @apply flex flex-col gap-0 border rounded-lg overflow-hidden;
+}
+.onboarding-step-row {
+  @apply flex items-center gap-4 p-4 bg-card border-b last:border-0 relative;
+}
+.onboarding-step-dot {
+  @apply h-3 w-3 rounded-full bg-muted border-2 border-background shadow-sm z-10;
+}
+.onboarding-step-dot-done {
+  @apply bg-green-500;
+}
+.onboarding-step-label-pending {
+  @apply flex-1 text-muted-foreground;
+}
+.onboarding-step-label-done {
+  @apply flex-1 font-medium;
+}
+.admin-controls-grid {
+  @apply grid sm:grid-cols-2 gap-4 mt-2;
+}
+.admin-control-card {
+  @apply flex flex-col gap-4 p-5 border rounded-xl bg-card items-start;
+}
+.admin-control-info {
+  @apply flex flex-col gap-1;
+}
+.admin-control-info p {
+  @apply text-sm text-muted-foreground;
+}
+.status-update-form {
+  @apply flex flex-col gap-4 p-5 border rounded-xl bg-accent/20;
+}
+.status-update-form-footer {
+  @apply flex items-center justify-between border-t pt-4;
+}
+.status-updates-history {
+  @apply flex flex-col gap-3 mt-6;
+}
+.status-update-history-item {
+  @apply flex flex-col gap-2 p-4 border rounded-lg bg-card;
+}
+.status-update-history-message {
+  @apply text-sm;
+}
+.status-update-history-meta {
+  @apply flex items-center justify-between text-xs text-muted-foreground;
+}
+
