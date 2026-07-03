@@ -48,6 +48,89 @@ const DEFAULT_FORM: TemplateFormState = {
   sort_order: 0,
 }
 
+interface TemplateFormProps {
+  formState: TemplateFormState
+  setFormState: React.Dispatch<React.SetStateAction<TemplateFormState>>
+  isPending: boolean
+  onSave: () => void
+  onCancel: () => void
+}
+
+function TemplateForm({
+  formState,
+  setFormState,
+  isPending,
+  onSave,
+  onCancel,
+}: TemplateFormProps) {
+  return (
+    <div className="form-template-edit-card">
+      <div className="form-grid-2col">
+        <div className="form-field form-field-span2">
+          <label className="form-label">Question Label *</label>
+          <input
+            type="text"
+            value={formState.label}
+            onChange={(e) => setFormState((s) => ({ ...s, label: e.target.value }))}
+            className="form-input"
+            placeholder="e.g. Instagram handle"
+          />
+        </div>
+        <div className="form-field">
+          <label className="form-label">Scope</label>
+          <select
+            value={formState.scope}
+            onChange={(e) => setFormState((s) => ({ ...s, scope: e.target.value as FormScope }))}
+            className="form-select"
+          >
+            {(Object.keys(SCOPE_LABELS) as FormScope[]).map((k) => (
+              <option key={k} value={k}>{SCOPE_LABELS[k]}</option>
+            ))}
+          </select>
+        </div>
+        <div className="form-field">
+          <label className="form-label">Field Type</label>
+          <select
+            value={formState.field_type}
+            onChange={(e) => setFormState((s) => ({ ...s, field_type: e.target.value as FormFieldType }))}
+            className="form-select"
+          >
+            {(Object.keys(FIELD_TYPE_LABELS) as FormFieldType[]).map((k) => (
+              <option key={k} value={k}>{FIELD_TYPE_LABELS[k]}</option>
+            ))}
+          </select>
+        </div>
+        <div className="form-field">
+          <label className="form-label">Sort Order</label>
+          <input
+            type="number"
+            value={formState.sort_order}
+            onChange={(e) => setFormState((s) => ({ ...s, sort_order: Number(e.target.value) }))}
+            className="form-input"
+            min={0}
+          />
+        </div>
+        <div className="form-field form-checkbox-inline">
+          <input
+            type="checkbox"
+            id="is-required-cb"
+            checked={formState.is_required}
+            onChange={(e) => setFormState((s) => ({ ...s, is_required: e.target.checked }))}
+            className="form-checkbox"
+          />
+          <label htmlFor="is-required-cb" className="form-label">Required</label>
+        </div>
+      </div>
+      <div className="form-actions">
+        <button onClick={onSave} disabled={isPending || !formState.label.trim()} className="btn-primary">
+          {isPending ? "Saving…" : "Save"}
+        </button>
+        <button onClick={onCancel} className="btn-ghost">Cancel</button>
+      </div>
+    </div>
+  )
+}
+
 export function FormBuilderClient({ initialTemplates }: FormBuilderClientProps) {
   const [templates, setTemplates] = useState(initialTemplates)
   const [showAddForm, setShowAddForm] = useState(false)
@@ -125,73 +208,6 @@ export function FormBuilderClient({ initialTemplates }: FormBuilderClientProps) 
     })
   }
 
-  const TemplateForm = ({ onSave, onCancel }: { onSave: () => void; onCancel: () => void }) => (
-    <div className="form-template-edit-card">
-      <div className="form-grid-2col">
-        <div className="form-field form-field-span2">
-          <label className="form-label">Question Label *</label>
-          <input
-            type="text"
-            value={formState.label}
-            onChange={(e) => setFormState((s) => ({ ...s, label: e.target.value }))}
-            className="form-input"
-            placeholder="e.g. Instagram handle"
-          />
-        </div>
-        <div className="form-field">
-          <label className="form-label">Scope</label>
-          <select
-            value={formState.scope}
-            onChange={(e) => setFormState((s) => ({ ...s, scope: e.target.value as FormScope }))}
-            className="form-select"
-          >
-            {(Object.keys(SCOPE_LABELS) as FormScope[]).map((k) => (
-              <option key={k} value={k}>{SCOPE_LABELS[k]}</option>
-            ))}
-          </select>
-        </div>
-        <div className="form-field">
-          <label className="form-label">Field Type</label>
-          <select
-            value={formState.field_type}
-            onChange={(e) => setFormState((s) => ({ ...s, field_type: e.target.value as FormFieldType }))}
-            className="form-select"
-          >
-            {(Object.keys(FIELD_TYPE_LABELS) as FormFieldType[]).map((k) => (
-              <option key={k} value={k}>{FIELD_TYPE_LABELS[k]}</option>
-            ))}
-          </select>
-        </div>
-        <div className="form-field">
-          <label className="form-label">Sort Order</label>
-          <input
-            type="number"
-            value={formState.sort_order}
-            onChange={(e) => setFormState((s) => ({ ...s, sort_order: Number(e.target.value) }))}
-            className="form-input"
-            min={0}
-          />
-        </div>
-        <div className="form-field form-checkbox-inline">
-          <input
-            type="checkbox"
-            id="is-required-cb"
-            checked={formState.is_required}
-            onChange={(e) => setFormState((s) => ({ ...s, is_required: e.target.checked }))}
-            className="form-checkbox"
-          />
-          <label htmlFor="is-required-cb" className="form-label">Required</label>
-        </div>
-      </div>
-      <div className="form-actions">
-        <button onClick={onSave} disabled={isPending || !formState.label.trim()} className="btn-primary">
-          {isPending ? "Saving…" : "Save"}
-        </button>
-        <button onClick={onCancel} className="btn-ghost">Cancel</button>
-      </div>
-    </div>
-  )
-
   return (
     <div className="settings-card">
       {error && <div className="error-banner">{error}</div>}
@@ -208,6 +224,9 @@ export function FormBuilderClient({ initialTemplates }: FormBuilderClientProps) 
           <div key={template.id}>
             {editingId === template.id ? (
               <TemplateForm
+                formState={formState}
+                setFormState={setFormState}
+                isPending={isPending}
                 onSave={() => handleUpdate(template.id)}
                 onCancel={cancelEdit}
               />
@@ -250,7 +269,13 @@ export function FormBuilderClient({ initialTemplates }: FormBuilderClientProps) 
 
       {/* Add new */}
       {showAddForm ? (
-        <TemplateForm onSave={handleAdd} onCancel={cancelEdit} />
+        <TemplateForm
+          formState={formState}
+          setFormState={setFormState}
+          isPending={isPending}
+          onSave={handleAdd}
+          onCancel={cancelEdit}
+        />
       ) : (
         <button
           onClick={() => { setShowAddForm(true); setEditingId(null) }}
