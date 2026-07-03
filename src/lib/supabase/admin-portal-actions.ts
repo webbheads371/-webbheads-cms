@@ -65,20 +65,20 @@ export async function uploadAgreementPdf(projectId: string, formData: FormData) 
   const file = formData.get("file") as File
   if (!file) return { error: "No file uploaded" }
 
-  const supabase = createClient()
+  const adminClient = createAdminClient()
   const path = `agreements/${projectId}/agreement.pdf`
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await adminClient.storage
     .from("client-uploads")
     .upload(path, file, { upsert: true, contentType: "application/pdf" })
   if (uploadError) return { error: uploadError.message }
 
-  const { data: { publicUrl } } = supabase.storage
+  const { data: { publicUrl } } = adminClient.storage
     .from("client-uploads")
     .getPublicUrl(path)
 
+  const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const adminClient = createAdminClient()
 
   // Upsert agreement row
   const { error } = await adminClient.from("agreements").upsert(
