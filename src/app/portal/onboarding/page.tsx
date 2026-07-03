@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { getCurrentClientUser } from "@/lib/supabase/server"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createAdminClient } from "@/lib/supabase/server"
 import { WizardStepper } from "./_components/wizard-stepper"
 import { StepWelcome } from "./_components/step-welcome"
 import { StepAgreement } from "./_components/step-agreement"
@@ -72,12 +72,39 @@ export default async function OnboardingPage() {
     }
 
     // Step 3: Advance payment approved?
-    const { data: advancePayment } = await supabase
+    let { data: advancePayment } = await supabase
       .from("payment_requests")
       .select("*")
       .eq("project_id", project.id)
       .eq("request_type", "advance")
       .single()
+
+    if (!advancePayment) {
+      const amount =
+        project.project_value && project.advance_percent
+          ? (project.project_value * project.advance_percent) / 100
+          : project.project_value
+            ? project.project_value * 0.5
+            : 0
+
+      if (amount > 0) {
+        const adminClient = createAdminClient()
+        const { data: newPayment, error: createError } = await adminClient
+          .from("payment_requests")
+          .insert({
+            project_id: project.id,
+            request_type: "advance",
+            amount: amount,
+            status: "pending_payment",
+          })
+          .select()
+          .single()
+
+        if (!createError && newPayment) {
+          advancePayment = newPayment
+        }
+      }
+    }
 
     const advanceApproved = advancePayment?.status === "approved"
 

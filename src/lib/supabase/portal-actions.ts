@@ -95,7 +95,26 @@ export async function uploadPaymentScreenshot(
     .from("client-uploads")
     .getPublicUrl(path)
 
-  const { error } = await supabase
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "Unauthorized" }
+
+  const { data: clientUser } = await adminClient
+    .from("client_users")
+    .select("client_id")
+    .eq("id", user.id)
+    .single()
+  if (!clientUser) return { error: "Unauthorized" }
+
+  const { data: project } = await adminClient
+    .from("projects")
+    .select("client_id")
+    .eq("id", projectId)
+    .single()
+  if (!project || project.client_id !== clientUser.client_id) {
+    return { error: "Unauthorized" }
+  }
+
+  const { error } = await adminClient
     .from("payment_requests")
     .update({
       screenshot_url: publicUrl,
