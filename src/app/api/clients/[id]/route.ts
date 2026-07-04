@@ -65,9 +65,11 @@ export async function DELETE(
     await adminClient.from("documents").delete().in("project_id", projectIds)
     await adminClient.from("agreements").delete().in("project_id", projectIds)
     await adminClient.from("payment_requests").delete().in("project_id", projectIds)
+    await adminClient.from("payments").delete().in("project_id", projectIds)
     await adminClient.from("form_responses").delete().in("project_id", projectIds)
     await adminClient.from("activity_log").delete().in("project_id", projectIds)
     await adminClient.from("project_status_updates").delete().in("project_id", projectIds)
+    await adminClient.from("project_checklist").delete().in("project_id", projectIds)
 
     // Delete the projects
     await adminClient.from("projects").delete().in("id", projectIds)

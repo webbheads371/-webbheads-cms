@@ -48,6 +48,20 @@ export async function DELETE(
   await adminClient.from("projects").update({ tech_lead_id: null }).eq("tech_lead_id", params.id)
   await adminClient.from("projects").update({ content_lead_id: null }).eq("content_lead_id", params.id)
 
+  // Nullify foreign key references in other tables
+  await adminClient.from("clients").update({ created_by: null }).eq("created_by", params.id)
+  await adminClient.from("client_users").update({ created_by: null }).eq("created_by", params.id)
+  await adminClient.from("form_templates").update({ created_by: null }).eq("created_by", params.id)
+  await adminClient.from("project_status_updates").update({ posted_by: null }).eq("posted_by", params.id)
+  await adminClient.from("activity_log").update({ actor_id: null }).eq("actor_id", params.id)
+  await adminClient.from("documents").update({ uploaded_by: null }).eq("uploaded_by", params.id)
+  await adminClient.from("payment_requests").update({ verified_by: null }).eq("verified_by", params.id)
+  await adminClient.from("payment_requests").update({ released_by: null }).eq("released_by", params.id)
+  await adminClient.from("agreements").update({ uploaded_by: null }).eq("uploaded_by", params.id)
+  await adminClient.from("bank_settings").update({ updated_by: null }).eq("updated_by", params.id)
+  await adminClient.from("payments").update({ recorded_by: null }).eq("recorded_by", params.id)
+  await adminClient.from("project_checklist").update({ done_by: null }).eq("done_by", params.id)
+
   // Remove from staff table first
   const { error: staffErr } = await adminClient
     .from("staff")
