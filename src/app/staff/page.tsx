@@ -3,6 +3,8 @@ import { getCurrentStaff } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { StaffClient } from "./staff-client"
 
+export const dynamic = "force-dynamic"
+
 export default async function StaffPage() {
   const supabase = createClient()
 
