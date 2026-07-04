@@ -311,6 +311,7 @@ export function ProjectDetailClient({
               paymentRequests={paymentRequests}
               statusUpdates={statusUpdates}
               documents={documents}
+              agreement={agreement}
             />
           </Suspense>
         </TabsContent>

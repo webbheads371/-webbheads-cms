@@ -7,13 +7,14 @@ import {
   postStatusUpdate,
   saveProjectPocSettings,
 } from "@/lib/supabase/admin-portal-actions"
-import type { Project, PaymentRequest, ProjectStatusUpdate } from "@/types"
+import type { Project, PaymentRequest, ProjectStatusUpdate, Agreement } from "@/types"
 
 interface ClientPortalTabProps {
   project: Project
   paymentRequests: PaymentRequest[]
   statusUpdates: ProjectStatusUpdate[]
   documents: any[]
+  agreement: Agreement | null
 }
 
 function OnboardingStepStatus({ label, done }: { label: string; done: boolean }) {
@@ -30,7 +31,7 @@ function OnboardingStepStatus({ label, done }: { label: string; done: boolean })
   )
 }
 
-export function ClientPortalTab({ project, paymentRequests, statusUpdates, documents }: ClientPortalTabProps) {
+export function ClientPortalTab({ project, paymentRequests, statusUpdates, documents, agreement }: ClientPortalTabProps) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -118,7 +119,7 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
           <OnboardingStepStatus label="Step 1 — Welcome" done={!!project.welcome_seen_at} />
           <OnboardingStepStatus
             label="Step 2 — Agreement signed + signature uploaded"
-            done={false /* Checked via agreement prop — simplified here */}
+            done={!!agreement?.client_agreed}
           />
           <OnboardingStepStatus
             label="Step 3 — Advance payment approved"
