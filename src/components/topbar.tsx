@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { StaffChangePasswordDialog } from "@/components/staff-change-password-dialog"
 import type { Staff } from "@/types"
 import { useRouter } from "next/navigation"
 
@@ -41,6 +42,7 @@ export function TopBar() {
       <div className="flex items-center gap-4">
         {staff && (
           <>
+            <StaffChangePasswordDialog />
             <Badge variant="outline" className={roleColors[staff.role]}>
               {staff.role.replace("_", " ")}
             </Badge>

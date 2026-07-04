@@ -59,6 +59,53 @@ export async function resetClientPortalPassword(userId: string) {
   return { error: null, credentials: { email: user?.email ?? "Unknown", tempPassword } }
 }
 
+// ─── Reset staff member password (admin only) ─────────────────────────────────
+
+export async function resetStaffPassword(staffId: string) {
+  const supabase = createClient()
+  const adminClient = createAdminClient()
+
+  // Verify the caller is an admin
+  const { data: { user: currentUser } } = await supabase.auth.getUser()
+  if (!currentUser) return { error: "Unauthorized", credentials: null }
+
+  const { data: callerStaff } = await supabase
+    .from("staff")
+    .select("role")
+    .eq("id", currentUser.id)
+    .single()
+
+  if (callerStaff?.role !== "admin") return { error: "Only admins can reset staff passwords", credentials: null }
+
+  // Generate a new temporary password
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%"
+  let tempPassword = ""
+  for (let i = 0; i < 12; i++) {
+    tempPassword += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  // Ensure it has at least one uppercase, one number, one special char
+  tempPassword = "Wh" + tempPassword + "1!"
+
+  const { error } = await adminClient.auth.admin.updateUserById(staffId, { password: tempPassword })
+  if (error) return { error: error.message, credentials: null }
+
+  // Fetch staff email
+  const { data: staffRecord } = await supabase
+    .from("staff")
+    .select("email, full_name")
+    .eq("id", staffId)
+    .single()
+
+  return {
+    error: null,
+    credentials: {
+      email: staffRecord?.email ?? "Unknown",
+      fullName: staffRecord?.full_name ?? "Staff Member",
+      tempPassword,
+    },
+  }
+}
+
 // ─── Upload agreement PDF (admin) ─────────────────────────────────────────────
 
 export async function uploadAgreementPdf(projectId: string, formData: FormData) {
