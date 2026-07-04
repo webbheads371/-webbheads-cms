@@ -2,9 +2,11 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
+import type { Staff } from "@/types"
 import {
   LayoutDashboard,
   Kanban,
@@ -17,24 +19,70 @@ import {
   CreditCard,
   Building2,
   FileText,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react"
-import { useState } from "react"
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+type NavItem = {
+  href: string
+  label: string
+  icon: React.ElementType
+  exact?: boolean
+  adminOnly?: boolean
+  children?: { href: string; label: string; icon: React.ElementType }[]
+}
+
+const navItems: NavItem[] = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/clients", label: "Clients", icon: Users },
-  { href: "/staff", label: "Staff", icon: UserCog },
+  { href: "/staff", label: "Staff", icon: UserCog, exact: true, adminOnly: true },
   { href: "/payments/queue", label: "Payment Queue", icon: CreditCard },
-  { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/settings/bank", label: "  Bank Settings", icon: Building2 },
-  { href: "/settings/forms", label: "  Form Builder", icon: FileText },
+  {
+    href: "/settings",
+    label: "Settings",
+    icon: Settings,
+    exact: true,
+    adminOnly: true,
+    children: [
+      { href: "/settings/bank", label: "Bank Settings", icon: Building2 },
+      { href: "/settings/forms", label: "Form Builder", icon: FileText },
+    ],
+  },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [staff, setStaff] = useState<Staff | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith("/settings"))
+
+  // Load current staff to filter admin-only items
+  useEffect(() => {
+    async function loadStaff() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase.from("staff").select("*").eq("id", user.id).single()
+      if (data) setStaff(data)
+    }
+    loadStaff()
+  }, [])
+
+  // Keep settings section open when on a settings route
+  useEffect(() => {
+    if (pathname.startsWith("/settings")) {
+      setSettingsOpen(true)
+    }
+  }, [pathname])
+
+  const isAdmin = staff?.role === "admin"
+
+  function isActive(item: NavItem) {
+    if (item.exact) return pathname === item.href
+    return pathname.startsWith(item.href)
+  }
 
   async function handleLogout() {
     const supabase = createClient()
@@ -48,6 +96,7 @@ export function Sidebar() {
       <button
         className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-background border"
         onClick={() => setMobileOpen(!mobileOpen)}
+        aria-label="Toggle navigation"
       >
         {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
@@ -66,10 +115,79 @@ export function Sidebar() {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
+            // Skip admin-only items for non-admin users (unless staff not loaded yet)
+            if (item.adminOnly && staff && !isAdmin) return null
+
             const Icon = item.icon
-            const isActive = pathname.startsWith(item.href)
+            const active = isActive(item)
+
+            if (item.children) {
+              // Collapsible settings section
+              const anyChildActive = item.children.some((c) => pathname === c.href)
+              const sectionActive = active || anyChildActive
+
+              return (
+                <div key={item.href}>
+                  <div className="flex items-center">
+                    <Link
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        "flex-1 flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                        sectionActive
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                    <button
+                      onClick={() => setSettingsOpen(!settingsOpen)}
+                      className={cn(
+                        "p-2 rounded-md transition-colors",
+                        sectionActive
+                          ? "text-primary-foreground hover:bg-primary/80"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                      aria-label="Toggle settings submenu"
+                    >
+                      {settingsOpen
+                        ? <ChevronDown className="h-3.5 w-3.5" />
+                        : <ChevronRight className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+
+                  {settingsOpen && (
+                    <div className="ml-4 mt-1 space-y-1 border-l pl-3">
+                      {item.children.map((child) => {
+                        const ChildIcon = child.icon
+                        const childActive = pathname === child.href
+                        return (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            onClick={() => setMobileOpen(false)}
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                              childActive
+                                ? "bg-primary/10 text-primary"
+                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            )}
+                          >
+                            <ChildIcon className="h-3.5 w-3.5" />
+                            {child.label}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            }
+
             return (
               <Link
                 key={item.href}
@@ -77,7 +195,7 @@ export function Sidebar() {
                 onClick={() => setMobileOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                  isActive
+                  active
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}

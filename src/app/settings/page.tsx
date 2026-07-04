@@ -1,14 +1,12 @@
 import { createClient } from "@/lib/supabase/server"
+import { getCurrentStaff } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { SettingsClient } from "./settings-client"
 
 export default async function SettingsPage() {
   const supabase = createClient()
 
-  const { data: currentStaff } = await supabase
-    .from("staff")
-    .select("*")
-    .single()
+  const currentStaff = await getCurrentStaff()
 
   if (currentStaff?.role !== "admin") {
     redirect("/dashboard")
