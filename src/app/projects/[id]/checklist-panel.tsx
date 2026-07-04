@@ -72,10 +72,8 @@ export const ChecklistPanel = memo(function ChecklistPanel({ items, currentStage
 
   const canEdit = useCallback((item: ProjectChecklistItem) => {
     if (!currentStaff) return false
-    if (currentStaff.role === "admin") return true
+    if (["admin", "tech_lead", "content_lead"].includes(currentStaff.role)) return true
     if (currentStaff.role === "sales" && item.category === "sales") return true
-    if (currentStaff.role === "tech_lead" && ["tech", "general"].includes(item.category)) return true
-    if (currentStaff.role === "content_lead" && ["content", "general"].includes(item.category)) return true
     return false
   }, [currentStaff])
 
