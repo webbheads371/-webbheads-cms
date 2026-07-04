@@ -13,9 +13,12 @@ export async function generateClientPortalLogin(
   const supabase = createClient()
   const adminClient = createAdminClient()
 
+  // Generate one password upfront and use it everywhere
+  const tempPassword = Math.random().toString(36).slice(-10) + "A1!"
+
   const { data: { user }, error: authError } = await adminClient.auth.admin.createUser({
     email,
-    password: Math.random().toString(36).slice(-10) + "A1!",
+    password: tempPassword,
     email_confirm: true,
   })
   if (authError || !user) return { error: authError?.message ?? "Failed to create auth user", credentials: null }
@@ -34,11 +37,6 @@ export async function generateClientPortalLogin(
     await adminClient.auth.admin.deleteUser(user.id)
     return { error: insertError.message, credentials: null }
   }
-
-  // Return temporary password to show Admin
-  const tempPassword = Math.random().toString(36).slice(-10) + "A1!"
-  // Reset to a known temp password
-  await adminClient.auth.admin.updateUserById(user.id, { password: tempPassword })
 
   revalidatePath("/clients")
   return { error: null, credentials: { email, tempPassword } }
