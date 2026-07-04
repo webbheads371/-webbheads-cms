@@ -165,14 +165,16 @@ export async function approvePaymentRequest(paymentRequestId: string, projectId:
   if (error) return { error: error.message }
 
   // Auto-record in payments table for accounting/staff view
-  await supabase.from("payments").insert({
-    project_id: req.project_id,
-    amount: req.amount,
-    payment_type: req.request_type,
-    method: "Client Portal",
-    paid_on: new Date().toISOString(),
-    note: "Approved via Client Portal",
-  })
+  if (req) {
+    await supabase.from("payments").insert({
+      project_id: req.project_id,
+      amount: req.amount,
+      payment_type: req.request_type,
+      method: "Client Portal",
+      paid_on: new Date().toISOString(),
+      note: "Approved via Client Portal",
+    })
+  }
 
   // If advance approved, auto-create final payment_request (if not yet existing)
   if (req?.request_type === "advance") {
