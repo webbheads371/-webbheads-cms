@@ -62,21 +62,31 @@ export async function DELETE(
 
   // 2. Delete all project-related data if there are projects
   if (projectIds.length > 0) {
-    await adminClient.from("documents").delete().in("project_id", projectIds)
-    await adminClient.from("agreements").delete().in("project_id", projectIds)
-    await adminClient.from("payment_requests").delete().in("project_id", projectIds)
-    await adminClient.from("payments").delete().in("project_id", projectIds)
-    await adminClient.from("form_responses").delete().in("project_id", projectIds)
-    await adminClient.from("activity_log").delete().in("project_id", projectIds)
-    await adminClient.from("project_status_updates").delete().in("project_id", projectIds)
-    await adminClient.from("project_checklist_items").delete().in("project_id", projectIds)
+    const p1 = await adminClient.from("documents").delete().in("project_id", projectIds)
+    if (p1.error) return NextResponse.json({ error: p1.error.message }, { status: 500 })
+    const p2 = await adminClient.from("agreements").delete().in("project_id", projectIds)
+    if (p2.error) return NextResponse.json({ error: p2.error.message }, { status: 500 })
+    const p3 = await adminClient.from("payment_requests").delete().in("project_id", projectIds)
+    if (p3.error) return NextResponse.json({ error: p3.error.message }, { status: 500 })
+    const p4 = await adminClient.from("payments").delete().in("project_id", projectIds)
+    if (p4.error) return NextResponse.json({ error: p4.error.message }, { status: 500 })
+    const p5 = await adminClient.from("form_responses").delete().in("project_id", projectIds)
+    if (p5.error) return NextResponse.json({ error: p5.error.message }, { status: 500 })
+    const p6 = await adminClient.from("activity_log").delete().in("project_id", projectIds)
+    if (p6.error) return NextResponse.json({ error: p6.error.message }, { status: 500 })
+    const p7 = await adminClient.from("project_status_updates").delete().in("project_id", projectIds)
+    if (p7.error) return NextResponse.json({ error: p7.error.message }, { status: 500 })
+    const p8 = await adminClient.from("project_checklist_items").delete().in("project_id", projectIds)
+    if (p8.error) return NextResponse.json({ error: p8.error.message }, { status: 500 })
 
     // Delete the projects
-    await adminClient.from("projects").delete().in("id", projectIds)
+    const p9 = await adminClient.from("projects").delete().in("id", projectIds)
+    if (p9.error) return NextResponse.json({ error: p9.error.message }, { status: 500 })
   }
 
   // 3. Delete the client_users records (we already deleted auth users above)
-  await adminClient.from("client_users").delete().eq("client_id", params.id)
+  const p10 = await adminClient.from("client_users").delete().eq("client_id", params.id)
+  if (p10.error) return NextResponse.json({ error: p10.error.message }, { status: 500 })
 
   // 4. Finally, delete the client
   const { error } = await adminClient
