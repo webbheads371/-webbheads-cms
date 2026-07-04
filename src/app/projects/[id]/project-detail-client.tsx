@@ -275,6 +275,7 @@ export function ProjectDetailClient({
               currentStaff={currentStaff}
               projectId={project.id}
               stages={stages}
+              onAutoAdvance={() => performMove()}
             />
           </Suspense>
         </TabsContent>

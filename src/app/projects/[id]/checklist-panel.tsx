@@ -20,6 +20,7 @@ interface Props {
   currentStaff: Staff | null
   projectId: string
   stages: PipelineStage[]
+  onAutoAdvance?: () => void
 }
 
 const categoryColors: Record<string, string> = {
@@ -29,7 +30,7 @@ const categoryColors: Record<string, string> = {
   general: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-900/50",
 }
 
-export const ChecklistPanel = memo(function ChecklistPanel({ items, currentStage, currentStaff, projectId, stages }: Props) {
+export const ChecklistPanel = memo(function ChecklistPanel({ items, currentStage, currentStaff, projectId, stages, onAutoAdvance }: Props) {
   const router = useRouter()
   const supabase = useSupabase()
   const [optimisticItems, setOptimisticItems] = useState<ProjectChecklistItem[] | null>(null)
@@ -117,6 +118,19 @@ export const ChecklistPanel = memo(function ChecklistPanel({ items, currentStage
     })
 
     router.refresh()
+
+    // Check if we should auto advance
+    if (newDone && item.is_required && item.stage_key === currentStage) {
+      const currentStageItems = groupedItems[currentStage] || []
+      const requiredItems = currentStageItems.filter((i) => i.is_required)
+      const doneRequiredItems = requiredItems.filter((i) => i.id === item.id ? newDone : i.is_done)
+      
+      if (doneRequiredItems.length === requiredItems.length && requiredItems.length > 0) {
+        if (onAutoAdvance) {
+          onAutoAdvance()
+        }
+      }
+    }
   }
 
   const isAdmin = currentStaff?.role === "admin"
