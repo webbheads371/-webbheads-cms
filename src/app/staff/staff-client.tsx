@@ -172,6 +172,8 @@ export function StaffClient({ staff, projects, clients }: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
+  const [syncResult, setSyncResult] = useState<string | null>(null)
 
   const [password, setPassword] = useState("")
   const [showNewPassword, setShowNewPassword] = useState(false)
@@ -254,16 +256,35 @@ export function StaffClient({ staff, projects, clients }: Props) {
     router.refresh()
   }
 
+  async function handleSync() {
+    setSyncing(true)
+    setSyncResult(null)
+    const res = await fetch("/api/staff/sync", { method: "POST" })
+    const data = await res.json()
+    setSyncing(false)
+    if (data.error) {
+      setSyncResult(`Error: ${data.error}`)
+    } else {
+      setSyncResult(data.message)
+      if (data.synced > 0) router.refresh()
+    }
+  }
+
   return (
     <div>
       <PageHeader title="Staff Management" description="Admin-only: manage team accounts and assignments">
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Staff Member
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleSync} disabled={syncing} size="sm">
+            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing...' : 'Sync Records'}
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Staff Member
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Staff Member</DialogTitle>
@@ -381,7 +402,14 @@ export function StaffClient({ staff, projects, clients }: Props) {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </PageHeader>
+
+      {syncResult && (
+        <div className={`mb-4 px-4 py-2.5 rounded-md text-sm border ${syncResult.startsWith('Error') ? 'bg-destructive/10 border-destructive/30 text-destructive' : 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900 text-green-800 dark:text-green-300'}`}>
+          {syncResult}
+        </div>
+      )}
 
       <Card>
         <CardContent className="pt-6">
