@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { formatDate } from "@/lib/utils"
-import { Plus, Key, RefreshCw, Eye, EyeOff, Copy, Check, ShieldAlert } from "lucide-react"
+import { Plus, Key, RefreshCw, Eye, EyeOff, Copy, Check, ShieldAlert, Trash2 } from "lucide-react"
 import { resetStaffPassword } from "@/lib/supabase/admin-portal-actions"
 import type { Staff } from "@/types"
 
@@ -422,46 +422,120 @@ export function StaffClient({ staff, projects, clients }: Props) {
                 <TableHead>Joined</TableHead>
                 <TableHead>Change Role</TableHead>
                 <TableHead>Password</TableHead>
+                <TableHead>Delete</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {staff.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell className="font-medium">{member.full_name}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{member.email}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={roleColors[member.role]}>
-                      {member.role.replace("_", " ")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {formatDate(member.created_at)}
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      defaultValue={member.role}
-                      onValueChange={(value) => handleRoleChange(member.id, value)}
-                    >
-                      <SelectTrigger className="w-36">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="tech_lead">Tech Lead</SelectItem>
-                        <SelectItem value="content_lead">Content Lead</SelectItem>
-                        <SelectItem value="sales">Sales</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <ResetPasswordModal member={member} />
-                  </TableCell>
-                </TableRow>
+                <StaffRow
+                  key={member.id}
+                  member={member}
+                  onRoleChange={handleRoleChange}
+                  onDeleted={() => router.refresh()}
+                />
               ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+// ─── Single staff row with inline delete ──────────────────────────────────────
+function StaffRow({
+  member,
+  onRoleChange,
+  onDeleted,
+}: {
+  member: Staff
+  onRoleChange: (id: string, role: string) => void
+  onDeleted: () => void
+}) {
+  const [deleting, setDeleting] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  async function handleDelete() {
+    setDeleting(true)
+    setDeleteError(null)
+    const res = await fetch(`/api/staff/${member.id}`, { method: "DELETE" })
+    const data = await res.json()
+    setDeleting(false)
+    if (data.error) {
+      setDeleteError(data.error)
+    } else {
+      setShowConfirm(false)
+      onDeleted()
+    }
+  }
+
+  return (
+    <TableRow>
+      <TableCell className="font-medium">{member.full_name}</TableCell>
+      <TableCell className="text-muted-foreground text-sm">{member.email}</TableCell>
+      <TableCell>
+        <Badge variant="outline" className={roleColors[member.role]}>
+          {member.role.replace("_", " ")}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-muted-foreground text-sm">
+        {formatDate(member.created_at)}
+      </TableCell>
+      <TableCell>
+        <Select
+          defaultValue={member.role}
+          onValueChange={(value) => onRoleChange(member.id, value)}
+        >
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="tech_lead">Tech Lead</SelectItem>
+            <SelectItem value="content_lead">Content Lead</SelectItem>
+            <SelectItem value="sales">Sales</SelectItem>
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell>
+        <ResetPasswordModal member={member} />
+      </TableCell>
+      <TableCell>
+        <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+          <DialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <Trash2 className="h-4 w-4" /> Delete Staff Member
+              </DialogTitle>
+              <DialogDescription>
+                Are you sure you want to permanently delete <strong>{member.full_name}</strong> ({member.email})? 
+                This will remove their login access and cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowConfirm(false)}>Cancel</Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Yes, Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </TableCell>
+    </TableRow>
   )
 }

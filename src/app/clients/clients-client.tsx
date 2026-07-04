@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/page-header"
 import { useSupabase } from "@/hooks/use-supabase"
 import { formatDate } from "@/lib/utils"
-import { Plus } from "lucide-react"
+import { Plus, Trash2 } from "lucide-react"
 
 interface ClientWithProjects {
   id: string
@@ -119,29 +119,16 @@ export function ClientsClient({ clients }: { clients: ClientWithProjects[] }) {
               <TableHead>Email</TableHead>
               <TableHead>Projects</TableHead>
               <TableHead>Created</TableHead>
+              <TableHead>Delete</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {clients.map((client) => (
-              <TableRow
-                key={client.id}
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => router.push(`/clients/${client.id}`)}
-              >
-                <TableCell className="font-medium">{client.company_name}</TableCell>
-                <TableCell>{client.contact_name || "—"}</TableCell>
-                <TableCell>{client.email || "—"}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{client.projects?.[0]?.count ?? 0}</Badge>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {formatDate(client.created_at)}
-                </TableCell>
-              </TableRow>
+              <ClientRow key={client.id} client={client} onDeleted={() => router.refresh()} />
             ))}
             {clients.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No clients yet. Create your first client.
                 </TableCell>
               </TableRow>
@@ -150,5 +137,88 @@ export function ClientsClient({ clients }: { clients: ClientWithProjects[] }) {
         </Table>
       </div>
     </div>
+  )
+}
+
+// ─── Single client row with inline delete ──────────────────────────────────────
+function ClientRow({
+  client,
+  onDeleted,
+}: {
+  client: ClientWithProjects
+  onDeleted: () => void
+}) {
+  const [deleting, setDeleting] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const router = useRouter()
+
+  async function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation() // Prevent row click navigation
+    setDeleting(true)
+    setDeleteError(null)
+    const res = await fetch(`/api/clients/${client.id}`, { method: "DELETE" })
+    const data = await res.json()
+    setDeleting(false)
+    if (data.error) {
+      setDeleteError(data.error)
+    } else {
+      setShowConfirm(false)
+      onDeleted()
+    }
+  }
+
+  return (
+    <TableRow
+      className="cursor-pointer hover:bg-muted/50 group"
+      onClick={() => router.push(`/clients/${client.id}`)}
+    >
+      <TableCell className="font-medium">{client.company_name}</TableCell>
+      <TableCell>{client.contact_name || "—"}</TableCell>
+      <TableCell>{client.email || "—"}</TableCell>
+      <TableCell>
+        <Badge variant="secondary">{client.projects?.[0]?.count ?? 0}</Badge>
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {formatDate(client.created_at)}
+      </TableCell>
+      <TableCell>
+        <div onClick={(e) => e.stopPropagation()}>
+          <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-destructive">
+                  <Trash2 className="h-4 w-4" /> Delete Client
+                </DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to permanently delete <strong>{client.company_name}</strong>? 
+                  This will remove their login access and all their projects.
+                </DialogDescription>
+              </DialogHeader>
+              {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowConfirm(false)}>Cancel</Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? "Deleting..." : "Yes, Delete"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </TableCell>
+    </TableRow>
   )
 }

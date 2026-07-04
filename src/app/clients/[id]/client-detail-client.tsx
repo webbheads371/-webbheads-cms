@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/page-header"
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog"
 import { formatDate } from "@/lib/utils"
-import { Plus, ExternalLink, Key, RefreshCw } from "lucide-react"
+import { Plus, ExternalLink, Key, RefreshCw, Trash2 } from "lucide-react"
 import { generateClientPortalLogin, updateClientType, resetClientPortalPassword } from "@/lib/supabase/admin-portal-actions"
 import type { Client, Project, Staff, ClientUser } from "@/types"
 
@@ -22,6 +25,9 @@ export function ClientDetailClient({ client, projects }: Props) {
   const [credentials, setCredentials] = useState<{ email: string; tempPassword: string } | null>(null)
   const [portalError, setPortalError] = useState<string | null>(null)
   const [typeUpdating, setTypeUpdating] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const hasPortalLogin = (client.client_users?.length ?? 0) > 0
 
@@ -69,13 +75,56 @@ export function ClientDetailClient({ client, projects }: Props) {
     }
   }
 
+  const handleDelete = async () => {
+    setDeleting(true)
+    setDeleteError(null)
+    const res = await fetch(`/api/clients/${client.id}`, { method: "DELETE" })
+    const data = await res.json()
+    setDeleting(false)
+    if (data.error) {
+      setDeleteError(data.error)
+    } else {
+      router.push("/clients")
+      router.refresh()
+    }
+  }
+
   return (
     <div>
       <PageHeader title={client.company_name} description="Client details and projects">
-        <Button onClick={() => router.push(`/projects/new?client_id=${client.id}`)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Project
-        </Button>
+        <div className="flex items-center gap-2">
+          <Dialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="text-destructive hover:bg-destructive/10 border-destructive/20">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Client
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-destructive">
+                  <Trash2 className="h-4 w-4" /> Delete Client
+                </DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to permanently delete <strong>{client.company_name}</strong>? 
+                  This will remove their login access and all their projects.
+                </DialogDescription>
+              </DialogHeader>
+              {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowConfirmDelete(false)}>Cancel</Button>
+                <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+                  {deleting ? "Deleting..." : "Yes, Delete"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Button onClick={() => router.push(`/projects/new?client_id=${client.id}`)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Project
+          </Button>
+        </div>
       </PageHeader>
 
       <div className="grid gap-6 md:grid-cols-4 mb-8">
