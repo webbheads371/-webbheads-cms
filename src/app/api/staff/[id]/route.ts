@@ -60,7 +60,7 @@ export async function DELETE(
   await adminClient.from("agreements").update({ uploaded_by: null }).eq("uploaded_by", params.id)
   await adminClient.from("bank_settings").update({ updated_by: null }).eq("updated_by", params.id)
   await adminClient.from("payments").update({ recorded_by: null }).eq("recorded_by", params.id)
-  await adminClient.from("project_checklist").update({ done_by: null }).eq("done_by", params.id)
+  await adminClient.from("project_checklist_items").update({ done_by: null }).eq("done_by", params.id)
 
   // Remove from staff table first
   const { error: staffErr } = await adminClient
