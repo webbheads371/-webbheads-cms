@@ -36,8 +36,8 @@ export async function DELETE(
     .eq("id", user.id)
     .single()
 
-  if (caller?.role !== "admin") {
-    return NextResponse.json({ error: "Only admins can delete clients" }, { status: 403 })
+  if (caller?.role !== "admin" && caller?.role !== "tech_lead") {
+    return NextResponse.json({ error: "Only admins and tech leads can delete clients" }, { status: 403 })
   }
 
   // Delete any portal login auth accounts for this client
