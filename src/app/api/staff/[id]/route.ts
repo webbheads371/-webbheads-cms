@@ -44,6 +44,10 @@ export async function DELETE(
     return NextResponse.json({ error: "You cannot delete your own account" }, { status: 400 })
   }
 
+  // Nullify foreign key references in projects table
+  await adminClient.from("projects").update({ tech_lead_id: null }).eq("tech_lead_id", params.id)
+  await adminClient.from("projects").update({ content_lead_id: null }).eq("content_lead_id", params.id)
+
   // Remove from staff table first
   const { error: staffErr } = await adminClient
     .from("staff")
