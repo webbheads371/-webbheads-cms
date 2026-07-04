@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { submitProfileForm, uploadFormFile } from "@/lib/supabase/portal-actions"
 import type { FormTemplate, FormResponse } from "@/types"
+import { Sparkles, CheckCircle2, Paperclip, ArrowRight } from "lucide-react"
 
 interface StepProfileProps {
   projectId: string
@@ -65,10 +66,12 @@ export function StepProfile({ projectId, templates, existingResponses }: StepPro
 
   if (submitted) {
     return (
-      <div className="wizard-step-content wizard-step-success">
-        <div className="success-icon">🎉</div>
-        <h2 className="wizard-step-title">Thank you!</h2>
-        <p className="wizard-step-subtitle">
+      <div className="wizard-step-content wizard-step-success text-center flex flex-col items-center">
+        <div className="welcome-icon-container p-4 bg-amber-50 dark:bg-amber-950/30 rounded-2xl mb-4 border border-amber-100 dark:border-amber-900/30 inline-block">
+          <Sparkles className="h-12 w-12 text-amber-500 animate-bounce" />
+        </div>
+        <h2 className="wizard-step-title text-2xl font-bold">Thank you!</h2>
+        <p className="wizard-step-subtitle text-muted-foreground mt-1 max-w-sm">
           We&apos;ll review your details and share your project timeline shortly.
           Redirecting to your dashboard…
         </p>
@@ -142,9 +145,11 @@ export function StepProfile({ projectId, templates, existingResponses }: StepPro
             {template.field_type === "file" && (
               <div>
                 {values[template.id] ? (
-                  <div className="form-file-uploaded">
-                    <span className="badge-success">✓ File uploaded</span>
-                    <a href={values[template.id]} target="_blank" rel="noreferrer" className="link">
+                  <div className="form-file-uploaded flex items-center gap-2">
+                    <span className="badge-success flex items-center gap-1 py-1 px-2.5 rounded-lg text-xs font-semibold">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> File uploaded
+                    </span>
+                    <a href={values[template.id]} target="_blank" rel="noreferrer" className="link ml-2 text-sm font-semibold">
                       View file
                     </a>
                   </div>
@@ -162,10 +167,10 @@ export function StepProfile({ projectId, templates, existingResponses }: StepPro
                     {fileUploading[template.id] ? (
                       <span>Uploading…</span>
                     ) : (
-                      <>
-                        <span className="file-upload-icon">📎</span>
+                      <span className="flex items-center gap-2">
+                        <Paperclip className="h-5 w-5 text-muted-foreground" />
                         <span>Click to upload file</span>
-                      </>
+                      </span>
                     )}
                   </label>
                 )}
@@ -175,19 +180,26 @@ export function StepProfile({ projectId, templates, existingResponses }: StepPro
         ))}
       </div>
 
-      {error && <div className="error-banner">{error}</div>}
+      {error && <div className="error-banner mt-4">{error}</div>}
 
-      <div className="wizard-step-actions">
+      <div className="wizard-step-actions mt-8">
         <button
           onClick={handleSubmit}
           disabled={!allRequiredFilled || isPending}
-          className="btn-primary btn-large"
+          className="btn-primary btn-large flex items-center justify-center gap-2 mx-auto"
           id="profile-submit-btn"
         >
-          {isPending ? "Submitting…" : "Submit Profile →"}
+          {isPending ? (
+            "Submitting…"
+          ) : (
+            <span className="flex items-center gap-2">
+              <span>Submit Profile</span>
+              <ArrowRight className="h-4 w-4" />
+            </span>
+          )}
         </button>
         {!allRequiredFilled && (
-          <p className="wizard-step-hint">Please fill in all required fields to continue.</p>
+          <p className="wizard-step-hint text-center mt-2">Please fill in all required fields to continue.</p>
         )}
       </div>
     </div>

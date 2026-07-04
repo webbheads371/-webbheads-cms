@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { approvePaymentRequest, rejectPaymentRequest } from "@/lib/supabase/admin-portal-actions"
+import { CheckCircle2, ExternalLink, Check, X } from "lucide-react"
 
 interface PaymentWithProject {
   id: string
@@ -64,10 +65,10 @@ export function PaymentQueueClient({ payments: initialPayments }: PaymentQueueCl
 
   if (payments.length === 0) {
     return (
-      <div className="dashboard-empty-state">
-        <span className="dashboard-empty-icon">✅</span>
-        <p>No pending payment verifications!</p>
-        <span className="dashboard-empty-hint">All payments have been reviewed.</span>
+      <div className="dashboard-empty-state text-center py-12 flex flex-col items-center">
+        <CheckCircle2 className="h-10 w-10 text-green-500 mb-3" />
+        <p className="font-bold text-lg">No pending payment verifications!</p>
+        <span className="dashboard-empty-hint text-sm text-muted-foreground">All payments have been reviewed.</span>
       </div>
     )
   }
@@ -108,14 +109,16 @@ export function PaymentQueueClient({ payments: initialPayments }: PaymentQueueCl
               href={payment.screenshot_url}
               target="_blank"
               rel="noreferrer"
-              className="payment-queue-screenshot-link"
+              className="payment-queue-screenshot-link inline-flex flex-col items-start gap-1"
             >
               <img
                 src={payment.screenshot_url}
                 alt="Payment screenshot"
                 className="payment-queue-screenshot"
               />
-              <span className="link">View full screenshot ↗</span>
+              <span className="link flex items-center gap-1 text-sm font-semibold">
+                View full screenshot <ExternalLink className="h-3 w-3" />
+              </span>
             </a>
           )}
 
@@ -134,7 +137,7 @@ export function PaymentQueueClient({ payments: initialPayments }: PaymentQueueCl
                 <button
                   onClick={() => handleReject(payment)}
                   disabled={isPending || !rejectionReason.trim()}
-                  className="btn-danger"
+                  className="btn-danger flex items-center gap-1"
                   id={`confirm-reject-${payment.id}`}
                 >
                   {isPending ? "Rejecting…" : "Confirm Reject"}
@@ -147,24 +150,24 @@ export function PaymentQueueClient({ payments: initialPayments }: PaymentQueueCl
                 </button>
               </div>
             ) : (
-              <>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleApprove(payment)}
                   disabled={isPending}
-                  className="btn-success"
+                  className="btn-success flex items-center gap-1.5 py-2 px-4 rounded-lg font-semibold text-white bg-green-600 hover:bg-green-700 transition-colors"
                   id={`approve-payment-${payment.id}`}
                 >
-                  ✓ Approve
+                  <Check className="h-4 w-4" /> Approve
                 </button>
                 <button
                   onClick={() => setRejectingId(payment.id)}
                   disabled={isPending}
-                  className="btn-danger"
+                  className="btn-danger flex items-center gap-1.5 py-2 px-4 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
                   id={`reject-payment-${payment.id}`}
                 >
-                  ✗ Reject
+                  <X className="h-4 w-4" /> Reject
                 </button>
-              </>
+              </div>
             )}
           </div>
         </div>

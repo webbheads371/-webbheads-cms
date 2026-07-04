@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef } from "react"
 import { saveBankSettings } from "@/lib/supabase/admin-portal-actions"
 import type { BankSettings } from "@/types"
+import { Image as ImageIcon, CheckCircle2 } from "lucide-react"
 
 interface BankSettingsClientProps {
   initialSettings: BankSettings | null
@@ -115,14 +116,21 @@ export function BankSettingsClient({ initialSettings }: BankSettingsClientProps)
                 onChange={handleQrChange}
                 className="file-upload-input"
               />
-              <span className="file-upload-icon">🖼️</span>
-              <span>{qrPreview ? "Replace QR image" : "Upload QR image"}</span>
+              <span className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                <span>{qrPreview ? "Replace QR image" : "Upload QR image"}</span>
+              </span>
             </label>
           </div>
         </div>
 
         {error && <div className="error-banner">{error}</div>}
-        {success && <div className="success-banner">✓ Bank settings saved successfully!</div>}
+        {success && (
+          <div className="success-banner flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4" />
+            <span>Bank settings saved successfully!</span>
+          </div>
+        )}
 
         <div className="form-actions">
           <button

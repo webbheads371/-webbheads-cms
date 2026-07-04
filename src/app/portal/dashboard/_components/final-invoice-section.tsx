@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { uploadPaymentScreenshot } from "@/lib/supabase/portal-actions"
 import type { BankSettings, PaymentRequest } from "@/types"
+import { Receipt, Upload, Clock, AlertTriangle, CheckCircle2 } from "lucide-react"
 
 interface FinalInvoiceSectionProps {
   projectId: string
@@ -36,7 +37,10 @@ export function FinalInvoiceSection({ projectId, paymentRequest, bankSettings }:
 
   return (
     <div className="dashboard-section">
-      <h2 className="dashboard-section-title">🧾 Final Invoice</h2>
+      <h2 className="dashboard-section-title flex items-center gap-2">
+        <Receipt className="h-5 w-5 text-primary" />
+        Final Invoice
+      </h2>
       <div className="payment-amount-card">
         <div className="payment-amount-row payment-advance-row">
           <span className="payment-amount-label">Remaining Balance</span>
@@ -87,7 +91,7 @@ export function FinalInvoiceSection({ projectId, paymentRequest, bankSettings }:
       )}
 
       {status === "pending_payment" && (
-        <label className="file-upload-area" id="final-payment-screenshot-label">
+        <label className="file-upload-area mt-4" id="final-payment-screenshot-label">
           <input
             type="file"
             accept="image/*"
@@ -95,26 +99,39 @@ export function FinalInvoiceSection({ projectId, paymentRequest, bankSettings }:
             disabled={uploading}
             className="file-upload-input"
           />
-          {uploading ? "Uploading…" : "📤 Upload payment screenshot"}
+          {uploading ? (
+            <span>Uploading…</span>
+          ) : (
+            <span className="flex items-center gap-2">
+              <Upload className="h-5 w-5 text-muted-foreground" />
+              Upload payment screenshot
+            </span>
+          )}
         </label>
       )}
 
       {status === "submitted" && (
-        <div className="payment-status-card payment-status-submitted">
-          <span className="payment-status-icon">⏳</span>
+        <div className="payment-status-card payment-status-submitted flex items-start gap-4">
+          <div className="flex-shrink-0 text-amber-600 dark:text-amber-400 mt-0.5">
+            <Clock className="h-6 w-6 animate-pulse" />
+          </div>
           <div>
             <strong>Thank you! We&apos;re verifying your payment.</strong>
-            <p>We&apos;ll update you within 1–2 hours.</p>
+            <p className="text-muted-foreground mt-0.5">We&apos;ll update you within 1–2 hours.</p>
           </div>
         </div>
       )}
 
       {status === "rejected" && (
-        <div className="payment-status-card payment-status-rejected">
-          <span className="payment-status-icon">⚠️</span>
-          <div>
-            <strong>Payment rejected</strong>
-            {paymentRequest.rejection_reason && <p>Reason: {paymentRequest.rejection_reason}</p>}
+        <div className="payment-status-card payment-status-rejected flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 text-red-600 dark:text-red-400 mt-0.5">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+            <div>
+              <strong>Payment rejected</strong>
+              {paymentRequest.rejection_reason && <p className="text-muted-foreground mt-0.5">Reason: {paymentRequest.rejection_reason}</p>}
+            </div>
           </div>
           <label className="file-upload-area file-upload-area-sm" id="final-reupload-label">
             <input
@@ -124,22 +141,27 @@ export function FinalInvoiceSection({ projectId, paymentRequest, bankSettings }:
               disabled={uploading}
               className="file-upload-input"
             />
-            {uploading ? "Uploading…" : "Re-upload screenshot"}
+            <span className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              {uploading ? "Uploading…" : "Re-upload screenshot"}
+            </span>
           </label>
         </div>
       )}
 
       {status === "approved" && (
-        <div className="payment-status-card payment-status-approved">
-          <span className="payment-status-icon">✅</span>
+        <div className="payment-status-card payment-status-approved flex items-start gap-4">
+          <div className="flex-shrink-0 text-green-600 dark:text-green-400 mt-0.5">
+            <CheckCircle2 className="h-6 w-6" />
+          </div>
           <div>
             <strong>Final payment confirmed!</strong>
-            <p>Thank you — your project is complete.</p>
+            <p className="text-muted-foreground mt-0.5">Thank you — your project is complete.</p>
           </div>
         </div>
       )}
 
-      {error && <div className="error-banner">{error}</div>}
+      {error && <div className="error-banner mt-4">{error}</div>}
     </div>
   )
 }

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { submitProfileForm, uploadFormFile } from "@/lib/supabase/portal-actions"
 import type { FormTemplate, FormResponse } from "@/types"
+import { CheckCircle2, Paperclip } from "lucide-react"
 
 interface CredentialsFormProps {
   projectId: string
@@ -132,15 +133,17 @@ export function CredentialsForm({ projectId, templates, existingResponses }: Cre
             {template.field_type === "file" && (
               <div>
                 {values[template.id] ? (
-                  <div className="form-file-uploaded">
-                    <span className="badge-success">✓ File uploaded</span>
-                    <a href={values[template.id]} target="_blank" rel="noreferrer" className="link ml-2">
+                  <div className="form-file-uploaded flex items-center gap-2">
+                    <span className="badge-success flex items-center gap-1 py-1 px-2.5 rounded-lg text-xs font-semibold">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> File uploaded
+                    </span>
+                    <a href={values[template.id]} target="_blank" rel="noreferrer" className="link ml-2 text-sm font-semibold">
                       View file
                     </a>
                     <button
                       type="button"
                       onClick={() => setValue(template.id, "")}
-                      className="text-xs text-red-500 hover:text-red-700 transition-colors ml-4"
+                      className="text-xs text-red-500 hover:text-red-700 transition-colors ml-4 font-semibold"
                     >
                       Delete
                     </button>
@@ -159,10 +162,10 @@ export function CredentialsForm({ projectId, templates, existingResponses }: Cre
                     {fileUploading[template.id] ? (
                       <span>Uploading…</span>
                     ) : (
-                      <>
-                        <span className="file-upload-icon">📎</span>
+                      <span className="flex items-center gap-2">
+                        <Paperclip className="h-5 w-5 text-muted-foreground" />
                         <span>Click to upload file</span>
-                      </>
+                      </span>
                     )}
                   </label>
                 )}
@@ -172,7 +175,12 @@ export function CredentialsForm({ projectId, templates, existingResponses }: Cre
         ))}
 
         {error && <div className="error-banner mt-4">{error}</div>}
-        {success && <div className="success-banner mt-4">✓ Credentials updated successfully!</div>}
+        {success && (
+          <div className="success-banner mt-4 flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+            Credentials updated successfully!
+          </div>
+        )}
 
         <div className="form-actions mt-6">
           <button

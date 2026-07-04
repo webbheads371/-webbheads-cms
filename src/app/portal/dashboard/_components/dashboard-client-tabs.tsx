@@ -5,6 +5,7 @@ import { CredentialsForm } from "./credentials-form"
 import { FinalInvoiceSection } from "./final-invoice-section"
 import { HandlesSection } from "./handles-section"
 import type { Project, PaymentRequest, BankSettings, ProjectStatusUpdate, FormTemplate, FormResponse } from "@/types"
+import { Home, KeyRound, UserCheck, Rocket, FileText, Calendar, Settings, FileSignature, Receipt, CreditCard, Mail, MessageCircle, Phone, ExternalLink, Folder, ArrowRight } from "lucide-react"
 
 interface DashboardClientTabsProps {
   project: Project & {
@@ -49,39 +50,42 @@ export function DashboardClientTabs({
   return (
     <div className="w-full flex flex-col gap-6">
       {/* Premium Tab Selection */}
-      <div className="flex border-b border-border/60 bg-muted/20 p-1 rounded-lg gap-2 self-start mb-4">
+      <div className="flex border border-border/60 bg-muted/30 p-1 rounded-xl gap-2 self-start mb-6 shadow-sm">
         <button
           onClick={() => setActiveTab("home")}
-          className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${
+          className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
             activeTab === "home"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-background text-foreground shadow-sm border border-border/10"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/50"
           }`}
           id="tab-home"
         >
-          🏠 Home
+          <Home className="h-4 w-4 text-primary" />
+          Home
         </button>
         <button
           onClick={() => setActiveTab("credentials")}
-          className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${
+          className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
             activeTab === "credentials"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-background text-foreground shadow-sm border border-border/10"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/50"
           }`}
           id="tab-credentials"
         >
-          🔑 Credentials
+          <KeyRound className="h-4 w-4 text-primary" />
+          Credentials
         </button>
         <button
           onClick={() => setActiveTab("poc")}
-          className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${
+          className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
             activeTab === "poc"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-background text-foreground shadow-sm border border-border/10"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/50"
           }`}
           id="tab-poc"
         >
-          📞 Point of Contact
+          <UserCheck className="h-4 w-4 text-primary" />
+          Point of Contact
         </button>
       </div>
 
@@ -93,8 +97,9 @@ export function DashboardClientTabs({
             <div className="flex flex-col gap-8">
               {/* Project Status Updates */}
               <div className="dashboard-section p-6 border rounded-xl bg-card/60 shadow-sm">
-                <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2">
-                  🚀 Project Status Updates
+                <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2 text-foreground">
+                  <Rocket className="h-5 w-5 text-primary animate-pulse" />
+                  Project Status Updates
                 </h2>
 
                 {statusUpdates.length > 0 ? (
@@ -123,26 +128,29 @@ export function DashboardClientTabs({
 
               {/* Important Documents */}
               <div className="dashboard-section p-6 border rounded-xl bg-card/60 shadow-sm">
-                <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2">
-                  📄 Important Documents
+                <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2 text-foreground">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Important Documents
                 </h2>
 
                 {importantDocs.length > 0 ? (
                   <div className="grid sm:grid-cols-2 gap-4">
                     {importantDocs.map((doc) => {
-                      let icon = "📁"
-                      if (doc.doc_type === "timeline") icon = "📅"
-                      if (doc.doc_type === "tech_flow") icon = "⚙️"
-                      if (doc.doc_type.includes("agreement")) icon = "📝"
-                      if (doc.doc_type.includes("invoice")) icon = "🧾"
+                      let IconComponent = Folder
+                      if (doc.doc_type === "timeline") IconComponent = Calendar
+                      if (doc.doc_type === "tech_flow") IconComponent = Settings
+                      if (doc.doc_type.includes("agreement")) IconComponent = FileSignature
+                      if (doc.doc_type.includes("invoice")) IconComponent = Receipt
 
                       return (
                         <div
                           key={doc.id}
-                          className="flex items-center justify-between p-4 border rounded-xl bg-background/50 hover:border-primary/50 transition-all group"
+                          className="flex items-center justify-between p-4 border rounded-xl bg-background/50 hover:border-primary/50 transition-all group shadow-sm hover:shadow-md"
                         >
                           <div className="flex items-center gap-3">
-                            <span className="text-2xl">{icon}</span>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                              <IconComponent className="h-5 w-5" />
+                            </div>
                             <div>
                               <div className="font-semibold text-sm capitalize">
                                 {doc.doc_type.replace("_", " ")}
@@ -157,9 +165,9 @@ export function DashboardClientTabs({
                               href={doc.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-sm text-primary hover:underline font-semibold flex items-center gap-1"
+                              className="text-sm text-primary hover:underline font-semibold flex items-center gap-1.5"
                             >
-                              Open ↗
+                              Open <ExternalLink className="h-3.5 w-3.5" />
                             </a>
                           )}
                         </div>
@@ -196,7 +204,10 @@ export function DashboardClientTabs({
             <div className="flex flex-col gap-6">
               {/* Payment Balance */}
               <div className="p-6 border rounded-xl bg-card/60 shadow-sm flex flex-col gap-4">
-                <h3 className="text-lg font-bold tracking-tight">💳 Payment Status</h3>
+                <h3 className="text-lg font-bold tracking-tight flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  Payment Status
+                </h3>
 
                 {project.project_value ? (
                   <div className="flex flex-col gap-3">
@@ -255,25 +266,29 @@ export function DashboardClientTabs({
           <div className="grid md:grid-cols-2 gap-8 items-start">
             {/* Assigned Project Leads */}
             <div className="p-6 border rounded-xl bg-card/60 shadow-sm flex flex-col gap-4">
-              <h2 className="text-xl font-bold tracking-tight"> Assigned Project Leads</h2>
+              <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-foreground">
+                <UserCheck className="h-5 w-5 text-primary" />
+                Assigned Project Leads
+              </h2>
               <p className="text-sm text-muted-foreground">
                 Your direct technical and creative contact points at WebbHeads.
               </p>
 
               <div className="flex flex-col gap-4 mt-2">
                 {/* Tech Lead */}
-                <div className="p-4 border rounded-xl bg-background/50 flex flex-col gap-1">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-primary">
+                <div className="p-4 border rounded-xl bg-background/50 flex flex-col gap-2">
+                  <div className="text-xs font-bold uppercase tracking-wider text-primary">
                     Tech Lead
                   </div>
                   {project.tech_lead ? (
                     <>
-                      <div className="font-bold text-base">{project.tech_lead.full_name}</div>
+                      <div className="font-bold text-base text-foreground">{project.tech_lead.full_name}</div>
                       <a
                         href={`mailto:${project.tech_lead.email}`}
-                        className="text-sm text-muted-foreground hover:text-primary transition-colors hover:underline mt-1 inline-flex items-center gap-1"
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors hover:underline inline-flex items-center gap-2"
                       >
-                        ✉️ {project.tech_lead.email}
+                        <Mail className="h-4 w-4" />
+                        {project.tech_lead.email}
                       </a>
                     </>
                   ) : (
@@ -284,18 +299,19 @@ export function DashboardClientTabs({
                 </div>
 
                 {/* Content Lead */}
-                <div className="p-4 border rounded-xl bg-background/50 flex flex-col gap-1">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-primary">
+                <div className="p-4 border rounded-xl bg-background/50 flex flex-col gap-2">
+                  <div className="text-xs font-bold uppercase tracking-wider text-primary">
                     Content Lead
                   </div>
                   {project.content_lead ? (
                     <>
-                      <div className="font-bold text-base">{project.content_lead.full_name}</div>
+                      <div className="font-bold text-base text-foreground">{project.content_lead.full_name}</div>
                       <a
                         href={`mailto:${project.content_lead.email}`}
-                        className="text-sm text-muted-foreground hover:text-primary transition-colors hover:underline mt-1 inline-flex items-center gap-1"
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors hover:underline inline-flex items-center gap-2"
                       >
-                        ✉️ {project.content_lead.email}
+                        <Mail className="h-4 w-4" />
+                        {project.content_lead.email}
                       </a>
                     </>
                   ) : (
@@ -309,7 +325,10 @@ export function DashboardClientTabs({
 
             {/* General Support & Inquiries */}
             <div className="p-6 border rounded-xl bg-card/60 shadow-sm flex flex-col gap-4">
-              <h2 className="text-xl font-bold tracking-tight">📞 Contact WebbHeads Support</h2>
+              <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-foreground">
+                <Phone className="h-5 w-5 text-primary" />
+                Contact WebbHeads Support
+              </h2>
               <p className="text-sm text-muted-foreground">
                 Need help or have general queries? Use the links below to connect with us instantly.
               </p>
@@ -321,8 +340,13 @@ export function DashboardClientTabs({
                   className="flex items-center justify-between p-4 border rounded-xl bg-background/50 hover:bg-muted/30 transition-all font-semibold hover:border-primary/50"
                   id="poc-email-link"
                 >
-                  <span className="flex items-center gap-2">✉️ Email Support</span>
-                  <span className="text-xs text-muted-foreground">{generalEmail} →</span>
+                  <span className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-primary" />
+                    Email Support
+                  </span>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    {generalEmail} <ArrowRight className="h-3 w-3" />
+                  </span>
                 </a>
 
                 {/* WhatsApp Support */}
@@ -333,8 +357,13 @@ export function DashboardClientTabs({
                   className="flex items-center justify-between p-4 border rounded-xl bg-background/50 hover:bg-muted/30 transition-all font-semibold hover:border-primary/50"
                   id="poc-whatsapp-link"
                 >
-                  <span className="flex items-center gap-2">💬 WhatsApp Us</span>
-                  <span className="text-xs text-muted-foreground">Chat live →</span>
+                  <span className="flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4 text-primary" />
+                    WhatsApp Us
+                  </span>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    Chat live <ArrowRight className="h-3 w-3" />
+                  </span>
                 </a>
 
                 {/* Call Support */}
@@ -343,8 +372,13 @@ export function DashboardClientTabs({
                   className="flex items-center justify-between p-4 border rounded-xl bg-background/50 hover:bg-muted/30 transition-all font-semibold hover:border-primary/50"
                   id="poc-phone-link"
                 >
-                  <span className="flex items-center gap-2">📞 Call Support</span>
-                  <span className="text-xs text-muted-foreground">{generalPhone} →</span>
+                  <span className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-primary" />
+                    Call Support
+                  </span>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    {generalPhone} <ArrowRight className="h-3 w-3" />
+                  </span>
                 </a>
               </div>
             </div>

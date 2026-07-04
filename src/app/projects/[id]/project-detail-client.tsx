@@ -1,5 +1,6 @@
 "use client"
 
+import { AlertTriangle } from "lucide-react"
 import { useState, lazy, Suspense } from "react"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
@@ -44,6 +45,7 @@ export function ProjectDetailClient({
   agreement, paymentRequests, formResponses, statusUpdates,
 }: Props) {
   const [showForceDialog, setShowForceDialog] = useState(false)
+  const [showCloseDialog, setShowCloseDialog] = useState(false)
   const router = useRouter()
   const supabase = useSupabase()
 
@@ -104,11 +106,30 @@ export function ProjectDetailClient({
 
     await supabase.from("activity_log").insert({
       project_id: project.id,
+      actor_id: currentStaff?.id,
       action: "stage_changed",
       detail: { from: project.current_stage, to: nextStage.key, forced },
     })
 
     setShowForceDialog(false)
+    router.refresh()
+  }
+
+  async function handleCloseProject(outcome: "closed_won" | "closed_lost") {
+    const { error } = await supabase
+      .from("projects")
+      .update({ current_stage: outcome, status: outcome })
+      .eq("id", project.id)
+    if (error) return
+
+    await supabase.from("activity_log").insert({
+      project_id: project.id,
+      actor_id: currentStaff?.id,
+      action: "stage_changed",
+      detail: { from: project.current_stage, to: outcome, forced: incompleteRequired.length > 0, closed: true },
+    })
+
+    setShowCloseDialog(false)
     router.refresh()
   }
 
@@ -152,32 +173,84 @@ export function ProjectDetailClient({
         status={project.status}
       />
 
-      {!isTerminal && nextStage && (
-        <div className="flex justify-end mb-6">
-          <Dialog open={showForceDialog} onOpenChange={setShowForceDialog}>
+      {!isTerminal && (
+        <div className="flex justify-end gap-3 mb-6">
+          {nextStage && nextStage.key !== "closed_won" && (
+            <Dialog open={showForceDialog} onOpenChange={setShowForceDialog}>
+              <DialogTrigger asChild>
+                <Button onClick={handleMoveStage} size="lg">
+                  Move to {nextStage.label}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Incomplete required items</DialogTitle>
+                  <DialogDescription>
+                    {incompleteRequired.length} required checklist item(s) are not yet complete.
+                    {isAdmin
+                      ? " You can force-move as admin."
+                      : " Ask an admin to force-move."}
+                  </DialogDescription>
+                </DialogHeader>
+                {isAdmin && (
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowForceDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={() => performMove(true)}>Move anyway</Button>
+                  </DialogFooter>
+                )}
+              </DialogContent>
+            </Dialog>
+          )}
+
+          <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
             <DialogTrigger asChild>
-              <Button onClick={handleMoveStage} size="lg">
-                Move to {nextStage.label}
+              <Button
+                variant={nextStage && nextStage.key === "closed_won" ? "default" : "outline"}
+                className={nextStage && nextStage.key === "closed_won" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-destructive text-destructive hover:bg-destructive/10"}
+                size="lg"
+              >
+                Close Client & Project
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Incomplete required items</DialogTitle>
+                <DialogTitle>Close Client & Project</DialogTitle>
                 <DialogDescription>
-                  {incompleteRequired.length} required checklist item(s) are not yet complete.
-                  {isAdmin
-                    ? " You can force-move as admin."
-                    : " Ask an admin to force-move."}
+                  Confirm the closure outcome of this project. Closing the client will transition this project to a terminal status (`Closed - Won` or `Closed - Lost`).
                 </DialogDescription>
               </DialogHeader>
-              {isAdmin && (
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowForceDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={() => performMove(true)}>Move anyway</Button>
-                </DialogFooter>
-              )}
+              <div className="py-4 space-y-3">
+                {incompleteRequired.length > 0 && (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-xs rounded border border-amber-200 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <strong>Incomplete Items:</strong> There are {incompleteRequired.length} required checklist items not yet completed in the current stage ({project.current_stage.replace(/_/g, " ")}).
+                      {!isAdmin && <p className="mt-1 font-semibold">Only admins can force-close with incomplete items.</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+                <Button variant="outline" onClick={() => setShowCloseDialog(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleCloseProject("closed_lost")}
+                  disabled={incompleteRequired.length > 0 && !isAdmin}
+                >
+                  Close as Lost
+                </Button>
+                <Button
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={() => handleCloseProject("closed_won")}
+                  disabled={incompleteRequired.length > 0 && !isAdmin}
+                >
+                  Close as Won
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
@@ -201,6 +274,7 @@ export function ProjectDetailClient({
               currentStage={project.current_stage}
               currentStaff={currentStaff}
               projectId={project.id}
+              stages={stages}
             />
           </Suspense>
         </TabsContent>

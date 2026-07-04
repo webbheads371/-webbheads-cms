@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { uploadPaymentScreenshot } from "@/lib/supabase/portal-actions"
 import type { BankSettings, PaymentRequest } from "@/types"
+import { Upload, Clock, AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react"
 
 interface StepPaymentProps {
   projectId: string
@@ -145,34 +146,40 @@ export function StepPayment({
               {uploading ? (
                 <span>Uploading…</span>
               ) : (
-                <>
-                  <span className="file-upload-icon">📤</span>
+                <span className="flex items-center gap-2 justify-center">
+                  <Upload className="h-5 w-5 text-muted-foreground" />
                   <span>Click to upload payment screenshot</span>
-                </>
+                </span>
               )}
             </label>
           </>
         )}
 
         {localStatus === "submitted" && (
-          <div className="payment-status-card payment-status-submitted">
-            <span className="payment-status-icon">⏳</span>
+          <div className="payment-status-card payment-status-submitted flex items-start gap-4">
+            <div className="flex-shrink-0 text-amber-600 dark:text-amber-400 mt-0.5 animate-pulse">
+              <Clock className="h-6 w-6" />
+            </div>
             <div>
               <strong>Thank you! We&apos;re verifying your payment.</strong>
-              <p>We&apos;ll update you within 1–2 hours.</p>
+              <p className="text-muted-foreground mt-0.5">We&apos;ll update you within 1–2 hours.</p>
             </div>
           </div>
         )}
 
         {localStatus === "rejected" && (
-          <div className="payment-status-card payment-status-rejected">
-            <span className="payment-status-icon">⚠️</span>
-            <div>
-              <strong>Payment rejected</strong>
-              {paymentRequest?.rejection_reason && (
-                <p>Reason: {paymentRequest.rejection_reason}</p>
-              )}
-              <p>Please re-upload a clear screenshot.</p>
+          <div className="payment-status-card payment-status-rejected flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 text-red-600 dark:text-red-400 mt-0.5">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <div>
+                <strong>Payment rejected</strong>
+                {paymentRequest?.rejection_reason && (
+                  <p className="text-muted-foreground mt-0.5">Reason: {paymentRequest.rejection_reason}</p>
+                )}
+                <p className="text-muted-foreground mt-0.5">Please re-upload a clear screenshot.</p>
+              </div>
             </div>
             <label className="file-upload-area file-upload-area-sm" id="payment-reupload-label">
               <input
@@ -182,35 +189,41 @@ export function StepPayment({
                 disabled={uploading}
                 className="file-upload-input"
               />
-              {uploading ? "Uploading…" : "Re-upload screenshot"}
+              <span className="flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                {uploading ? "Uploading…" : "Re-upload screenshot"}
+              </span>
             </label>
           </div>
         )}
 
         {localStatus === "approved" && (
-          <div className="payment-status-card payment-status-approved">
-            <span className="payment-status-icon">✅</span>
+          <div className="payment-status-card payment-status-approved flex items-start gap-4">
+            <div className="flex-shrink-0 text-green-600 dark:text-green-400 mt-0.5">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
             <div>
               <strong>Payment approved!</strong>
-              <p>Your advance payment has been confirmed. You can now proceed.</p>
+              <p className="text-muted-foreground mt-0.5">Your advance payment has been confirmed. You can now proceed.</p>
             </div>
           </div>
         )}
       </div>
 
-      {error && <div className="error-banner">{error}</div>}
+      {error && <div className="error-banner mt-4">{error}</div>}
 
-      <div className="wizard-step-actions">
+      <div className="wizard-step-actions mt-8">
         <button
           disabled={!canProceed}
-          className="btn-primary btn-large"
+          className="btn-primary btn-large flex items-center justify-center gap-2 mx-auto"
           id="payment-next-btn"
           onClick={() => window.location.reload()}
         >
-          Next: Profile Handover →
+          <span>Next: Profile Handover</span>
+          <ArrowRight className="h-4 w-4" />
         </button>
         {!canProceed && localStatus !== "submitted" && (
-          <p className="wizard-step-hint">
+          <p className="wizard-step-hint text-center mt-2">
             Payment must be approved by our team before you can continue.
           </p>
         )}
