@@ -188,6 +188,7 @@ export async function approvePaymentRequest(paymentRequestId: string, projectId:
 
   revalidatePath("/payments/queue")
   revalidatePath(`/projects/${projectId}`)
+  revalidatePath("/portal/dashboard")
   return { error: null }
 }
 
@@ -212,6 +213,7 @@ export async function rejectPaymentRequest(
 
   revalidatePath("/payments/queue")
   revalidatePath(`/projects/${projectId}`)
+  revalidatePath("/portal/dashboard")
   return { error: null }
 }
 
@@ -233,6 +235,7 @@ export async function releaseFinalInvoice(projectId: string) {
   if (error) return { error: error.message }
 
   revalidatePath(`/projects/${projectId}`)
+  revalidatePath("/portal/dashboard")
   return { error: null }
 }
 
@@ -274,6 +277,7 @@ export async function postStatusUpdate(
   if (error) return { error: error.message }
 
   revalidatePath(`/projects/${projectId}`)
+  revalidatePath("/portal/dashboard")
   return { error: null }
 }
 

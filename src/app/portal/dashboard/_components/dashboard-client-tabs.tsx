@@ -236,7 +236,7 @@ export function DashboardClientTabs({
                       ) : finalPayment?.status === "submitted" ? (
                         <span className="badge-pending text-xs font-semibold">Under Review</span>
                       ) : finalPayment ? (
-                        <span className="badge-gray text-xs font-semibold">Pending release</span>
+                        <span className="badge-gray text-xs font-semibold">Unpaid</span>
                       ) : (
                         <span className="text-xs text-muted-foreground">TBD</span>
                       )}
