@@ -206,55 +206,57 @@ export function ProjectDetailClient({
             </Dialog>
           )}
 
-          <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
-            <DialogTrigger asChild>
-              <Button
-                variant={nextStage && nextStage.key === "closed_won" ? "default" : "outline"}
-                className={nextStage && nextStage.key === "closed_won" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-destructive text-destructive hover:bg-destructive/10"}
-                size="lg"
-              >
-                Close Client & Project
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Close Client & Project</DialogTitle>
-                <DialogDescription>
-                  Confirm the closure outcome of this project. Closing the client will transition this project to a terminal status (`Closed - Won` or `Closed - Lost`).
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-4 space-y-3">
-                {incompleteRequired.length > 0 && (
-                  <div className="p-3 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-xs rounded border border-amber-200 flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <strong>Incomplete Items:</strong> There are {incompleteRequired.length} required checklist items not yet completed in the current stage ({project.current_stage.replace(/_/g, " ")}).
-                      {!isAdmin && <p className="mt-1 font-semibold">Only admins can force-close with incomplete items.</p>}
+          {isAdmin && (
+            <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
+              <DialogTrigger asChild>
+                <Button
+                  variant={nextStage && nextStage.key === "closed_won" ? "default" : "outline"}
+                  className={nextStage && nextStage.key === "closed_won" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-destructive text-destructive hover:bg-destructive/10"}
+                  size="lg"
+                >
+                  Close Client & Project
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Close Client & Project</DialogTitle>
+                  <DialogDescription>
+                    Confirm the closure outcome of this project. Closing the client will transition this project to a terminal status (`Closed - Won` or `Closed - Lost`).
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-3">
+                  {incompleteRequired.length > 0 && (
+                    <div className="p-3 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-xs rounded border border-amber-200 flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <strong>Incomplete Items:</strong> There are {incompleteRequired.length} required checklist items not yet completed in the current stage ({project.current_stage.replace(/_/g, " ")}).
+                        {!isAdmin && <p className="mt-1 font-semibold">Only admins can force-close with incomplete items.</p>}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-              <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
-                <Button variant="outline" onClick={() => setShowCloseDialog(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleCloseProject("closed_lost")}
-                  disabled={incompleteRequired.length > 0 && !isAdmin}
-                >
-                  Close as Lost
-                </Button>
-                <Button
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                  onClick={() => handleCloseProject("closed_won")}
-                  disabled={incompleteRequired.length > 0 && !isAdmin}
-                >
-                  Close as Won
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                  )}
+                </div>
+                <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+                  <Button variant="outline" onClick={() => setShowCloseDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleCloseProject("closed_lost")}
+                    disabled={incompleteRequired.length > 0 && !isAdmin}
+                  >
+                    Close as Lost
+                  </Button>
+                  <Button
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={() => handleCloseProject("closed_won")}
+                    disabled={incompleteRequired.length > 0 && !isAdmin}
+                  >
+                    Close as Won
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       )}
 

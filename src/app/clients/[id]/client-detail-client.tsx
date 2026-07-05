@@ -130,7 +130,7 @@ export function ClientDetailClient({ client, projects, role }: Props) {
         </div>
       </PageHeader>
 
-      <div className="grid gap-6 md:grid-cols-4 mb-8">
+      <div className={`grid gap-6 ${role === "admin" ? "md:grid-cols-4" : "md:grid-cols-2"} mb-8`}>
         <Card>
           <CardHeader>
             <CardTitle className="text-sm">Contact</CardTitle>
@@ -162,53 +162,55 @@ export function ClientDetailClient({ client, projects, role }: Props) {
             </div>
           </CardContent>
         </Card>
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Key className="h-4 w-4" /> Portal Access
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {credentials ? (
-              <div className="text-sm space-y-2 bg-accent/30 p-3 rounded-md border">
-                <p className="font-semibold text-green-600">Login Generated Successfully!</p>
-                <p>Share these credentials with the client securely:</p>
-                <div className="font-mono text-xs bg-background p-2 rounded border">
-                  <div>Email: {credentials.email}</div>
-                  <div>Temp Password: {credentials.tempPassword}</div>
-                </div>
-                <p className="text-xs text-muted-foreground">The client will be prompted to change their password on first login.</p>
-              </div>
-            ) : hasPortalLogin ? (
-              <div className="space-y-4">
-                <div className="text-sm flex items-center justify-between gap-2 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 p-3 rounded-md">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">✓</span>
-                    <div>
-                      <strong>Portal login active</strong>
-                      <p className="text-xs mt-0.5">Linked to {client.client_users?.[0]?.email}</p>
-                    </div>
+        {role === "admin" && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Key className="h-4 w-4" /> Portal Access
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {credentials ? (
+                <div className="text-sm space-y-2 bg-accent/30 p-3 rounded-md border">
+                  <p className="font-semibold text-green-600">Login Generated Successfully!</p>
+                  <p>Share these credentials with the client securely:</p>
+                  <div className="font-mono text-xs bg-background p-2 rounded border">
+                    <div>Email: {credentials.email}</div>
+                    <div>Temp Password: {credentials.tempPassword}</div>
                   </div>
-                  <Button onClick={handleResetPassword} disabled={isGenerating} size="sm" variant="outline" className="text-foreground">
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Reset Password
-                  </Button>
+                  <p className="text-xs text-muted-foreground">The client will be prompted to change their password on first login.</p>
                 </div>
-                {portalError && <p className="text-xs text-destructive mt-2">{portalError}</p>}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Generate a dedicated portal login for this client to view their project status, make payments, and submit forms.
-                </p>
-                <Button onClick={handleGenerateLogin} disabled={isGenerating} size="sm" variant="secondary">
-                  {isGenerating ? "Generating..." : "Generate Portal Login"}
-                </Button>
-                {portalError && <p className="text-xs text-destructive mt-2">{portalError}</p>}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              ) : hasPortalLogin ? (
+                <div className="space-y-4">
+                  <div className="text-sm flex items-center justify-between gap-2 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 p-3 rounded-md">
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">✓</span>
+                      <div>
+                        <strong>Portal login active</strong>
+                        <p className="text-xs mt-0.5">Linked to {client.client_users?.[0]?.email}</p>
+                      </div>
+                    </div>
+                    <Button onClick={handleResetPassword} disabled={isGenerating} size="sm" variant="outline" className="text-foreground">
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Reset Password
+                    </Button>
+                  </div>
+                  {portalError && <p className="text-xs text-destructive mt-2">{portalError}</p>}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Generate a dedicated portal login for this client to view their project status, make payments, and submit forms.
+                  </p>
+                  <Button onClick={handleGenerateLogin} disabled={isGenerating} size="sm" variant="secondary">
+                    {isGenerating ? "Generating..." : "Generate Portal Login"}
+                  </Button>
+                  {portalError && <p className="text-xs text-destructive mt-2">{portalError}</p>}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Card>
