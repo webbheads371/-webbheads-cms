@@ -271,7 +271,7 @@ export const ChecklistPanel = memo(function ChecklistPanel({ items, currentStage
       })}
 
       {/* Close Client Section */}
-      {!isTerminal && (
+      {!isTerminal && isAdmin && (
         <Card className="border-amber-200 dark:border-amber-900 bg-amber-50/10 dark:bg-amber-950/10 mt-6">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2 text-amber-800 dark:text-amber-300">
