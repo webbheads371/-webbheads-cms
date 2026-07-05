@@ -37,7 +37,7 @@ const navItems: NavItem[] = [
   { href: "/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/staff", label: "Staff", icon: UserCog, exact: true, adminOnly: true },
-  { href: "/payments/queue", label: "Payment Queue", icon: CreditCard },
+  { href: "/payments/queue", label: "Payment Queue", icon: CreditCard, adminOnly: true },
   {
     href: "/settings",
     label: "Settings",

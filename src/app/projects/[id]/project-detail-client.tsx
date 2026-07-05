@@ -24,6 +24,8 @@ const ActivityTimeline = dynamic(() => import("./activity-timeline").then((m) =>
 const AgreementTab = dynamic(() => import("./agreement-tab").then((m) => ({ default: m.AgreementTab })), { ssr: false })
 const FormResponsesTab = dynamic(() => import("./form-responses-tab").then((m) => ({ default: m.FormResponsesTab })), { ssr: false })
 const ClientPortalTab = dynamic(() => import("./client-portal-tab").then((m) => ({ default: m.ClientPortalTab })), { ssr: false })
+const WorkUpdatesTab = dynamic(() => import("./work-updates-tab").then((m) => ({ default: m.WorkUpdatesTab })), { ssr: false })
+
 
 interface Props {
   project: Project & { client: any; tech_lead: Staff | null; content_lead: Staff | null }
@@ -259,12 +261,23 @@ export function ProjectDetailClient({
       <Tabs defaultValue="checklist" className="mt-6">
         <TabsList>
           <TabsTrigger value="checklist">Checklist</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="agreement">Agreement</TabsTrigger>
-          <TabsTrigger value="form-responses">Form Responses</TabsTrigger>
-          <TabsTrigger value="client-portal">Client Portal</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
+          {isAdmin ? (
+            <>
+              <TabsTrigger value="payments">Payments</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
+              <TabsTrigger value="agreement">Agreement</TabsTrigger>
+              <TabsTrigger value="form-responses">Form Responses</TabsTrigger>
+              <TabsTrigger value="client-portal">Client Portal</TabsTrigger>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+            </>
+          ) : (
+            <>
+              <TabsTrigger value="work-updates">Work Updates</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
+              <TabsTrigger value="form-responses">Form Responses</TabsTrigger>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         <TabsContent value="checklist">
@@ -280,47 +293,77 @@ export function ProjectDetailClient({
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="payments">
-          <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading payments...</div>}>
-            <PaymentsTab payments={payments} projectId={project.id} projectValue={project.project_value} />
-          </Suspense>
-        </TabsContent>
+        {isAdmin ? (
+          <>
+            <TabsContent value="payments">
+              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading payments...</div>}>
+                <PaymentsTab payments={payments} projectId={project.id} projectValue={project.project_value} />
+              </Suspense>
+            </TabsContent>
 
-        <TabsContent value="documents">
-          <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading documents...</div>}>
-            <DocumentsTab documents={documents} projectId={project.id} />
-          </Suspense>
-        </TabsContent>
+            <TabsContent value="documents">
+              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading documents...</div>}>
+                <DocumentsTab documents={documents} projectId={project.id} />
+              </Suspense>
+            </TabsContent>
 
-        <TabsContent value="agreement">
-          <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading agreement...</div>}>
-            <AgreementTab projectId={project.id} agreement={agreement} />
-          </Suspense>
-        </TabsContent>
+            <TabsContent value="agreement">
+              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading agreement...</div>}>
+                <AgreementTab projectId={project.id} agreement={agreement} />
+              </Suspense>
+            </TabsContent>
 
-        <TabsContent value="form-responses">
-          <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading responses...</div>}>
-            <FormResponsesTab responses={formResponses} />
-          </Suspense>
-        </TabsContent>
+            <TabsContent value="form-responses">
+              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading responses...</div>}>
+                <FormResponsesTab responses={formResponses} />
+              </Suspense>
+            </TabsContent>
 
-        <TabsContent value="client-portal">
-          <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading portal controls...</div>}>
-            <ClientPortalTab
-              project={project}
-              paymentRequests={paymentRequests}
-              statusUpdates={statusUpdates}
-              documents={documents}
-              agreement={agreement}
-            />
-          </Suspense>
-        </TabsContent>
+            <TabsContent value="client-portal">
+              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading portal controls...</div>}>
+                <ClientPortalTab
+                  project={project}
+                  paymentRequests={paymentRequests}
+                  statusUpdates={statusUpdates}
+                  documents={documents}
+                  agreement={agreement}
+                />
+              </Suspense>
+            </TabsContent>
 
-        <TabsContent value="activity">
-          <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading activity...</div>}>
-            <ActivityTimeline activity={activity} />
-          </Suspense>
-        </TabsContent>
+            <TabsContent value="activity">
+              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading activity...</div>}>
+                <ActivityTimeline activity={activity} />
+              </Suspense>
+            </TabsContent>
+          </>
+        ) : (
+          <>
+            <TabsContent value="work-updates">
+              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading updates...</div>}>
+                <WorkUpdatesTab projectId={project.id} statusUpdates={statusUpdates} />
+              </Suspense>
+            </TabsContent>
+
+            <TabsContent value="documents">
+              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading documents...</div>}>
+                <DocumentsTab documents={documents} projectId={project.id} />
+              </Suspense>
+            </TabsContent>
+
+            <TabsContent value="form-responses">
+              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading responses...</div>}>
+                <FormResponsesTab responses={formResponses} />
+              </Suspense>
+            </TabsContent>
+
+            <TabsContent value="activity">
+              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading activity...</div>}>
+                <ActivityTimeline activity={activity} />
+              </Suspense>
+            </TabsContent>
+          </>
+        )}
       </Tabs>
     </div>
   )

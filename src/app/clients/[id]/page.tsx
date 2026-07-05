@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getCurrentStaff } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
 import { ClientDetailClient } from "./client-detail-client"
 
@@ -8,6 +8,8 @@ export default async function ClientDetailPage({
   params: { id: string }
 }) {
   const supabase = createClient()
+  const staff = await getCurrentStaff()
+  const role = staff?.role || "sales"
 
   const { data: client } = await supabase
     .from("clients")
@@ -23,5 +25,5 @@ export default async function ClientDetailPage({
     .eq("client_id", params.id)
     .order("created_at", { ascending: false })
 
-  return <ClientDetailClient client={client} projects={projects || []} />
+  return <ClientDetailClient client={client} projects={projects || []} role={role} />
 }

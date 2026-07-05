@@ -1,7 +1,13 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getCurrentStaff } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
 import { PaymentQueueClient } from "./payment-queue-client"
 
 export default async function PaymentQueuePage() {
+  const staff = await getCurrentStaff()
+  if (!staff || staff.role !== "admin") {
+    redirect("/dashboard")
+  }
+
   const supabase = createClient()
 
   const { data: submittedPayments } = await supabase

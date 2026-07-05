@@ -17,9 +17,10 @@ import type { Client, Project, Staff, ClientUser } from "@/types"
 interface Props {
   client: Client & { client_users?: ClientUser[] }
   projects: (Project & { tech_lead: Staff | null; content_lead: Staff | null })[]
+  role: string
 }
 
-export function ClientDetailClient({ client, projects }: Props) {
+export function ClientDetailClient({ client, projects, role }: Props) {
   const router = useRouter()
   const [isGenerating, setIsGenerating] = useState(false)
   const [credentials, setCredentials] = useState<{ email: string; tempPassword: string } | null>(null)
@@ -93,32 +94,34 @@ export function ClientDetailClient({ client, projects }: Props) {
     <div>
       <PageHeader title={client.company_name} description="Client details and projects">
         <div className="flex items-center gap-2">
-          <Dialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="text-destructive hover:bg-destructive/10 border-destructive/20">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Client
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-sm">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-destructive">
-                  <Trash2 className="h-4 w-4" /> Delete Client
-                </DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to permanently delete <strong>{client.company_name}</strong>? 
-                  This will remove their login access and all their projects.
-                </DialogDescription>
-              </DialogHeader>
-              {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowConfirmDelete(false)}>Cancel</Button>
-                <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-                  {deleting ? "Deleting..." : "Yes, Delete"}
+          {role === "admin" && (
+            <Dialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="text-destructive hover:bg-destructive/10 border-destructive/20">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Client
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-destructive">
+                    <Trash2 className="h-4 w-4" /> Delete Client
+                  </DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to permanently delete <strong>{client.company_name}</strong>? 
+                    This will remove their login access and all their projects.
+                  </DialogDescription>
+                </DialogHeader>
+                {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowConfirmDelete(false)}>Cancel</Button>
+                  <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+                    {deleting ? "Deleting..." : "Yes, Delete"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
 
           <Button onClick={() => router.push(`/projects/new?client_id=${client.id}`)}>
             <Plus className="h-4 w-4 mr-2" />
