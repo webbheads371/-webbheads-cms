@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { usePortalTab } from "../../portal-tab-context"
 import { CredentialsForm } from "./credentials-form"
 import { FinalInvoiceSection } from "./final-invoice-section"
 import { HandlesSection } from "./handles-section"
@@ -34,8 +34,7 @@ export function DashboardClientTabs({
   formResponses,
   formTemplates,
 }: DashboardClientTabsProps) {
-  const searchParams = useSearchParams()
-  const activeTopTab = searchParams.get("tab") || "dashboard"
+  const { activeTab: activeTopTab } = usePortalTab()
 
   const [activeSubTab, setActiveSubTab] = useState<"home" | "credentials">("home")
 

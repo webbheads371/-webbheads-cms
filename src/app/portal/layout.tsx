@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { getCurrentClientUser } from "@/lib/supabase/server"
 import type { ReactNode } from "react"
 import { PortalNav } from "./portal-nav"
+import { PortalTabProvider } from "./portal-tab-context"
 import { LogOut } from "lucide-react"
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {
@@ -9,7 +10,8 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   if (!clientUser) redirect("/login")
 
   return (
-    <div className="portal-shell bg-slate-50/30 dark:bg-slate-950 min-h-screen flex flex-col font-sans">
+    <PortalTabProvider>
+      <div className="portal-shell bg-slate-50/30 dark:bg-slate-950 min-h-screen flex flex-col font-sans">
       <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/80 transition-all duration-300">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
@@ -40,9 +42,10 @@ export default async function PortalLayout({ children }: { children: ReactNode }
           </div>
         </div>
       </header>
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 pt-8 pb-24 md:pb-8">
         {children}
       </main>
-    </div>
+      </div>
+    </PortalTabProvider>
   )
 }
