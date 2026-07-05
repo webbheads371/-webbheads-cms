@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import { agreeToAgreement, uploadSignature } from "@/lib/supabase/portal-actions"
 import type { Agreement } from "@/types"
 import { CheckCircle2, Paperclip, ArrowRight } from "lucide-react"
@@ -11,6 +12,7 @@ interface StepAgreementProps {
 }
 
 export function StepAgreement({ projectId, agreement }: StepAgreementProps) {
+  const router = useRouter()
   const [agreed, setAgreed] = useState(agreement.client_agreed)
   const [signatureUrl, setSignatureUrl] = useState(agreement.signature_url)
   const [uploading, setUploading] = useState(false)
@@ -127,8 +129,8 @@ export function StepAgreement({ projectId, agreement }: StepAgreementProps) {
           className="btn-primary btn-large flex items-center justify-center gap-2 mx-auto"
           id="agreement-next-btn"
           onClick={() => {
-            // The parent page will re-fetch and advance the step
-            window.location.reload()
+            // Re-fetch server component data client-side and advance the step
+            router.refresh()
           }}
         >
           <span>Next: Advance Payment</span>

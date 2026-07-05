@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
 import { createClient, createAdminClient } from "./server"
 
 // ─── Step 1: Mark welcome seen ───────────────────────────────────────────────
@@ -13,7 +14,7 @@ export async function markWelcomeSeen(projectId: string) {
     .eq("id", projectId)
   if (error) return { error: error.message }
   revalidatePath("/portal/onboarding")
-  return { error: null }
+  redirect("/portal/onboarding")
 }
 
 // ─── Update password (client) ────────────────────────────────────────────────
@@ -35,7 +36,7 @@ export async function agreeToAgreement(projectId: string) {
     .eq("project_id", projectId)
   if (error) return { error: error.message }
   revalidatePath("/portal/onboarding")
-  return { error: null }
+  redirect("/portal/onboarding")
 }
 
 export async function uploadSignature(projectId: string, formData: FormData) {
@@ -126,7 +127,7 @@ export async function uploadPaymentScreenshot(
 
   revalidatePath("/portal/onboarding")
   revalidatePath("/portal/dashboard")
-  return { error: null }
+  redirect("/portal/onboarding")
 }
 
 // ─── Step 4: Profile handover form submission ─────────────────────────────────
@@ -188,7 +189,7 @@ export async function submitProfileForm(
   revalidatePath("/portal")
   revalidatePath("/portal/onboarding")
   revalidatePath("/portal/dashboard")
-  return { error: null }
+  redirect("/portal/dashboard")
 }
 
 // ─── File upload for form responses ──────────────────────────────────────────

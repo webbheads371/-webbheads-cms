@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { uploadPaymentScreenshot } from "@/lib/supabase/portal-actions"
 import type { BankSettings, PaymentRequest } from "@/types"
 import { Upload, Clock, AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react"
@@ -21,6 +22,7 @@ export function StepPayment({
   bankSettings,
   paymentRequest,
 }: StepPaymentProps) {
+  const router = useRouter()
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [localStatus, setLocalStatus] = useState(paymentRequest?.status ?? "pending_payment")
@@ -217,7 +219,7 @@ export function StepPayment({
           disabled={!canProceed}
           className="btn-primary btn-large flex items-center justify-center gap-2 mx-auto"
           id="payment-next-btn"
-          onClick={() => window.location.reload()}
+          onClick={() => router.refresh()}
         >
           <span>Next: Profile Handover</span>
           <ArrowRight className="h-4 w-4" />

@@ -37,7 +37,7 @@ export function DashboardClientTabs({
   const searchParams = useSearchParams()
   const activeTopTab = searchParams.get("tab") || "dashboard"
 
-  const [activeSubTab, setActiveSubTab] = useState<"home" | "credentials" | "poc">("home")
+  const [activeSubTab, setActiveSubTab] = useState<"home" | "credentials">("home")
 
   const advancePayment = paymentRequests.find((p) => p.request_type === "advance")
   const finalPayment = paymentRequests.find((p) => p.request_type === "final" && p.released)
@@ -83,18 +83,6 @@ export function DashboardClientTabs({
           >
             <KeyRound className="h-4 w-4" />
             Credentials
-          </button>
-          <button
-            onClick={() => setActiveSubTab("poc")}
-            className={`px-4 py-2 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 ${
-              activeSubTab === "poc"
-                ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200/20"
-                : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-            }`}
-            id="tab-poc"
-          >
-            <UserCheck className="h-4 w-4" />
-            Point of Contact
           </button>
         </div>
       )}
@@ -199,93 +187,6 @@ export function DashboardClientTabs({
                   templates={formTemplates}
                   existingResponses={formResponses}
                 />
-              </div>
-            )}
-
-            {/* POC Sub-tab */}
-            {activeSubTab === "poc" && (
-              <div className="grid md:grid-cols-2 gap-8 items-start animate-fade-in">
-                {/* Assigned Project Leads */}
-                <div className="p-6 border border-slate-200/60 dark:border-slate-800/60 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm flex flex-col gap-4">
-                  <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
-                    <UserCheck className="h-5 w-5 text-indigo-500" />
-                    Assigned Project Leads
-                  </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Your direct technical and creative contact points at WebbHeads.
-                  </p>
-
-                  <div className="flex flex-col gap-4 mt-2">
-                    <div className="p-4 border border-slate-200/60 dark:border-slate-800/60 rounded-xl bg-slate-50/50 dark:bg-slate-950/50 flex flex-col gap-2">
-                      <div className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                        Tech Lead
-                      </div>
-                      {project.tech_lead ? (
-                        <>
-                          <div className="font-bold text-base text-slate-800 dark:text-slate-200">{project.tech_lead.full_name}</div>
-                          <a
-                            href={`mailto:${project.tech_lead.email}`}
-                            className="text-sm text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors hover:underline inline-flex items-center gap-2"
-                          >
-                            <Mail className="h-4 w-4" />
-                            {project.tech_lead.email}
-                          </a>
-                        </>
-                      ) : (
-                        <div className="text-sm text-slate-400 italic py-1">
-                          To be assigned shortly
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-4 border border-slate-200/60 dark:border-slate-800/60 rounded-xl bg-slate-50/50 dark:bg-slate-950/50 flex flex-col gap-2">
-                      <div className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                        Content Lead
-                      </div>
-                      {project.content_lead ? (
-                        <>
-                          <div className="font-bold text-base text-slate-800 dark:text-slate-200">{project.content_lead.full_name}</div>
-                          <a
-                            href={`mailto:${project.content_lead.email}`}
-                            className="text-sm text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors hover:underline inline-flex items-center gap-2"
-                          >
-                            <Mail className="h-4 w-4" />
-                            {project.content_lead.email}
-                          </a>
-                        </>
-                      ) : (
-                        <div className="text-sm text-slate-400 italic py-1">
-                          To be assigned shortly
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Support Card */}
-                <div className="p-6 border border-slate-200/60 dark:border-slate-800/60 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm flex flex-col gap-4">
-                  <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
-                    <Phone className="h-5 w-5 text-indigo-500" />
-                    Support & General Queries
-                  </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Need help or have questions? Reach out to our central desk.
-                  </p>
-                  <div className="flex flex-col gap-3 mt-4">
-                    <a
-                      href={`mailto:${generalEmail}`}
-                      className="flex items-center justify-between p-4 border border-slate-200/60 dark:border-slate-800/60 rounded-xl bg-slate-50/50 dark:bg-slate-950/50 hover:bg-slate-100/50 dark:hover:bg-slate-900 transition-all font-semibold hover:border-indigo-500/50"
-                    >
-                      <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                        <Mail className="h-4 w-4 text-indigo-500" />
-                        Email Support
-                      </span>
-                      <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                        {generalEmail} <ArrowRight className="h-3 w-3" />
-                      </span>
-                    </a>
-                  </div>
-                </div>
               </div>
             )}
           </div>

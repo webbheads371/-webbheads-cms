@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { markWelcomeSeen } from "@/lib/supabase/portal-actions"
 import { Sparkles, FileSignature, CreditCard, ClipboardList, ArrowRight, Folder } from "lucide-react"
 
@@ -13,16 +12,13 @@ interface StepWelcomeProps {
 export function StepWelcome({ clientName, projectId }: StepWelcomeProps) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
 
   const handleNext = () => {
     setError(null)
     startTransition(async () => {
       const result = await markWelcomeSeen(projectId)
-      if (result.error) {
+      if (result && result.error) {
         setError(result.error)
-      } else {
-        router.refresh()
       }
     })
   }
