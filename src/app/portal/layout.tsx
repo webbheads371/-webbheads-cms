@@ -21,9 +21,11 @@ export default async function PortalLayout({ children }: { children: ReactNode }
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className="portal-brand flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 to-violet-600 text-white font-black text-lg shadow-md hover:scale-105 transition-transform duration-300">
-                W
-              </div>
+              <img
+                src="/logo.png"
+                alt="WebbHeads Logo"
+                className="h-9 w-9 rounded-xl object-contain bg-black p-1 hover:scale-105 transition-transform duration-300 shadow-md"
+              />
               <span className="font-bold tracking-tight text-lg bg-clip-text text-transparent bg-gradient-to-r from-slate-950 to-slate-700 dark:from-white dark:to-slate-300">
                 WebbHeads
               </span>
