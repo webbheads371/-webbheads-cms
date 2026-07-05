@@ -36,7 +36,6 @@ export function DashboardClientTabs({
 }: DashboardClientTabsProps) {
   const { activeTab: activeTopTab } = usePortalTab()
 
-  const [activeSubTab, setActiveSubTab] = useState<"home" | "credentials">("home")
 
   const advancePayment = paymentRequests.find((p) => p.request_type === "advance")
   const finalPayment = paymentRequests.find((p) => p.request_type === "final" && p.released)
@@ -56,44 +55,11 @@ export function DashboardClientTabs({
 
   return (
     <div className="w-full flex flex-col gap-6 animate-fade-in duration-300">
-      {/* Sub-tab selection (only visible if activeTopTab is dashboard) */}
-      {activeTopTab === "dashboard" && (
-        <div className="flex border border-slate-200/60 dark:border-slate-800/60 bg-slate-100/50 dark:bg-slate-900/50 p-1 rounded-xl gap-2 self-start mb-4 shadow-sm">
-          <button
-            onClick={() => setActiveSubTab("home")}
-            className={`px-4 py-2 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 ${
-              activeSubTab === "home"
-                ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200/20"
-                : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-            }`}
-            id="tab-home"
-          >
-            <Home className="h-4 w-4" />
-            Home
-          </button>
-          <button
-            onClick={() => setActiveSubTab("credentials")}
-            className={`px-4 py-2 text-xs md:text-sm font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 ${
-              activeSubTab === "credentials"
-                ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200/20"
-                : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-            }`}
-            id="tab-credentials"
-          >
-            <KeyRound className="h-4 w-4" />
-            Credentials
-          </button>
-        </div>
-      )}
-
       {/* Tab Contents */}
       <div className="transition-all duration-300">
-        {/* ==================== DASHBOARD TAB ==================== */}
-        {activeTopTab === "dashboard" && (
-          <div>
-            {/* HOME Sub-tab */}
-            {activeSubTab === "home" && (
-              <div className="grid md:grid-cols-[1fr_320px] gap-8 items-start">
+        {/* ==================== HOME TAB ==================== */}
+        {activeTopTab === "home" && (
+          <div className="grid md:grid-cols-[1fr_320px] gap-8 items-start animate-fade-in">
                 {/* Left column: Updates & Banners */}
                 <div className="flex flex-col gap-8">
                   {/* Project Status Updates */}
@@ -175,19 +141,17 @@ export function DashboardClientTabs({
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+          </div>
+        )}
 
-            {/* CREDENTIALS Sub-tab */}
-            {activeSubTab === "credentials" && (
-              <div className="max-w-2xl p-6 border border-slate-200/60 dark:border-slate-800/60 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm">
-                <CredentialsForm
-                  projectId={project.id}
-                  templates={formTemplates}
-                  existingResponses={formResponses}
-                />
-              </div>
-            )}
+        {/* ==================== CREDENTIALS TAB ==================== */}
+        {activeTopTab === "credentials" && (
+          <div className="max-w-2xl p-6 border border-slate-200/60 dark:border-slate-800/60 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm animate-fade-in">
+            <CredentialsForm
+              projectId={project.id}
+              templates={formTemplates}
+              existingResponses={formResponses}
+            />
           </div>
         )}
 

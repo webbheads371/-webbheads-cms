@@ -2,13 +2,14 @@
 
 import Link from "next/link"
 import { usePortalTab } from "./portal-tab-context"
-import { LayoutDashboard, FileText, CreditCard, LifeBuoy } from "lucide-react"
+import { Home, KeyRound, FileText, CreditCard, LifeBuoy } from "lucide-react"
 
 export function PortalNav() {
   const { activeTab, setActiveTab } = usePortalTab()
 
   const links = [
-    { href: "/portal/dashboard", tabName: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
+    { href: "/portal/dashboard", tabName: "home" as const, label: "Home", icon: Home },
+    { href: "/portal/dashboard?tab=credentials", tabName: "credentials" as const, label: "Credentials", icon: KeyRound },
     { href: "/portal/dashboard?tab=documents", tabName: "documents" as const, label: "Documents", icon: FileText },
     { href: "/portal/dashboard?tab=payments", tabName: "payments" as const, label: "Payments", icon: CreditCard },
     { href: "/portal/dashboard?tab=support", tabName: "support" as const, label: "Support", icon: LifeBuoy },

@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 
-type TabType = "dashboard" | "documents" | "payments" | "support"
+type TabType = "home" | "credentials" | "documents" | "payments" | "support"
 
 interface PortalTabContextProps {
   activeTab: TabType
@@ -14,21 +14,26 @@ const PortalTabContext = createContext<PortalTabContextProps | undefined>(undefi
 
 function PortalTabContextInner({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams()
-  const initialTab = (searchParams.get("tab") as TabType) || "dashboard"
+  const tabParam = searchParams.get("tab") as TabType | null
+  const initialTab = tabParam && ["home", "credentials", "documents", "payments", "support"].includes(tabParam)
+    ? tabParam
+    : "home"
   const [activeTab, setActiveTabState] = useState<TabType>(initialTab)
 
   // Keep state in sync if URL changes externally (e.g. initial load)
   useEffect(() => {
     const tab = searchParams.get("tab") as TabType
-    if (tab && ["dashboard", "documents", "payments", "support"].includes(tab)) {
+    if (tab && ["home", "credentials", "documents", "payments", "support"].includes(tab)) {
       setActiveTabState(tab)
+    } else if (!tab) {
+      setActiveTabState("home")
     }
   }, [searchParams])
 
   const setActiveTab = (tab: TabType) => {
     setActiveTabState(tab)
     // Update the URL client-side without triggering Next.js server-side re-render
-    const newUrl = tab === "dashboard" ? "/portal/dashboard" : `/portal/dashboard?tab=${tab}`
+    const newUrl = tab === "home" ? "/portal/dashboard" : `/portal/dashboard?tab=${tab}`
     window.history.pushState({ ...window.history.state, as: newUrl, url: newUrl }, "", newUrl)
   }
 
