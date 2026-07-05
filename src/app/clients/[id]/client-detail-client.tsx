@@ -123,10 +123,12 @@ export function ClientDetailClient({ client, projects, role }: Props) {
             </Dialog>
           )}
 
-          <Button onClick={() => router.push(`/projects/new?client_id=${client.id}`)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Project
-          </Button>
+          {role === "admin" && (
+            <Button onClick={() => router.push(`/projects/new?client_id=${client.id}`)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Project
+            </Button>
+          )}
         </div>
       </PageHeader>
 

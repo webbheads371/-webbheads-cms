@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getCurrentStaff } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { NewProjectForm } from "./new-project-form"
 
@@ -7,6 +7,11 @@ export default async function NewProjectPage({
 }: {
   searchParams: { client_id?: string }
 }) {
+  const currentStaff = await getCurrentStaff()
+  if (!currentStaff || currentStaff.role !== "admin") {
+    redirect("/dashboard")
+  }
+
   const supabase = createClient()
 
   const { data: clients } = await supabase
