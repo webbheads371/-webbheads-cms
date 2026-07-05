@@ -26,6 +26,7 @@ export function NewProjectForm({ clients, staff, preselectedClientId }: Props) {
 
   const techLeads = staff.filter((s) => s.role === "tech_lead")
   const contentLeads = staff.filter((s) => s.role === "content_lead")
+  const salesLeads = staff.filter((s) => s.role === "sales")
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -38,6 +39,7 @@ export function NewProjectForm({ clients, staff, preselectedClientId }: Props) {
       name: formData.get("name") as string,
       tech_lead_id: (formData.get("tech_lead_id") as string) || null,
       content_lead_id: (formData.get("content_lead_id") as string) || null,
+      sales_lead_id: (formData.get("sales_lead_id") as string) || null,
       project_value: formData.get("project_value")
         ? Number(formData.get("project_value"))
         : null,
@@ -119,7 +121,7 @@ export function NewProjectForm({ clients, staff, preselectedClientId }: Props) {
               <Input id="name" name="name" placeholder="e.g. Website Redesign - ABC Traders" required />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="tech_lead_id">Tech Lead</Label>
                 <Select name="tech_lead_id">
@@ -143,6 +145,21 @@ export function NewProjectForm({ clients, staff, preselectedClientId }: Props) {
                   </SelectTrigger>
                   <SelectContent>
                     {contentLeads.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sales_lead_id">Sales Lead</Label>
+                <Select name="sales_lead_id">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Assign sales lead" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {salesLeads.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.full_name}
                       </SelectItem>

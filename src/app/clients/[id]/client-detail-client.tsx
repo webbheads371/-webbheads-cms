@@ -16,7 +16,7 @@ import type { Client, Project, Staff, ClientUser } from "@/types"
 
 interface Props {
   client: Client & { client_users?: ClientUser[] }
-  projects: (Project & { tech_lead: Staff | null; content_lead: Staff | null })[]
+  projects: (Project & { tech_lead: Staff | null; content_lead: Staff | null; sales_lead: Staff | null })[]
   role: string
 }
 
@@ -242,6 +242,7 @@ export function ClientDetailClient({ client, projects, role }: Props) {
                   <div className="flex gap-4 mt-1 text-sm text-muted-foreground">
                     {project.tech_lead && <span>Tech: {project.tech_lead.full_name}</span>}
                     {project.content_lead && <span>Content: {project.content_lead.full_name}</span>}
+                    {project.sales_lead && <span>Sales: {project.sales_lead.full_name}</span>}
                   </div>
                 </div>
                 <ExternalLink className="h-4 w-4 text-muted-foreground" />

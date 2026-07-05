@@ -17,7 +17,7 @@ export default async function NewProjectPage({
   const { data: staff } = await supabase
     .from("staff")
     .select("id, full_name, role")
-    .in("role", ["tech_lead", "content_lead"])
+    .in("role", ["tech_lead", "content_lead", "sales"])
 
   if (!clients?.length) {
     redirect("/clients?noClients=true")

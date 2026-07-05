@@ -37,6 +37,7 @@ export interface Project {
   status: ProjectStatus
   tech_lead_id: string | null
   content_lead_id: string | null
+  sales_lead_id: string | null
   project_value: number | null
   advance_percent: number | null
   created_at: string
@@ -49,6 +50,7 @@ export interface Project {
   client?: Client
   tech_lead?: Staff
   content_lead?: Staff
+  sales_lead?: Staff
 }
 
 export type ChecklistCategory = "tech" | "content" | "sales" | "general"

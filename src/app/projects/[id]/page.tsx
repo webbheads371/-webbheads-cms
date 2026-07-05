@@ -11,7 +11,7 @@ export default async function ProjectDetailPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("*, client:clients(*), tech_lead:staff!projects_tech_lead_id_fkey(*), content_lead:staff!projects_content_lead_id_fkey(*)")
+    .select("*, client:clients(*), tech_lead:staff!projects_tech_lead_id_fkey(*), content_lead:staff!projects_content_lead_id_fkey(*), sales_lead:staff!projects_sales_lead_id_fkey(*)")
     .eq("id", params.id)
     .single()
 

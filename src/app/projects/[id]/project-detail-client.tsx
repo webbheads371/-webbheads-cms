@@ -28,7 +28,7 @@ const WorkUpdatesTab = dynamic(() => import("./work-updates-tab").then((m) => ({
 
 
 interface Props {
-  project: Project & { client: any; tech_lead: Staff | null; content_lead: Staff | null }
+  project: Project & { client: any; tech_lead: Staff | null; content_lead: Staff | null; sales_lead: Staff | null }
   stages: PipelineStage[]
   checklistItems: ProjectChecklistItem[]
   payments: Payment[]
@@ -160,6 +160,9 @@ export function ProjectDetailClient({
         )}
         {project.content_lead && (
           <Badge variant="secondary">Content Lead: {project.content_lead.full_name}</Badge>
+        )}
+        {project.sales_lead && (
+          <Badge variant="secondary">Sales Lead: {project.sales_lead.full_name}</Badge>
         )}
         {project.project_value && (
           <Badge variant="secondary">Value: {formatCurrency(project.project_value)}</Badge>

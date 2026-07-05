@@ -7,7 +7,7 @@ export default async function PipelinePage() {
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("*, client:clients(company_name), tech_lead:staff!projects_tech_lead_id_fkey(id, full_name), content_lead:staff!projects_content_lead_id_fkey(id, full_name)")
+    .select("*, client:clients(company_name), tech_lead:staff!projects_tech_lead_id_fkey(id, full_name), content_lead:staff!projects_content_lead_id_fkey(id, full_name), sales_lead:staff!projects_sales_lead_id_fkey(id, full_name)")
     .order("created_at", { ascending: false })
     .limit(100)
 

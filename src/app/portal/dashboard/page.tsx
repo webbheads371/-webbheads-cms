@@ -20,7 +20,8 @@ export default async function DashboardPage() {
       *,
       client:clients(*),
       tech_lead:staff!tech_lead_id(full_name, email),
-      content_lead:staff!content_lead_id(full_name, email)
+      content_lead:staff!content_lead_id(full_name, email),
+      sales_lead:staff!sales_lead_id(full_name, email)
     `)
     .eq("client_id", clientUser.client_id)
     .single()

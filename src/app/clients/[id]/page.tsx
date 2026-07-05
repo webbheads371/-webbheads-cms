@@ -21,7 +21,7 @@ export default async function ClientDetailPage({
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("*, tech_lead:staff!projects_tech_lead_id_fkey(id, full_name), content_lead:staff!projects_content_lead_id_fkey(id, full_name)")
+    .select("*, tech_lead:staff!projects_tech_lead_id_fkey(id, full_name), content_lead:staff!projects_content_lead_id_fkey(id, full_name), sales_lead:staff!projects_sales_lead_id_fkey(id, full_name)")
     .eq("client_id", params.id)
     .order("created_at", { ascending: false })
 

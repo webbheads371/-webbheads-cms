@@ -16,6 +16,7 @@ interface DashboardClientTabsProps {
   project: Project & {
     tech_lead?: { full_name: string; email: string } | null
     content_lead?: { full_name: string; email: string } | null
+    sales_lead?: { full_name: string; email: string } | null
   }
   paymentRequests: PaymentRequest[]
   bankSettings: BankSettings | null

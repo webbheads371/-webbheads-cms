@@ -45,6 +45,7 @@ export async function createProjectAction(formData: FormData) {
     name: formData.get("name") as string,
     tech_lead_id: formData.get("tech_lead_id") as string || null,
     content_lead_id: formData.get("content_lead_id") as string || null,
+    sales_lead_id: formData.get("sales_lead_id") as string || null,
     project_value: formData.get("project_value") ? Number(formData.get("project_value")) : null,
     expected_close_date: formData.get("expected_close_date") as string || null,
   }

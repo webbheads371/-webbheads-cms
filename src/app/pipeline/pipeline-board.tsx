@@ -260,6 +260,11 @@ const ProjectCard = memo(function ProjectCard({ project, canDrag }: { project: P
               Content: {project.content_lead.full_name?.split(" ")[0]}
             </Badge>
           )}
+          {project.sales_lead && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+              Sales: {project.sales_lead.full_name?.split(" ")[0]}
+            </Badge>
+          )}
         </div>
       </CardContent>
     </Card>
