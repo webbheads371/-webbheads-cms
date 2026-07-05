@@ -311,7 +311,7 @@ export function DashboardClientTabs({
                   return (
                     <div
                       key={doc.id}
-                      className="flex items-center justify-between p-4 border border-slate-200/50 dark:border-slate-800/50 rounded-xl bg-white/50 dark:bg-slate-955/50 hover:border-indigo-500/50 transition-all group shadow-sm hover:shadow-md"
+                      className="flex items-center justify-between p-4 border border-slate-200/50 dark:border-slate-800/50 rounded-xl bg-white/50 dark:bg-slate-900/50 hover:border-indigo-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 group"
                     >
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -528,7 +528,7 @@ export function DashboardClientTabs({
                 {/* Email Support */}
                 <a
                   href={`mailto:${generalEmail}`}
-                  className="flex items-center justify-between p-4 border border-slate-200/60 dark:border-slate-800/60 rounded-xl bg-slate-50/50 dark:bg-slate-950/50 hover:bg-slate-100/50 dark:hover:bg-slate-900 transition-all font-semibold hover:border-indigo-500/50"
+                  className="flex items-center justify-between p-4 border border-slate-200/60 dark:border-slate-800/60 rounded-xl bg-slate-50/50 dark:bg-slate-950/50 hover:bg-slate-100/50 dark:hover:bg-slate-900 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-semibold hover:border-indigo-500/50"
                   id="poc-email-link"
                 >
                   <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
@@ -545,7 +545,7 @@ export function DashboardClientTabs({
                   href={`https://wa.me/${generalWhatsapp.replace(/\D/g, "")}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-between p-4 border border-slate-200/60 dark:border-slate-800/60 rounded-xl bg-slate-50/50 dark:bg-slate-950/50 hover:bg-slate-100/50 dark:hover:bg-slate-900 transition-all font-semibold hover:border-indigo-500/50"
+                  className="flex items-center justify-between p-4 border border-slate-200/60 dark:border-slate-800/60 rounded-xl bg-slate-50/50 dark:bg-slate-950/50 hover:bg-slate-100/50 dark:hover:bg-slate-900 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-semibold hover:border-indigo-500/50"
                   id="poc-whatsapp-link"
                 >
                   <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
@@ -560,7 +560,7 @@ export function DashboardClientTabs({
                 {/* Call Support */}
                 <a
                   href={`tel:${generalPhone.replace(/\D/g, "")}`}
-                  className="flex items-center justify-between p-4 border border-slate-200/60 dark:border-slate-800/60 rounded-xl bg-slate-50/50 dark:bg-slate-955/50 hover:bg-slate-100/50 dark:hover:bg-slate-900 transition-all font-semibold hover:border-indigo-500/50"
+                  className="flex items-center justify-between p-4 border border-slate-200/60 dark:border-slate-800/60 rounded-xl bg-slate-50/50 dark:bg-slate-950/50 hover:bg-slate-100/50 dark:hover:bg-slate-900 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-semibold hover:border-indigo-500/50"
                   id="poc-phone-link"
                 >
                   <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">

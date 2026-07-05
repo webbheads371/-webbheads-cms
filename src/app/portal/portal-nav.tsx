@@ -37,7 +37,7 @@ export function PortalNav() {
             {isActive && (
               <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-cyan-500 to-violet-600 rounded-full" />
             )}
-            <span className="absolute inset-0 bg-slate-100 dark:bg-slate-800 opacity-0 group-hover:opacity-100 rounded-lg -z-10 transition-opacity duration-300" />
+            <span className="absolute inset-0 bg-slate-100/80 dark:bg-slate-800/80 opacity-0 scale-95 group-hover:scale-100 group-hover:opacity-100 rounded-lg -z-10 transition-all duration-300 ease-out" />
           </Link>
         )
       })}
