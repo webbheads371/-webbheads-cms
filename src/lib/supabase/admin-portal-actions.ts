@@ -16,12 +16,83 @@ export async function generateClientPortalLogin(
   // Generate one password upfront and use it everywhere
   const tempPassword = Math.random().toString(36).slice(-10) + "A1!"
 
-  const { data: { user }, error: authError } = await adminClient.auth.admin.createUser({
+  let user: any = null
+  let isExistingUser = false
+
+  const { data: createData, error: authError } = await adminClient.auth.admin.createUser({
     email,
     password: tempPassword,
     email_confirm: true,
   })
-  if (authError || !user) return { error: authError?.message ?? "Failed to create auth user", credentials: null }
+
+  if (authError) {
+    // If user is already registered, let's find the user and link them if possible
+    if (authError.message.includes("already been registered") || authError.message.includes("already exists")) {
+      const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
+      if (listError) {
+        return { error: `Email already registered, and failed to retrieve user list: ${listError.message}`, credentials: null }
+      }
+      
+      const existingUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
+      if (!existingUser) {
+        return { error: "Email already registered, but user details could not be found in auth list.", credentials: null }
+      }
+      
+      user = existingUser
+      isExistingUser = true
+    } else {
+      return { error: authError.message, credentials: null }
+    }
+  } else {
+    user = createData.user
+  }
+
+  if (!user) {
+    return { error: "Failed to create or retrieve auth user", credentials: null }
+  }
+
+  // If the user already existed in auth, check if they are staff or already linked
+  if (isExistingUser) {
+    const { data: existingStaff } = await adminClient
+      .from("staff")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle()
+      
+    if (existingStaff) {
+      return { error: "This email is registered as a staff member and cannot be used for a client portal.", credentials: null }
+    }
+
+    const { data: existingClientUser } = await adminClient
+      .from("client_users")
+      .select("client_id")
+      .eq("id", user.id)
+      .maybeSingle()
+
+    if (existingClientUser) {
+      if (existingClientUser.client_id === clientId) {
+        // Already linked to this client. Update password and return success.
+        const { error: updateError } = await adminClient.auth.admin.updateUserById(user.id, {
+          password: tempPassword,
+        })
+        if (updateError) {
+          return { error: `Failed to update password for existing client portal: ${updateError.message}`, credentials: null }
+        }
+        revalidatePath("/clients")
+        return { error: null, credentials: { email, tempPassword } }
+      } else {
+        return { error: "This email is already linked to another client portal login.", credentials: null }
+      }
+    }
+    
+    // Update password for existing user so tempPassword works
+    const { error: updateError } = await adminClient.auth.admin.updateUserById(user.id, {
+      password: tempPassword,
+    })
+    if (updateError) {
+      return { error: `Failed to set password for existing user: ${updateError.message}`, credentials: null }
+    }
+  }
 
   const { data: { user: currentUser } } = await supabase.auth.getUser()
 
@@ -32,9 +103,12 @@ export async function generateClientPortalLogin(
     email,
     created_by: currentUser?.id,
   })
+
   if (insertError) {
-    // Rollback auth user
-    await adminClient.auth.admin.deleteUser(user.id)
+    // Only delete the auth user if we created them in this execution
+    if (!isExistingUser) {
+      await adminClient.auth.admin.deleteUser(user.id)
+    }
     return { error: insertError.message, credentials: null }
   }
 
