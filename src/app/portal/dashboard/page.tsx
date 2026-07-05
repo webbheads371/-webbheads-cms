@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import { getCurrentClientUser } from "@/lib/supabase/server"
 import { createClient } from "@/lib/supabase/server"
@@ -93,15 +94,17 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <DashboardClientTabs
-        project={project}
-        paymentRequests={(paymentRequests ?? []) as PaymentRequest[]}
-        bankSettings={bankSettings as BankSettings | null}
-        statusUpdates={(statusUpdates ?? []) as ProjectStatusUpdate[]}
-        documents={documents ?? []}
-        formTemplates={(formTemplates ?? []) as FormTemplate[]}
-        formResponses={(formResponses ?? []) as FormResponse[]}
-      />
+      <Suspense fallback={<div className="text-sm text-slate-500 py-6">Loading dashboard content...</div>}>
+        <DashboardClientTabs
+          project={project}
+          paymentRequests={(paymentRequests ?? []) as PaymentRequest[]}
+          bankSettings={bankSettings as BankSettings | null}
+          statusUpdates={(statusUpdates ?? []) as ProjectStatusUpdate[]}
+          documents={documents ?? []}
+          formTemplates={(formTemplates ?? []) as FormTemplate[]}
+          formResponses={(formResponses ?? []) as FormResponse[]}
+        />
+      </Suspense>
     </div>
   )
 }

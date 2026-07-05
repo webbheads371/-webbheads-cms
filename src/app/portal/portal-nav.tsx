@@ -1,24 +1,26 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { LayoutDashboard, FileText, CreditCard, LifeBuoy } from "lucide-react"
 
 export function PortalNav() {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const currentTab = searchParams.get("tab") || "dashboard"
 
   const links = [
-    { href: "/portal/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/portal/dashboard?tab=documents", label: "Documents", icon: FileText },
-    { href: "/portal/dashboard?tab=payments", label: "Payments", icon: CreditCard },
-    { href: "/portal/dashboard?tab=support", label: "Support", icon: LifeBuoy },
+    { href: "/portal/dashboard", tabName: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/portal/dashboard?tab=documents", tabName: "documents", label: "Documents", icon: FileText },
+    { href: "/portal/dashboard?tab=payments", tabName: "payments", label: "Payments", icon: CreditCard },
+    { href: "/portal/dashboard?tab=support", tabName: "support", label: "Support", icon: LifeBuoy },
   ]
 
   return (
     <nav className="hidden md:flex items-center gap-1 lg:gap-2">
       {links.map((link) => {
         const Icon = link.icon
-        const isActive = pathname === link.href
+        const isActive = pathname === "/portal/dashboard" && currentTab === link.tabName
 
         return (
           <Link
@@ -30,7 +32,7 @@ export function PortalNav() {
                 : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
-            <Icon className={`h-4 w-4 transition-transform duration-300 group-hover:scale-110`} />
+            <Icon className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
             <span>{link.label}</span>
             {isActive && (
               <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-cyan-500 to-violet-600 rounded-full" />
