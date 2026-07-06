@@ -67,7 +67,7 @@ export function StepProfile({ projectId, templates, existingResponses }: StepPro
   if (submitted) {
     return (
       <div className="wizard-step-content wizard-step-success text-center flex flex-col items-center">
-        <div className="welcome-icon-container p-4 bg-amber-50 dark:bg-amber-950/30 rounded-2xl mb-4 border border-amber-100 dark:border-amber-900/30 inline-block">
+        <div className="welcome-icon-container p-4 bg-amber-50/60 dark:bg-amber-950/30 backdrop-blur-sm rounded-2xl mb-4 border border-amber-200/30 dark:border-amber-900/30 inline-block">
           <Sparkles className="h-12 w-12 text-amber-500 animate-bounce" />
         </div>
         <h2 className="wizard-step-title text-2xl font-bold">Thank you!</h2>

@@ -127,7 +127,7 @@ export async function uploadPaymentScreenshot(
 
   revalidatePath("/portal/onboarding")
   revalidatePath("/portal/dashboard")
-  redirect("/portal/onboarding")
+  return { error: null }
 }
 
 // ─── Step 4: Profile handover form submission ─────────────────────────────────

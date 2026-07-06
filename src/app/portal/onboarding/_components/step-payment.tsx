@@ -46,10 +46,11 @@ export function StepPayment({
 
     const result = await uploadPaymentScreenshot(paymentRequest.id, projectId, "advance", formData)
     setUploading(false)
-    if (result.error) {
+    if (result?.error) {
       setError(result.error)
-    } else {
+    } else if (result) {
       setLocalStatus("submitted")
+      router.refresh()
     }
   }
 
@@ -80,7 +81,7 @@ export function StepPayment({
 
       {/* Bank / UPI details */}
       {bankSettings ? (
-        <div className="payment-bank-card">
+        <div className="payment-bank-card glass-frost">
           <div className="payment-bank-left">
             {bankSettings.qr_image_url && (
               <img

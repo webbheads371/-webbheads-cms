@@ -94,7 +94,7 @@ export function StepAgreement({ projectId, agreement }: StepAgreementProps) {
           Upload an image of your handwritten signature (PNG, JPG, or JPEG)
         </p>
         {signatureUrl ? (
-          <div className="signature-preview flex flex-col items-center gap-2 border rounded-xl p-4 bg-background/50 max-w-sm">
+          <div className="signature-preview flex flex-col items-center gap-2 border border-white/30 dark:border-white/10 rounded-xl p-4 bg-white/40 dark:bg-white/5 backdrop-blur-sm max-w-sm">
             <img src={signatureUrl} alt="Your signature" className="signature-img" />
             <span className="badge-success flex items-center gap-1.5 py-1 px-2.5 rounded-lg text-xs font-semibold">
               <CheckCircle2 className="h-3.5 w-3.5" /> Signature uploaded

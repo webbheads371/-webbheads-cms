@@ -629,3 +629,37 @@ export async function saveProjectPocSettings(
   return { error: null }
 }
 
+// ─── Save Project Timeline Stages ──────────────────────────────────────────────
+
+export async function saveProjectTimelineStages(
+  projectId: string,
+  designStatus: string | null,
+  devStatus: string | null,
+  reviewStatus: string | null
+) {
+  const adminClient = createAdminClient()
+
+  const { error } = await adminClient
+    .from("projects")
+    .update({
+      timeline_design_status: designStatus || null,
+      timeline_dev_status: devStatus || null,
+      timeline_review_status: reviewStatus || null,
+    })
+    .eq("id", projectId)
+
+  if (error) return { error: error.message }
+
+  // Insert activity log
+  await adminClient.from("activity_log").insert({
+    project_id: projectId,
+    action: "timeline_stages_updated",
+    detail: { designStatus, devStatus, reviewStatus },
+  })
+
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath("/portal/dashboard")
+  return { error: null }
+}
+
+

@@ -13,7 +13,7 @@ interface WizardStepperProps {
 
 export function WizardStepper({ currentStep }: WizardStepperProps) {
   return (
-    <div className="wizard-stepper flex md:flex-col gap-6 md:gap-8 sticky top-24 z-10 bg-slate-50/50 dark:bg-slate-950 md:bg-transparent p-4 md:p-0 rounded-2xl border md:border-0 border-slate-200/50 backdrop-blur-md md:backdrop-blur-none">
+    <div className="wizard-stepper flex md:flex-col gap-6 md:gap-8 sticky top-24 z-10 glass-frost md:bg-transparent p-4 md:p-0 rounded-2xl border md:border-0 border-white/30 dark:border-white/10 backdrop-blur-xl md:backdrop-blur-none">
       {STEPS.map((step, index) => {
         const status =
           step.number < currentStep
@@ -26,12 +26,12 @@ export function WizardStepper({ currentStep }: WizardStepperProps) {
           <div key={step.number} className="wizard-step-item flex-1 md:flex-initial relative flex items-center md:items-start gap-3 md:gap-4 group">
             {/* Step circle with animation */}
             <div 
-              className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold bg-white dark:bg-slate-900 transition-all duration-500 ${
+              className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm transition-all duration-500 ${
                 status === "done"
-                  ? "border-emerald-500 bg-emerald-500 text-white dark:border-emerald-500"
+                  ? "border-emerald-500 bg-emerald-500/90 text-white dark:border-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.25)]"
                   : status === "active"
-                  ? "border-violet-600 text-violet-600 dark:border-violet-400 dark:text-violet-400 shadow-[0_0_15px_rgba(124,58,237,0.3)] dark:shadow-[0_0_20px_rgba(167,139,250,0.2)] scale-105"
-                  : "border-slate-200 text-slate-400 dark:border-slate-800 dark:text-slate-500"
+                  ? "border-[#D6A33C] text-[#D6A33C] dark:border-[#E8C56B] dark:text-[#E8C56B] shadow-[0_0_20px_rgba(214,163,60,0.3)] dark:shadow-[0_0_25px_rgba(232,197,107,0.2)] scale-105"
+                  : "border-slate-300/60 text-slate-400 dark:border-slate-700 dark:text-slate-500"
               }`}
             >
               {status === "done" ? (
@@ -50,7 +50,7 @@ export function WizardStepper({ currentStep }: WizardStepperProps) {
                   status === "done"
                     ? "text-slate-900 dark:text-slate-100"
                     : status === "active"
-                    ? "text-violet-600 dark:text-violet-400 font-bold"
+                    ? "text-[#D6A33C] dark:text-[#E8C56B] font-bold"
                     : "text-slate-400 dark:text-slate-500"
                 }`}
               >

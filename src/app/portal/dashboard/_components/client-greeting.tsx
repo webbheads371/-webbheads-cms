@@ -21,8 +21,8 @@ export function ClientGreeting({ clientName }: ClientGreetingProps) {
   }, [])
 
   return (
-    <h1 className="dashboard-title animate-fade-in">
-      {greeting}, {clientName}!
+    <h1 className="dashboard-title animate-fade-in font-bold text-4xl md:text-[48px] tracking-tight text-[#111827] dark:text-white leading-[1.15] mb-2">
+      Welcome back, {clientName}!
     </h1>
   )
 }

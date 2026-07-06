@@ -51,6 +51,9 @@ export interface Project {
   tech_lead?: Staff
   content_lead?: Staff
   sales_lead?: Staff
+  timeline_design_status?: "completed" | "in_progress" | "upcoming" | null
+  timeline_dev_status?: "completed" | "in_progress" | "upcoming" | null
+  timeline_review_status?: "completed" | "in_progress" | "upcoming" | null
 }
 
 export type ChecklistCategory = "tech" | "content" | "sales" | "general"

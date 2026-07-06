@@ -37,18 +37,19 @@ export function ChangePasswordForm() {
 
   if (!isOpen) {
     return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
-      >
-        <Lock className="h-3 w-3" />
-        Change Password
-      </button>
+    <button
+      onClick={() => setIsOpen(true)}
+      className="text-xs text-muted-foreground hover:text-[#D6A33C] flex items-center gap-1.5 transition-all duration-300 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/40 rounded-xl px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:shadow-sm"
+      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03)' }}
+    >
+      <Lock className="h-3 w-3" />
+      Change Password
+    </button>
     )
   }
 
   return (
-    <div className="bg-card border rounded-md p-4 shadow-sm w-full max-w-sm">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/40 rounded-2xl p-4 w-full max-w-sm" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04)' }}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold flex items-center gap-2">
           <Lock className="h-4 w-4" /> Change Password

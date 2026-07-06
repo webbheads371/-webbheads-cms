@@ -6,6 +6,7 @@ import {
   releaseFinalInvoice,
   postStatusUpdate,
   saveProjectPocSettings,
+  saveProjectTimelineStages,
 } from "@/lib/supabase/admin-portal-actions"
 import type { Project, PaymentRequest, ProjectStatusUpdate, Agreement } from "@/types"
 
@@ -47,6 +48,32 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
   const [pocEmail, setPocEmail] = useState(initialEmail)
   const [pocWhatsapp, setPocWhatsapp] = useState(initialWhatsapp)
   const [pocPhone, setPocPhone] = useState(initialPhone)
+
+  // Timeline stage status overrides
+  const [timelineDesign, setTimelineDesign] = useState<string>(project.timeline_design_status || "")
+  const [timelineDev, setTimelineDev] = useState<string>(project.timeline_dev_status || "")
+  const [timelineReview, setTimelineReview] = useState<string>(project.timeline_review_status || "")
+  const [timelineSuccess, setTimelineSuccess] = useState(false)
+
+  const handleSaveTimelineStages = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError(null)
+    setTimelineSuccess(false)
+    startTransition(async () => {
+      const result = await saveProjectTimelineStages(
+        project.id,
+        timelineDesign || null,
+        timelineDev || null,
+        timelineReview || null
+      )
+      if (result.error) {
+        setError(result.error)
+      } else {
+        setTimelineSuccess(true)
+        setTimeout(() => setTimelineSuccess(false), 3000)
+      }
+    })
+  }
 
   const advancePayment = paymentRequests.find((p) => p.request_type === "advance")
   const finalPayment = paymentRequests.find((p) => p.request_type === "final")
@@ -130,6 +157,68 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
             done={!!project.profile_submitted_at}
           />
         </div>
+      </div>
+
+      {/* Project Timeline Stages Override */}
+      <div className="tab-section">
+        <h3 className="tab-section-title">Project Timeline Stages Override</h3>
+        {timelineSuccess && <div className="success-banner mb-3">✓ Timeline stage overrides saved successfully!</div>}
+        <form onSubmit={handleSaveTimelineStages} className="bank-settings-form">
+          <p className="text-xs text-slate-500 mb-3" style={{ fontSize: "0.75rem", lineHeight: "1.25rem", color: "#6b7280" }}>
+            Manually override the status for the project timeline stages displayed on the client dashboard. Set to <strong>Auto (Derived)</strong> to let the system automatically compute the status based on the current pipeline stage.
+          </p>
+          <div className="form-grid-3col shadow-xs" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="form-field">
+              <label className="form-label" htmlFor="timeline-design" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Design Phase</label>
+              <select
+                id="timeline-design"
+                value={timelineDesign}
+                onChange={(e) => setTimelineDesign(e.target.value)}
+                className="form-select"
+              >
+                <option value="">Auto (Derived)</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+            <div className="form-field">
+              <label className="form-label" htmlFor="timeline-dev">Development Phase</label>
+              <select
+                id="timeline-dev"
+                value={timelineDev}
+                onChange={(e) => setTimelineDev(e.target.value)}
+                className="form-select"
+              >
+                <option value="">Auto (Derived)</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+            <div className="form-field">
+              <label className="form-label" htmlFor="timeline-review">Review Phase</label>
+              <select
+                id="timeline-review"
+                value={timelineReview}
+                onChange={(e) => setTimelineReview(e.target.value)}
+                className="form-select"
+              >
+                <option value="">Auto (Derived)</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={isPending}
+            className="btn-primary btn-sm"
+          >
+            {isPending ? "Saving..." : "Save Timeline Override"}
+          </button>
+        </form>
       </div>
 
       {/* Point of Contact Settings */}

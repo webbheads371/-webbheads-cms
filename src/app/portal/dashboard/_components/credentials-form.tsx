@@ -133,7 +133,7 @@ export function CredentialsForm({ projectId, templates, existingResponses }: Cre
             {template.field_type === "file" && (
               <div>
                 {values[template.id] ? (
-                  <div className="form-file-uploaded flex items-center gap-2">
+                  <div className="form-file-uploaded flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/40 rounded-xl p-3" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)' }}>
                     <span className="badge-success flex items-center gap-1 py-1 px-2.5 rounded-lg text-xs font-semibold">
                       <CheckCircle2 className="h-3.5 w-3.5" /> File uploaded
                     </span>

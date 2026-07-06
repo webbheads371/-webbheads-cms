@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { getCurrentClientUser } from "@/lib/supabase/server"
 import type { ReactNode } from "react"
 import { PortalNav } from "./portal-nav"
+import { PortalSidebar } from "./portal-sidebar"
 import { PortalTabProvider } from "./portal-tab-context"
 import { LogOut } from "lucide-react"
 
@@ -11,40 +12,30 @@ export default async function PortalLayout({ children }: { children: ReactNode }
 
   return (
     <PortalTabProvider>
-      <div className="portal-shell bg-slate-50/30 dark:bg-slate-950 min-h-screen flex flex-col font-sans">
-      <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/80 transition-all duration-300">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <div className="portal-brand flex items-center gap-2">
-              <img
-                src="/logo.png"
-                alt="WebbHeads Logo"
-                className="h-9 w-9 rounded-xl object-contain bg-black p-1 hover:scale-105 transition-transform duration-300 shadow-md"
-              />
-              <span className="font-bold tracking-tight text-lg bg-clip-text text-transparent bg-gradient-to-r from-slate-950 to-slate-700 dark:from-white dark:to-slate-300">
-                WebbHeads
-              </span>
-            </div>
-            <PortalNav />
-          </div>
+      <div className="portal-shell min-h-screen premium-bg font-sans relative overflow-x-hidden flex flex-col p-2 md:px-8 md:pt-4 md:pb-8">
+        {/* Liquid Chrome Background Orbs */}
+        <div className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
+          <div className="liquid-orb liquid-orb-1" />
+          <div className="liquid-orb liquid-orb-2" />
+          <div className="liquid-orb liquid-orb-3" />
+          <div className="liquid-orb liquid-orb-4" />
+          <div className="liquid-orb liquid-orb-5" />
+          <div className="liquid-orb liquid-orb-6" />
+        </div>
 
-          <div className="flex items-center gap-4">
-            {/* Logout button */}
-            <form action="/api/auth/signout" method="POST">
-              <button 
-                type="submit" 
-                className="flex items-center justify-center gap-1.5 h-9 px-4 rounded-xl border border-slate-200 hover:border-red-200 dark:border-slate-800 dark:hover:border-red-900/50 hover:bg-red-50/50 dark:hover:bg-red-950/20 text-slate-600 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 text-xs font-semibold shadow-sm transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Sign out</span>
-              </button>
-            </form>
+        {/* Outer Grid layout to manage floating navbar and content space */}
+        <div className="w-full max-w-[1400px] mx-auto flex flex-col gap-0 items-start relative z-10 flex-1">
+          {/* Top Navbar */}
+          <PortalSidebar />
+
+          {/* Bottom Floating Content Container */}
+          <div className="w-full flex-1 flex flex-col min-w-0 pt-2 md:pt-4">
+            {/* Main Content Body */}
+            <main className="w-full flex-1 pb-28 md:pb-8">
+              {children}
+            </main>
           </div>
         </div>
-      </header>
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 pt-8 pb-24 md:pb-8">
-        {children}
-      </main>
       </div>
     </PortalTabProvider>
   )

@@ -4,7 +4,6 @@ import { getCurrentClientUser } from "@/lib/supabase/server"
 import { createClient } from "@/lib/supabase/server"
 import { DashboardClientTabs } from "./_components/dashboard-client-tabs"
 import { ChangePasswordForm } from "./_components/change-password-form"
-import { ClientGreeting } from "./_components/client-greeting"
 import type { Document, PaymentRequest, BankSettings, ProjectStatusUpdate, FormTemplate, FormResponse } from "@/types"
 
 export default async function DashboardPage() {
@@ -83,14 +82,8 @@ export default async function DashboardPage() {
   })
 
   return (
-    <div className="dashboard-layout">
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 dashboard-header">
-        <div>
-          <ClientGreeting clientName={project.client?.contact_name || project.client?.company_name || "Client"} />
-          <p className="dashboard-subtitle">
-            Track your project updates, manage payments, credentials, and documents in one place.
-          </p>
-        </div>
+    <div className="dashboard-layout flex flex-col gap-[32px] px-2 md:px-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-end gap-6 dashboard-header">
         <div className="flex-shrink-0 flex justify-end">
           <ChangePasswordForm />
         </div>

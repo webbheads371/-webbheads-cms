@@ -27,15 +27,15 @@ export function StepWelcome({ clientName, projectId }: StepWelcomeProps) {
     <div className="wizard-step-content flex flex-col items-center text-center animate-fade-in duration-500">
       {/* Decorative Sparkles */}
       <div className="relative mb-6">
-        <div className="absolute inset-0 bg-violet-500/20 rounded-3xl blur-xl animate-pulse" />
-        <div className="relative p-5 bg-gradient-to-tr from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 rounded-3xl border border-amber-500/20 dark:border-amber-500/30 shadow-inner hover:scale-110 transition-transform duration-300">
+        <div className="absolute inset-0 bg-amber-500/20 rounded-3xl blur-xl animate-pulse" />
+        <div className="relative p-5 bg-gradient-to-tr from-amber-500/10 to-yellow-500/10 dark:from-amber-500/20 dark:to-yellow-500/20 rounded-3xl border border-amber-500/20 dark:border-amber-500/30 shadow-inner hover:scale-110 transition-transform duration-300">
           <Sparkles className="h-10 w-10 text-amber-500 dark:text-amber-400 animate-spin-slow" />
         </div>
       </div>
 
       <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
         Welcome to{" "}
-        <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 via-indigo-500 to-violet-600">
+        <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-600 via-amber-500 to-slate-400">
           WebbHeads!
         </span>
       </h1>
@@ -47,7 +47,7 @@ export function StepWelcome({ clientName, projectId }: StepWelcomeProps) {
       {/* Onboarding steps cards */}
       <div className="w-full max-w-lg grid grid-cols-1 gap-4 mt-8 text-left">
         {/* Step 2 */}
-        <div className="group flex items-start gap-4 p-4 border border-slate-200/60 dark:border-slate-800/60 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 hover:-translate-y-0.5">
+        <div className="group flex items-start gap-4 p-4 border border-white/30 dark:border-white/10 rounded-2xl bg-white/40 dark:bg-white/5 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-white/50 dark:hover:bg-white/10 hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-0.5">
           <div className="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400 border border-cyan-500/20 group-hover:scale-105 transition-transform duration-300">
             <FileSignature className="h-6 w-6" />
           </div>
@@ -58,8 +58,8 @@ export function StepWelcome({ clientName, projectId }: StepWelcomeProps) {
         </div>
 
         {/* Step 3 */}
-        <div className="group flex items-start gap-4 p-4 border border-slate-200/60 dark:border-slate-800/60 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 hover:-translate-y-0.5">
-          <div className="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 border border-indigo-500/20 group-hover:scale-105 transition-transform duration-300">
+        <div className="group flex items-start gap-4 p-4 border border-white/30 dark:border-white/10 rounded-2xl bg-white/40 dark:bg-white/5 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-white/50 dark:hover:bg-white/10 hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-0.5">
+          <div className="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-500/20 group-hover:scale-105 transition-transform duration-300">
             <CreditCard className="h-6 w-6" />
           </div>
           <div>
@@ -69,8 +69,8 @@ export function StepWelcome({ clientName, projectId }: StepWelcomeProps) {
         </div>
 
         {/* Step 4 */}
-        <div className="group flex items-start gap-4 p-4 border border-slate-200/60 dark:border-slate-800/60 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 hover:-translate-y-0.5">
-          <div className="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400 border border-violet-500/20 group-hover:scale-105 transition-transform duration-300">
+        <div className="group flex items-start gap-4 p-4 border border-white/30 dark:border-white/10 rounded-2xl bg-white/40 dark:bg-white/5 backdrop-blur-sm shadow-sm hover:shadow-md hover:bg-white/50 dark:hover:bg-white/10 hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-0.5">
+          <div className="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-400/10 text-slate-600 dark:bg-slate-400/20 dark:text-slate-400 border border-slate-400/20 group-hover:scale-105 transition-transform duration-300">
             <Folder className="h-6 w-6" />
           </div>
           <div>
@@ -90,7 +90,7 @@ export function StepWelcome({ clientName, projectId }: StepWelcomeProps) {
         <button
           onClick={handleNext}
           disabled={isPending}
-          className="w-full h-12 bg-gradient-to-r from-cyan-500 via-indigo-500 to-violet-600 hover:from-cyan-600 hover:via-indigo-600 hover:to-violet-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/20 dark:shadow-indigo-950/40 hover:shadow-indigo-500/30 transition-all duration-300 flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
+          className="w-full h-12 bg-gradient-to-r from-amber-600 via-amber-500 to-slate-500 hover:from-amber-700 hover:via-amber-600 hover:to-slate-600 text-white font-bold rounded-2xl shadow-lg shadow-amber-500/20 dark:shadow-amber-950/40 hover:shadow-amber-500/30 transition-all duration-300 flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
           id="welcome-next-btn"
         >
           {isPending ? (

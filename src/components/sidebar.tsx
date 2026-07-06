@@ -93,17 +93,19 @@ export function Sidebar() {
 
   return (
     <>
+      {/* Mobile menu toggle button */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-background border"
+        className="lg:hidden fixed top-4 left-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl bg-white/90 border border-slate-200/60 shadow-md backdrop-blur-sm text-slate-700 font-medium text-sm hover:bg-white transition-all duration-200"
         onClick={() => setMobileOpen(!mobileOpen)}
         aria-label="Toggle navigation"
       >
         {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        <span className="sr-only">Menu</span>
       </button>
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 border-r bg-card flex flex-col transition-transform duration-200 lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 w-[280px] border-r bg-card/95 backdrop-blur-sm flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 shadow-xl lg:shadow-none",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
