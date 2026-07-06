@@ -48,15 +48,15 @@ export function WizardStepper({ currentStep }: WizardStepperProps) {
               <span 
                 className={`text-xs md:text-sm font-semibold transition-colors duration-300 ${
                   status === "done"
-                    ? "text-white"
+                    ? "text-slate-900 dark:text-slate-100"
                     : status === "active"
-                    ? "text-white font-bold"
-                    : "text-white/60"
+                    ? "text-slate-900 dark:text-white font-bold"
+                    : "text-slate-400 dark:text-slate-500"
                 }`}
               >
                 {step.label}
               </span>
-              <span className="hidden md:inline text-[10px] text-white/40 mt-0.5">
+              <span className="hidden md:inline text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
                 {status === "done" ? "Completed" : status === "active" ? "In Progress" : "Pending"}
               </span>
             </div>
