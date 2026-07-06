@@ -41,7 +41,7 @@ export function PortalSidebar() {
                 }`}
                 title={item.label}
               >
-                <Icon className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:scale-110" strokeWidth={2.5} />
+                <Icon className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5" strokeWidth={2.5} />
                 <span className="text-sm font-bold tracking-wide">{item.label}</span>
                 {isActive && (
                   <span className="absolute bottom-0 left-2 right-2 h-[3px] bg-gradient-to-r from-red-500 to-red-700 rounded-t-md shadow-[0_0_6px_rgba(239,68,68,0.4)]" />
@@ -58,7 +58,7 @@ export function PortalSidebar() {
             className="flex items-center justify-center h-11 px-4 gap-2 rounded-[14px] text-black dark:text-slate-300 hover:text-red-600 hover:bg-red-50/60 dark:hover:bg-red-950/40 transition-all duration-300 group"
             title="Sign out"
           >
-            <LogOut className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5" strokeWidth={2.5} />
+            <LogOut className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
             <span className="text-sm font-bold tracking-wide">Sign out</span>
           </button>
         </form>
@@ -91,7 +91,7 @@ export function PortalSidebar() {
                   {isActive && (
                     <span className="absolute top-0 left-4 right-4 h-[2px] bg-gradient-to-r from-red-400 to-red-600 rounded-b-md" />
                   )}
-                  <Icon className={`h-5 w-5 transition-all duration-200 ${isActive ? "scale-110" : ""}`} strokeWidth={isActive ? 2.5 : 2} />
+                  <Icon className={`h-5 w-5 transition-all duration-200 ${isActive ? "scale-105" : ""}`} strokeWidth={isActive ? 2.5 : 2} />
                   <span className={`text-[10px] font-semibold tracking-wide ${isActive ? "text-red-600" : "text-slate-500"}`}>{item.label}</span>
                 </button>
               )
