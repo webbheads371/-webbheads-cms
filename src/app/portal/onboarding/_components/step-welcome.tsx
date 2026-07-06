@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { markWelcomeSeen } from "@/lib/supabase/portal-actions"
-import { Sparkles, FileSignature, CreditCard, ClipboardList, ArrowRight, Folder } from "lucide-react"
+import { FileSignature, CreditCard, ArrowRight, Folder } from "lucide-react"
 
 interface StepWelcomeProps {
   clientName: string
@@ -25,11 +25,15 @@ export function StepWelcome({ clientName, projectId }: StepWelcomeProps) {
 
   return (
     <div className="wizard-step-content flex flex-col items-center text-center animate-fade-in duration-500">
-      {/* Decorative Sparkles */}
+      {/* Company Logo */}
       <div className="relative mb-6">
         <div className="absolute inset-0 bg-amber-500/20 rounded-3xl blur-xl animate-pulse" />
-        <div className="relative p-5 bg-gradient-to-tr from-amber-500/10 to-yellow-500/10 dark:from-amber-500/20 dark:to-yellow-500/20 rounded-3xl border border-amber-500/20 dark:border-amber-500/30 shadow-inner hover:scale-110 transition-transform duration-300">
-          <Sparkles className="h-10 w-10 text-amber-500 dark:text-amber-400 animate-spin-slow" />
+        <div className="relative p-4 bg-gradient-to-tr from-amber-500/10 to-yellow-500/10 dark:from-amber-500/20 dark:to-yellow-500/20 rounded-3xl border border-amber-500/20 dark:border-amber-500/30 shadow-inner hover:scale-110 transition-transform duration-300 flex items-center justify-center">
+          <img
+            src="/logo.png"
+            alt="WebbHeads Logo"
+            className="h-12 w-12 object-contain"
+          />
         </div>
       </div>
 
