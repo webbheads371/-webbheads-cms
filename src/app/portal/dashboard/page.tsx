@@ -84,17 +84,17 @@ export default async function DashboardPage() {
 
   return (
     <div className="dashboard-layout flex flex-col gap-[32px] px-2 md:px-4">
-      <div className="flex flex-row md:items-center justify-between gap-2 md:gap-6 dashboard-header flex-wrap">
+      <div className="flex flex-row items-start justify-between gap-2 md:gap-6 dashboard-header flex-wrap">
         {/* Mobile Logo (hidden on md and above since PortalSidebar handles it) */}
         <div className="flex md:hidden items-center shrink-0">
           <img
             src="/logo.png"
             alt="WebbHeads Logo"
-            className="h-9 w-9 rounded-full object-contain shadow-sm"
+            className="h-10 w-10 rounded-full object-contain shadow-sm mt-1"
           />
         </div>
         
-        <div className="flex-shrink-0 flex flex-wrap items-center justify-end gap-2 ml-auto">
+        <div className="flex-1 flex flex-wrap items-center justify-end gap-2">
           <MobileDashboardActions />
           <ChangePasswordForm />
         </div>
