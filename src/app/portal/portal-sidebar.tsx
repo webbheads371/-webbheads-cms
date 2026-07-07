@@ -76,7 +76,7 @@ export function PortalSidebar() {
           }}
         >
           <div className="flex items-center justify-around px-1 py-1">
-            {items.map((item) => {
+            {items.filter(i => !["credentials", "support"].includes(i.tabName)).map((item) => {
               const Icon = item.icon
               const isActive = activeTab === item.tabName
               return (
@@ -96,17 +96,6 @@ export function PortalSidebar() {
                 </button>
               )
             })}
-            {/* Mobile Logout */}
-            <form action="/api/auth/signout" method="POST" className="flex-1">
-              <button
-                type="submit"
-                className="flex flex-col items-center justify-center gap-0.5 h-14 w-full rounded-xl text-slate-500 hover:text-red-600 transition-all duration-200"
-                title="Sign out"
-              >
-                <LogOut className="h-5 w-5" strokeWidth={2} />
-                <span className="text-[10px] font-semibold tracking-wide">Logout</span>
-              </button>
-            </form>
           </div>
         </div>
       </div>
