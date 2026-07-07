@@ -115,13 +115,13 @@ export function DashboardClientTabs({
       <div className="transition-all duration-300">
         {/* ==================== HOME TAB ==================== */}
         {activeTopTab === "home" && (
-          <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-8 items-start animate-fade-in">
-            {/* Column 1: Project Timeline & Updates */}
-            <div className="flex flex-col gap-8">
-              <div className="mb-[-16px]">
-                <ClientGreeting clientName={project.client?.contact_name || project.client?.company_name || "Client"} />
-              </div>
-              <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-6">
+          <div className="flex flex-col gap-8 animate-fade-in">
+            <div>
+              <ClientGreeting clientName={project.client?.contact_name || project.client?.company_name || "Client"} />
+            </div>
+            <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-8 items-stretch">
+              {/* Column 1: Project Timeline & Updates */}
+              <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-6 h-full">
                 <h2 className="text-2xl font-bold tracking-tight text-[#111827] dark:text-white flex items-center gap-2">
                   <Rocket className="h-5 w-5 text-[#D6A33C] animate-pulse" />
                   Project Timeline
@@ -255,10 +255,9 @@ export function DashboardClientTabs({
                   </span>
                 </div>
               </div>
-            </div>
 
             {/* Column 2: Project Team Overview */}
-            <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-6 text-left">
+            <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-6 text-left h-full">
               <h3 className="text-2xl font-bold tracking-tight text-[#111827] dark:text-white">
                 Project Team
               </h3>
@@ -293,7 +292,7 @@ export function DashboardClientTabs({
             </div>
 
             {/* Column 3: Payment Status Dashboard Card */}
-            <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-6">
+            <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-6 h-full">
               <h3 className="text-2xl font-bold tracking-tight text-[#111827] dark:text-white">
                 Payment Summary
               </h3>
@@ -386,6 +385,7 @@ export function DashboardClientTabs({
                 </div>
               </div>
             </div>
+          </div>
           </div>
         )}
 

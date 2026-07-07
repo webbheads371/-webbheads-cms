@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, Trash2 } from "lucide-react"
 import { useState, lazy, Suspense } from "react"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
@@ -48,6 +48,7 @@ export function ProjectDetailClient({
 }: Props) {
   const [showForceDialog, setShowForceDialog] = useState(false)
   const [showCloseDialog, setShowCloseDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const router = useRouter()
   const supabase = useSupabase()
 
@@ -135,6 +136,21 @@ export function ProjectDetailClient({
     router.refresh()
   }
 
+  async function handleDeleteProject() {
+    const { error } = await supabase
+      .from("projects")
+      .delete()
+      .eq("id", project.id)
+    if (error) {
+      console.error("Failed to delete project:", error)
+      return
+    }
+
+    setShowDeleteDialog(false)
+    router.push("/dashboard")
+    router.refresh()
+  }
+
   return (
     <div>
       <PageHeader
@@ -178,9 +194,9 @@ export function ProjectDetailClient({
         status={project.status}
       />
 
-      {!isTerminal && (
+      {(isAdmin || !isTerminal) && (
         <div className="flex justify-end gap-3 mb-6">
-          {nextStage && nextStage.key !== "closed_won" && (
+          {!isTerminal && nextStage && nextStage.key !== "closed_won" && (
             <Dialog open={showForceDialog} onOpenChange={setShowForceDialog}>
               <DialogTrigger asChild>
                 <Button onClick={handleMoveStage} size="lg">
@@ -209,7 +225,7 @@ export function ProjectDetailClient({
             </Dialog>
           )}
 
-          {isAdmin && (
+          {!isTerminal && isAdmin && (
             <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
               <DialogTrigger asChild>
                 <Button
@@ -255,6 +271,33 @@ export function ProjectDetailClient({
                     disabled={incompleteRequired.length > 0 && !isAdmin}
                   >
                     Close as Won
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {isAdmin && (
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+              <DialogTrigger asChild>
+                <Button variant="destructive" size="lg">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Project
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Project</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete this project? This action cannot be undone and will permanently remove all associated data, including checklist items, payments, documents, and activity logs.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+                  <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button variant="destructive" onClick={handleDeleteProject}>
+                    Delete Project
                   </Button>
                 </DialogFooter>
               </DialogContent>
