@@ -8,8 +8,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isLogin = pathname === "/login"
   const isPortal = pathname?.startsWith("/portal")
+  const isRoot = pathname === "/"
 
-  if (isLogin || isPortal) {
+  if (isLogin || isPortal || isRoot) {
     return <>{children}</>
   }
 
