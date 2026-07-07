@@ -84,7 +84,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="dashboard-layout flex flex-col gap-[32px] px-2 md:px-4">
-      <div className="flex flex-row items-start md:items-center justify-between gap-2 md:gap-6 dashboard-header flex-wrap">
+      <div className="flex flex-row items-start md:items-center justify-between gap-2 md:gap-6 dashboard-header">
         {/* Mobile Logo (hidden on md and above since PortalSidebar handles it) */}
         <div className="flex md:hidden items-center shrink-0">
           <img
@@ -94,7 +94,7 @@ export default async function DashboardPage() {
           />
         </div>
         
-        <div className="flex-shrink-0 flex flex-wrap items-center justify-end gap-2 ml-auto">
+        <div className="flex-1 flex flex-wrap items-start md:items-center justify-end gap-2">
           <MobileDashboardActions />
           <ChangePasswordForm />
         </div>
