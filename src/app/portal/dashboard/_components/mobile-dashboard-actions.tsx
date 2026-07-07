@@ -7,7 +7,7 @@ export function MobileDashboardActions() {
   const { activeTab, setActiveTab } = usePortalTab()
 
   return (
-    <div className="contents md:hidden">
+    <div className="flex md:hidden flex-wrap items-center justify-end gap-2">
       <button
         onClick={() => setActiveTab("credentials")}
         className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border transition-all duration-300 ${
