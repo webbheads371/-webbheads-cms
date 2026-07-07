@@ -3,7 +3,6 @@ import { redirect } from "next/navigation"
 import { getCurrentClientUser } from "@/lib/supabase/server"
 import { createClient } from "@/lib/supabase/server"
 import { DashboardClientTabs } from "./_components/dashboard-client-tabs"
-import { ChangePasswordForm } from "./_components/change-password-form"
 import { MobileDashboardActions } from "./_components/mobile-dashboard-actions"
 import type { Document, PaymentRequest, BankSettings, ProjectStatusUpdate, FormTemplate, FormResponse } from "@/types"
 
@@ -96,7 +95,6 @@ export default async function DashboardPage() {
         
         <div className="flex-1 flex flex-wrap items-start md:items-center justify-end gap-2">
           <MobileDashboardActions />
-          <ChangePasswordForm />
         </div>
       </div>
 

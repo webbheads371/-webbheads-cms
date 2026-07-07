@@ -2,6 +2,7 @@
 
 import { usePortalTab } from "@/app/portal/portal-tab-context"
 import { KeyRound, LifeBuoy, LogOut } from "lucide-react"
+import { ChangePasswordForm } from "./change-password-form"
 
 export function MobileDashboardActions() {
   const { activeTab, setActiveTab } = usePortalTab()
@@ -33,6 +34,8 @@ export function MobileDashboardActions() {
         <LifeBuoy className="h-3.5 w-3.5" />
         <span className="text-xs font-medium">Support</span>
       </button>
+
+      <ChangePasswordForm />
 
       <form action="/api/auth/signout" method="POST">
         <button
