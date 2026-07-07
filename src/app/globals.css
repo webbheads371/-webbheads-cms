@@ -52,9 +52,17 @@
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
 }
 
@@ -102,10 +110,10 @@
 
 /* Wizard Stepper (Mode A) */
 .wizard-layout {
-  @apply grid md:grid-cols-[240px_1fr] gap-8 items-start;
+  @apply flex flex-col gap-4 md:grid md:grid-cols-[240px_1fr] md:gap-8 md:items-start;
 }
 .wizard-card {
-  @apply bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/40 rounded-2xl p-6 md:p-10;
+  @apply bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/40 rounded-2xl p-4 sm:p-6 md:p-10;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04);
 }
 .wizard-stepper {
@@ -299,7 +307,7 @@
 
 /* Dashboard (Mode B) */
 .dashboard-layout {
-  @apply flex flex-col gap-10;
+  @apply flex flex-col gap-6 md:gap-10;
 }
 .dashboard-header {
   @apply flex flex-col gap-2;
@@ -746,17 +754,22 @@
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 24px;
+  border-radius: 20px;
   box-shadow: 0 8px 24px rgba(60, 50, 20, 0.08),
               inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              background 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  contain: layout;
 }
 
-.glass-card-silver:hover {
-  background: rgba(255, 255, 255, 0.55);
-  box-shadow: 0 12px 32px rgba(60, 50, 20, 0.12),
-              inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  transform: translateY(-2px);
+@media (hover: hover) {
+  .glass-card-silver:hover {
+    background: rgba(255, 255, 255, 0.55);
+    box-shadow: 0 12px 32px rgba(60, 50, 20, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px);
+  }
 }
 
 .dark .glass-card-silver {
@@ -766,8 +779,10 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
-.dark .glass-card-silver:hover {
-  background: rgba(12, 18, 34, 0.65);
+@media (hover: hover) {
+  .dark .glass-card-silver:hover {
+    background: rgba(12, 18, 34, 0.65);
+  }
 }
 
 /* Premium Card Silver */
@@ -887,8 +902,21 @@
     radial-gradient(circle at 85% 10%, #e9d9b0 0%, transparent 45%),
     linear-gradient(135deg, #d8dade 0%, #eceef0 20%, #c9cdd2 40%, #f0e2bd 55%, #d2d5d9 70%, #b9bec4 85%, #e6e8ea 100%);
   background-size: 200% 200%;
-  animation: shimmer 18s ease-in-out infinite;
   background-attachment: fixed;
+}
+
+/* Only animate shimmer on capable devices */
+@media (prefers-reduced-motion: no-preference) and (min-width: 768px) {
+  .premium-bg {
+    animation: shimmer 18s ease-in-out infinite;
+  }
+}
+
+@media (max-width: 767px) {
+  .premium-bg {
+    background-attachment: scroll;
+    background-size: 100% 100%;
+  }
 }
 
 .dark .premium-bg {
@@ -898,7 +926,12 @@
     radial-gradient(circle at 85% 10%, #1e1a12 0%, transparent 45%),
     linear-gradient(135deg, #1a1d24 0%, #0f172a 20%, #1e2028 40%, #1a1510 55%, #111318 70%, #0d0f14 85%, #161922 100%);
   background-size: 200% 200%;
-  animation: shimmer 18s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: no-preference) and (min-width: 768px) {
+  .dark .premium-bg {
+    animation: shimmer 18s ease-in-out infinite;
+  }
 }
 
 .premium-glass-sidebar {
@@ -1014,68 +1047,80 @@
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
-  will-change: transform, opacity;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .liquid-orb-1 {
-  width: clamp(100px, 14vw, 200px);
-  height: clamp(100px, 14vw, 200px);
+  width: clamp(80px, 14vw, 200px);
+  height: clamp(80px, 14vw, 200px);
   top: 5%;
   left: 8%;
   background: radial-gradient(circle at 35% 30%, #ffffff, #d8b563 70%, transparent 100%);
   opacity: 0.75;
-  animation: orb-float-1 16s ease-in-out infinite, orb-pulse 8s ease-in-out infinite;
 }
 
 .liquid-orb-2 {
-  width: clamp(60px, 8vw, 110px);
-  height: clamp(60px, 8vw, 110px);
+  width: clamp(50px, 8vw, 110px);
+  height: clamp(50px, 8vw, 110px);
   top: 3%;
   left: 26%;
   background: radial-gradient(circle at 35% 30%, #ffffff, #e9e2d2 70%, transparent 100%);
   opacity: 0.8;
-  animation: orb-float-2 20s ease-in-out infinite, orb-pulse 12s ease-in-out infinite 2s;
 }
 
 .liquid-orb-3 {
-  width: clamp(120px, 16vw, 250px);
-  height: clamp(120px, 16vw, 250px);
+  width: clamp(90px, 16vw, 250px);
+  height: clamp(90px, 16vw, 250px);
   top: 2%;
   right: 6%;
   background: radial-gradient(circle at 35% 30%, #fff8e6, #d9a84c 70%, transparent 100%);
   opacity: 0.6;
-  animation: orb-float-3 24s ease-in-out infinite, orb-pulse 10s ease-in-out infinite 4s;
 }
 
 .liquid-orb-4 {
-  width: clamp(80px, 10vw, 160px);
-  height: clamp(80px, 10vw, 160px);
+  width: clamp(60px, 10vw, 160px);
+  height: clamp(60px, 10vw, 160px);
   bottom: 5%;
   right: 10%;
   background: radial-gradient(circle at 35% 30%, #ffffff, #e2c98a 70%, transparent 100%);
   opacity: 0.7;
-  animation: orb-float-4 18s ease-in-out infinite, orb-pulse 9s ease-in-out infinite 1s;
 }
 
-/* Extra orbs for richer feel */
 .liquid-orb-5 {
-  width: clamp(70px, 9vw, 130px);
-  height: clamp(70px, 9vw, 130px);
+  width: clamp(50px, 9vw, 130px);
+  height: clamp(50px, 9vw, 130px);
   bottom: 15%;
   left: 5%;
   background: radial-gradient(circle at 40% 40%, #fff5d6, #c9a84c 70%, transparent 100%);
   opacity: 0.45;
-  animation: orb-float-2 22s ease-in-out infinite 3s;
 }
 
 .liquid-orb-6 {
-  width: clamp(50px, 6vw, 90px);
-  height: clamp(50px, 6vw, 90px);
+  width: clamp(40px, 6vw, 90px);
+  height: clamp(40px, 6vw, 90px);
   top: 40%;
   right: 3%;
   background: radial-gradient(circle at 35% 30%, #fffbe8, #e8c56b 70%, transparent 100%);
   opacity: 0.35;
-  animation: orb-float-1 26s ease-in-out infinite 5s;
+}
+
+/* Only animate orbs on devices that can handle it */
+@media (prefers-reduced-motion: no-preference) and (min-width: 768px) {
+  .liquid-orb-1 { animation: orb-float-1 16s ease-in-out infinite, orb-pulse 8s ease-in-out infinite; }
+  .liquid-orb-2 { animation: orb-float-2 20s ease-in-out infinite, orb-pulse 12s ease-in-out infinite 2s; }
+  .liquid-orb-3 { animation: orb-float-3 24s ease-in-out infinite, orb-pulse 10s ease-in-out infinite 4s; }
+  .liquid-orb-4 { animation: orb-float-4 18s ease-in-out infinite, orb-pulse 9s ease-in-out infinite 1s; }
+  .liquid-orb-5 { animation: orb-float-2 22s ease-in-out infinite 3s; }
+  .liquid-orb-6 { animation: orb-float-1 26s ease-in-out infinite 5s; }
+}
+
+/* On mobile: show only 3 orbs, hide extras */
+@media (max-width: 767px) {
+  .liquid-orb-4, .liquid-orb-5, .liquid-orb-6 { display: none; }
+  .liquid-orb-1 { opacity: 0.5; }
+  .liquid-orb-2 { opacity: 0.55; }
+  .liquid-orb-3 { opacity: 0.4; }
 }
 
 .dark .liquid-orb-1 { background: radial-gradient(circle at 35% 30%, #ffffff15, #d8b56330 70%, transparent 100%); opacity: 0.5; }

@@ -4,7 +4,6 @@ import type { ReactNode } from "react"
 import { PortalNav } from "./portal-nav"
 import { PortalSidebar } from "./portal-sidebar"
 import { PortalTabProvider } from "./portal-tab-context"
-import { LogOut } from "lucide-react"
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {
   const clientUser = await getCurrentClientUser()
@@ -12,7 +11,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
 
   return (
     <PortalTabProvider>
-      <div className="portal-shell min-h-screen premium-bg font-sans relative overflow-x-hidden flex flex-col p-2 md:px-8 md:pt-4 md:pb-8">
+      <div className="portal-shell min-h-screen premium-bg font-sans relative overflow-x-hidden flex flex-col p-2 sm:p-3 md:px-8 md:pt-4 md:pb-8">
         {/* Liquid Chrome Background Orbs */}
         <div className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
           <div className="liquid-orb liquid-orb-1" />
@@ -29,10 +28,12 @@ export default async function PortalLayout({ children }: { children: ReactNode }
           <PortalSidebar />
 
           {/* Bottom Floating Content Container */}
-          <div className="w-full flex-1 flex flex-col min-w-0 pt-2 md:pt-4">
-            {/* Main Content Body */}
-            <main className="w-full flex-1 pb-28 md:pb-8">
-              {children}
+          <div className="w-full flex-1 flex flex-col min-w-0 pt-1 md:pt-4">
+            {/* Main Content Body — pb-24 ensures content isn't hidden behind mobile bottom nav */}
+            <main className="w-full flex-1 pb-24 md:pb-8" style={{ paddingBottom: 'max(96px, calc(80px + env(safe-area-inset-bottom)))' }}>
+              <div className="md:!pb-8" style={{}}>
+                {children}
+              </div>
             </main>
           </div>
         </div>

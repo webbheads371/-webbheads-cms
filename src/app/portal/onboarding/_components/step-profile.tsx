@@ -54,7 +54,7 @@ export function StepProfile({ projectId, templates, existingResponses }: StepPro
         value: values[t.id] ?? "",
       }))
       const result = await submitProfileForm(projectId, responses)
-      if (result.error) {
+      if (result?.error) {
         setError(result.error)
       } else {
         setSubmitted(true)

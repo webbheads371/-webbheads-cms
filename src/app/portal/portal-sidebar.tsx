@@ -1,7 +1,7 @@
 "use client"
 
 import { usePortalTab } from "./portal-tab-context"
-import { Home, KeyRound, FileText, CreditCard, Settings, LogOut } from "lucide-react"
+import { Home, KeyRound, FileText, CreditCard, LifeBuoy, LogOut } from "lucide-react"
 
 export function PortalSidebar() {
   const { activeTab, setActiveTab } = usePortalTab()
@@ -11,7 +11,7 @@ export function PortalSidebar() {
     { tabName: "credentials" as const, icon: KeyRound, label: "Credentials" },
     { tabName: "documents" as const, icon: FileText, label: "Documents" },
     { tabName: "payments" as const, icon: CreditCard, label: "Payments" },
-    { tabName: "support" as const, icon: Settings, label: "Support" },
+    { tabName: "support" as const, icon: LifeBuoy, label: "Support" },
   ]
 
   return (

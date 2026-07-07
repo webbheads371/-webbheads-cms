@@ -1,359 +1,913 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Liquid Chrome Glass — Dashboard</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', Inter, -apple-system, sans-serif;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    background: radial-gradient(circle at 15% 15%, #f3ede0 0%, transparent 40%),
-                radial-gradient(circle at 85% 10%, #e9d9b0 0%, transparent 45%),
-                linear-gradient(135deg, #d8dade 0%, #eceef0 20%, #c9cdd2 40%, #f0e2bd 55%, #d2d5d9 70%, #b9bec4 85%, #e6e8ea 100%);
-    background-size: 200% 200%;
-    animation: shimmer 18s ease-in-out infinite;
-    position: relative;
-    overflow: hidden;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Portal — Webbheads CMS</title>
+  <!-- Google Fonts for premium typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-purple: #8b5cf6;
+      --bg-pink: #ec4899;
+      --bg-blue: #3b82f6;
+      --bg-cyan: #06b6d4;
+      --glass-bg: rgba(255, 255, 255, 0.15);
+      --glass-border: rgba(255, 255, 255, 0.22);
+      --text-main: #ffffff;
+      --text-muted: rgba(255, 255, 255, 0.7);
+      --text-sub: rgba(255, 255, 255, 0.5);
+    }
 
-  @keyframes shimmer {
-    0%   { background-position: 0% 50%; }
-    50%  { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  .orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(2px);
-    opacity: 0.8;
-    pointer-events: none;
-  }
-  .orb-1 {
-    width: 160px; height: 160px; top: 6%; left: 10%;
-    background: radial-gradient(circle at 35% 30%, #ffffff, #d8b563 70%, transparent 100%);
-  }
-  .orb-2 {
-    width: 90px; height: 90px; top: 4%; left: 24%;
-    background: radial-gradient(circle at 35% 30%, #ffffff, #e9e2d2 70%, transparent 100%);
-  }
-  .orb-3 {
-    width: 200px; height: 200px; top: 3%; right: 8%;
-    background: radial-gradient(circle at 35% 30%, #fff8e6, #d9a84c 70%, transparent 100%);
-    opacity: 0.6;
-  }
-  .orb-4 {
-    width: 130px; height: 130px; bottom: 4%; right: 12%;
-    background: radial-gradient(circle at 35% 30%, #ffffff, #e2c98a 70%, transparent 100%);
-    opacity: 0.7;
-  }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at 0% 0%, #1e113a 0%, #0d0b18 50%, #0a0e1c 100%);
+      min-height: 100vh;
+      color: var(--text-main);
+      overflow-x: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
 
-  .dashboard {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    width: 100%;
-    max-width: 1140px;
-    background: rgba(255,255,255,0.28);
-    backdrop-filter: blur(28px) saturate(140%);
-    -webkit-backdrop-filter: blur(28px) saturate(140%);
-    border: 1px solid rgba(255,255,255,0.55);
-    border-radius: 28px;
-    box-shadow: 0 20px 60px rgba(60,50,20,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
-    overflow: hidden;
-  }
+    /* Mesh Gradient Orbs */
+    .mesh-gradient {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 1;
+      pointer-events: none;
+    }
 
-  /* Sidebar */
-  .sidebar {
-    width: 200px;
-    padding: 28px 16px;
-    background: rgba(255,255,255,0.25);
-    border-right: 1px solid rgba(255,255,255,0.4);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .logo-dot {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.5);
-    border: 1px solid rgba(255,255,255,0.7);
-    margin-bottom: 24px;
-  }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px;
-    border-radius: 12px;
-    font-size: 14px;
-    color: #4a4a45;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .nav-item:hover { background: rgba(255,255,255,0.35); }
-  .nav-item.active {
-    background: rgba(255,255,255,0.55);
-    color: #6b4d13;
-    font-weight: 600;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  }
-  .nav-icon { font-size: 16px; width: 18px; text-align: center; }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(140px);
+      opacity: 0.6;
+      mix-blend-mode: screen;
+      animation: float 25s ease-in-out infinite;
+    }
 
-  /* Main */
-  .main { flex: 1; padding: 28px 32px; }
+    .orb-1 {
+      width: 50vw;
+      height: 50vw;
+      min-width: 450px;
+      min-height: 450px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.85) 0%, rgba(139, 92, 246, 0) 70%);
+      top: -10%;
+      left: -10%;
+      animation-delay: 0s;
+    }
 
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 24px;
-  }
-  .header h1 { font-size: 26px; color: #2b2b28; font-weight: 700; }
-  .header .date { font-size: 13px; color: #6b6a63; margin-top: 4px; }
-  .header-right { display: flex; align-items: center; gap: 14px; }
-  .search-box {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,0.5);
-    border: 1px solid rgba(255,255,255,0.7);
-    border-radius: 20px;
-    padding: 8px 16px;
-    font-size: 13px;
-    color: #6b6a63;
-  }
-  .user-chip { display: flex; align-items: center; gap: 8px; }
-  .avatar {
-    width: 34px; height: 34px; border-radius: 50%;
-    background: linear-gradient(135deg,#e8b84b,#c98f1f);
-    display: flex; align-items: center; justify-content: center;
-    color: #4a3208; font-weight: 700; font-size: 13px;
-    border: 1px solid rgba(255,255,255,0.6);
-  }
-  .bell {
-    width: 34px; height: 34px; border-radius: 50%;
-    background: rgba(255,255,255,0.5);
-    border: 1px solid rgba(255,255,255,0.7);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-  }
+    .orb-2 {
+      width: 60vw;
+      height: 60vw;
+      min-width: 500px;
+      min-height: 500px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.8) 0%, rgba(236, 72, 153, 0) 70%);
+      bottom: -15%;
+      right: -10%;
+      animation-duration: 30s;
+      animation-delay: -5s;
+    }
 
-  .grid {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 20px;
-  }
-  .card {
-    background: rgba(255,255,255,0.45);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.6);
-    border-radius: 18px;
-    padding: 18px 20px;
-    box-shadow: 0 8px 24px rgba(60,50,20,0.08);
-    margin-bottom: 20px;
-  }
-  .card-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 4px;
-  }
-  .card-header h2 { font-size: 16px; color: #2b2b28; font-weight: 700; }
-  .card-sub { font-size: 12px; color: #79786f; margin-bottom: 14px; }
+    .orb-3 {
+      width: 45vw;
+      height: 45vw;
+      min-width: 380px;
+      min-height: 380px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.8) 0%, rgba(59, 130, 246, 0) 70%);
+      top: 25%;
+      right: 15%;
+      animation-duration: 22s;
+      animation-delay: -2s;
+    }
 
-  .project-block { margin-bottom: 18px; }
-  .project-block:last-child { margin-bottom: 0; }
-  .project-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
-  .project-name { font-size: 14px; font-weight: 600; color: #2b2b28; }
-  .project-dates { font-size: 11px; color: #8a8980; }
-  .progress-track {
-    height: 8px; border-radius: 20px;
-    background: rgba(0,0,0,0.08);
-    overflow: hidden;
-    margin-bottom: 10px;
-  }
-  .progress-fill {
-    height: 100%; border-radius: 20px;
-    background: linear-gradient(90deg,#f0c869,#d4a017);
-  }
-  .task-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
-  .task-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #4a4a45; }
-  .task-check {
-    width: 14px; height: 14px; border-radius: 50%;
-    border: 1.5px solid #b3ac96;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 9px; color: transparent;
-    flex-shrink: 0;
-  }
-  .task-check.done { background: #6faa63; border-color: #6faa63; color: white; }
-  .status-row { display: flex; justify-content: flex-end; }
-  .status-pill {
-    font-size: 11px; font-weight: 700;
-    padding: 3px 12px; border-radius: 20px;
-    background: rgba(212,160,23,0.18);
-    color: #8a5f0c;
-  }
+    .orb-4 {
+      width: 40vw;
+      height: 40vw;
+      min-width: 320px;
+      min-height: 320px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.75) 0%, rgba(6, 182, 212, 0) 70%);
+      bottom: 20%;
+      left: 10%;
+      animation-duration: 28s;
+      animation-delay: -8s;
+    }
 
-  .team-row {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(0,0,0,0.06);
-  }
-  .team-row:last-child { border-bottom: none; }
-  .team-avatar {
-    width: 38px; height: 38px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 13px; color: white;
-    flex-shrink: 0;
-  }
-  .team-info { flex: 1; }
-  .team-name { font-size: 13px; font-weight: 600; color: #2b2b28; }
-  .team-role { font-size: 11px; color: #8a8980; }
-  .active-badge {
-    font-size: 10px; font-weight: 700;
-    background: rgba(111,170,99,0.18); color: #3d6a34;
-    padding: 3px 10px; border-radius: 20px;
-    margin-right: 8px;
-  }
-  .team-icons { display: flex; gap: 6px; font-size: 13px; color: #8a8980; }
+    @keyframes float {
+      0% {
+        transform: translate(0px, 0px) scale(1);
+      }
+      33% {
+        transform: translate(40px, -60px) scale(1.08);
+      }
+      66% {
+        transform: translate(-30px, 30px) scale(0.95);
+      }
+      100% {
+        transform: translate(0px, 0px) scale(1);
+      }
+    }
 
-  .chart-wrap { display: flex; align-items: flex-end; gap: 14px; height: 130px; margin-top: 10px; }
-  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .bar-val { font-size: 11px; color: #6b6a63; font-weight: 600; }
-  .bar {
-    width: 100%; max-width: 26px;
-    border-radius: 6px 6px 0 0;
-    background: linear-gradient(180deg,#f0c869,#d4a017);
-  }
-  .bar-label { font-size: 11px; color: #8a8980; }
-</style>
+    /* Container */
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      z-index: 2;
+      position: relative;
+    }
+
+    /* Navigation/Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding: 0 10px;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-mark {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #3b82f6 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 22px;
+      box-shadow: 0 8px 24px rgba(236, 72, 153, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      position: relative;
+    }
+
+    .logo-mark::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0));
+      pointer-events: none;
+    }
+
+    .logo-text h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(to right, #ffffff, rgba(255, 255, 255, 0.8));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-text p {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+    }
+
+    .user-profile-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 6px 18px 6px 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 30px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .user-avatar-h {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      border: 1.5px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .user-info-h {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-info-h span:first-child {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .user-info-h span:last-child {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Grid Layout - 3 Columns with 24px+ gaps (28px) */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+    }
+
+    /* Glass Cards Base Styling */
+    .glass-card {
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.12),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                  box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.22),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.38);
+    }
+
+    /* Grid composition: 1 large card (2x2), 3-4 smaller supporting cards */
+    /* Hero Card: spans 2 columns, 2 rows */
+    .hero-card {
+      grid-column: span 2;
+      grid-row: span 2;
+      justify-content: space-between;
+      min-height: 420px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.08) 100%);
+    }
+
+    /* Stat Card: spans 1 column, 1 row */
+    .stat-card {
+      grid-column: span 1;
+      justify-content: space-between;
+      min-height: 196px;
+    }
+
+    /* Chart Card: spans 1 column, 1 row */
+    .chart-card {
+      grid-column: span 1;
+      min-height: 196px;
+    }
+
+    /* Profile Card: spans 1 column, 1 row (under Hero on row 3) */
+    .profile-card {
+      grid-column: span 1;
+      justify-content: space-between;
+      min-height: 220px;
+    }
+
+    /* CTA Card: spans 2 columns, 1 row */
+    .cta-card {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.06) 100%);
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 220px;
+    }
+
+    /* Typography & Core Elements */
+    h2 {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+      z-index: 1;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 12px;
+      z-index: 1;
+    }
+
+    .card-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.8px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      z-index: 1;
+      display: inline-block;
+    }
+
+    .secondary-text {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      z-index: 1;
+      font-weight: 400;
+    }
+
+    /* Hero Card Specific Content */
+    .hero-top {
+      z-index: 1;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 24px;
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      background-color: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.5; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.5; }
+    }
+
+    .hero-heading {
+      font-size: 38px;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 16px;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-progress-section {
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 28px;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .progress-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .progress-percentage {
+      font-size: 15px;
+      font-weight: 700;
+      color: #60a5fa;
+    }
+
+    .progress-bar-container {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      width: 100%;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #a855f7, #ec4899);
+      border-radius: 4px;
+      width: 78%;
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+    }
+
+    .hero-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 24px;
+      margin-top: 24px;
+    }
+
+    .milestone-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .milestone-label {
+      font-size: 10px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 600;
+    }
+
+    .milestone-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* Stat Card Specific Content */
+    .stat-number {
+      font-size: 54px;
+      font-weight: 800;
+      line-height: 1;
+      margin: 18px 0 10px 0;
+      letter-spacing: -2px;
+      background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.6) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      z-index: 1;
+    }
+
+    .stat-trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #10b981;
+      z-index: 1;
+    }
+
+    /* Chart Card Specific Content */
+    .chart-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .chart-graphic {
+      height: 90px;
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      margin-top: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .chart-bar-wrapper {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      position: relative;
+    }
+
+    .chart-bar-wrapper:hover .chart-bar-tooltip {
+      opacity: 1;
+      transform: translateY(-8px);
+    }
+
+    .chart-bar {
+      width: 100%;
+      border-radius: 4px 4px 0 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.08) 100%);
+      transition: height 0.6s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
+      cursor: pointer;
+    }
+
+    .chart-bar-wrapper:hover .chart-bar {
+      background: linear-gradient(180deg, #ec4899 0%, #8b5cf6 100%);
+      box-shadow: 0 0 12px rgba(236, 72, 153, 0.5);
+    }
+
+    .chart-bar-tooltip {
+      position: absolute;
+      top: -32px;
+      background: rgba(15, 17, 26, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      color: white;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      white-space: nowrap;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .chart-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+
+    .chart-label {
+      flex: 1;
+      text-align: center;
+      font-size: 9px;
+      color: var(--text-sub);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    /* Profile Card Specific Content */
+    .profile-info-block {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 16px 0 24px 0;
+      z-index: 1;
+    }
+
+    .profile-avatar-large {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+    }
+
+    .profile-meta h4 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .profile-meta p {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .contact-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 1;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    .contact-item:hover {
+      color: var(--text-main);
+      transform: translateX(2px);
+    }
+
+    .contact-icon {
+      font-size: 16px;
+      opacity: 0.85;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+    }
+
+    /* CTA Card Specific Content */
+    .cta-left {
+      z-index: 1;
+      max-width: 60%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cta-icon-badge {
+      display: inline-flex;
+      font-size: 28px;
+      margin-bottom: 6px;
+      animation: bounce 4s infinite ease-in-out;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .cta-right {
+      z-index: 1;
+    }
+
+    .cta-button {
+      background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%);
+      background-size: 200% auto;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 16px 28px;
+      border-radius: 14px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+      text-decoration: none;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .cta-button:hover {
+      background-position: right center;
+      transform: translateY(-3px);
+      box-shadow: 0 16px 36px rgba(139, 92, 246, 0.55);
+      border-color: rgba(255, 255, 255, 0.55);
+    }
+
+    .cta-button:active {
+      transform: translateY(0);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 1024px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .hero-card {
+        grid-column: span 2;
+      }
+      .cta-card {
+        grid-column: span 2;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+      .hero-card {
+        grid-column: span 1;
+        grid-row: span 1;
+        min-height: auto;
+      }
+      .cta-card {
+        grid-column: span 1;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+        min-height: auto;
+      }
+      .cta-left {
+        max-width: 100%;
+      }
+      .cta-button {
+        width: 100%;
+      }
+      body {
+        padding: 24px 16px;
+      }
+      header {
+        flex-direction: column;
+        gap: 20px;
+        align-items: flex-start;
+      }
+      .user-profile-header {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
-<div class="orb orb-3"></div>
-<div class="orb orb-4"></div>
-
-<div class="dashboard">
-  <div class="sidebar">
-    <div class="logo-dot"></div>
-    <div class="nav-item active"><span class="nav-icon">⌂</span> Dashboard</div>
-    <div class="nav-item"><span class="nav-icon">▤</span> Projects</div>
-    <div class="nav-item"><span class="nav-icon">📊</span> Analytics</div>
-    <div class="nav-item"><span class="nav-icon">◎</span> Team</div>
-    <div class="nav-item"><span class="nav-icon">💳</span> Payments</div>
-    <div class="nav-item"><span class="nav-icon">⚙</span> Settings</div>
+  <!-- Dynamic mesh gradient backgrounds -->
+  <div class="mesh-gradient">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
   </div>
 
-  <div class="main">
-    <div class="header">
-      <div>
-        <h1>Welcome back, Ram!</h1>
-        <div class="date">July 7, 2026</div>
-      </div>
-      <div class="header-right">
-        <div class="search-box">🔍 Search</div>
-        <div class="user-chip">
-          <div class="avatar">R</div>
-        </div>
-        <div class="bell">🔔</div>
-      </div>
-    </div>
-
-    <div class="grid">
-      <div>
-        <div class="card">
-          <div class="card-header"><h2>Project status overview</h2><span style="font-size:16px;color:#8a8980;">⋯</span></div>
-          <div class="card-sub">Timelines</div>
-
-          <div class="project-block">
-            <div class="project-top">
-              <span class="project-name">Zenith Platform</span>
-              <span class="project-dates">12 Oct – 15 Dec</span>
-            </div>
-            <div class="progress-track"><div class="progress-fill" style="width:45%;"></div></div>
-            <div class="task-list">
-              <div class="task-row"><span class="task-check done">✓</span> Tasks in progress</div>
-              <div class="task-row"><span class="task-check done">✓</span> Design complete</div>
-            </div>
-            <div class="status-row"><span class="status-pill">45%</span></div>
-          </div>
-
-          <div class="project-block">
-            <div class="project-top">
-              <span class="project-name">Alpha App</span>
-              <span class="project-dates">01 Sep – 30 Nov</span>
-            </div>
-            <div class="progress-track"><div class="progress-fill" style="width:72%;"></div></div>
-            <div class="task-list">
-              <div class="task-row"><span class="task-check"></span> Tasks pending</div>
-              <div class="task-row"><span class="task-check done">✓</span> QA passed</div>
-            </div>
-            <div class="status-row"><span class="status-pill">72%</span></div>
-          </div>
-
-          <div class="project-block">
-            <div class="project-top">
-              <span class="project-name">Delta Web</span>
-              <span class="project-dates">15 Aug – 10 Nov</span>
-            </div>
-            <div class="progress-track"><div class="progress-fill" style="width:88%;"></div></div>
-            <div class="task-list">
-              <div class="task-row"><span class="task-check done">✓</span> Launch ready</div>
-            </div>
-            <div class="status-row"><span class="status-pill">88%</span></div>
-          </div>
+  <div class="container">
+    <header>
+      <div class="logo-container">
+        <div class="logo-mark">W</div>
+        <div class="logo-text">
+          <h1>Webbheads CMS</h1>
+          <p>Client Hub Portal</p>
         </div>
       </div>
-
-      <div>
-        <div class="card">
-          <div class="card-header"><h2>Team members</h2><span style="font-size:16px;color:#8a8980;">⋯</span></div>
-
-          <div class="team-row">
-            <div class="team-avatar" style="background:#d4a017;">R</div>
-            <div class="team-info"><div class="team-name">Ram V.</div><div class="team-role">Lead</div></div>
-            <span class="active-badge">Active</span>
-            <div class="team-icons">📞 ✉</div>
-          </div>
-          <div class="team-row">
-            <div class="team-avatar" style="background:#8a97a8;">S</div>
-            <div class="team-info"><div class="team-name">Sarah L.</div><div class="team-role">Dev</div></div>
-            <span class="active-badge">Active</span>
-            <div class="team-icons">📞 ✉</div>
-          </div>
-          <div class="team-row">
-            <div class="team-avatar" style="background:#a88a97;">A</div>
-            <div class="team-info"><div class="team-name">Alex C.</div><div class="team-role">Design</div></div>
-            <span class="active-badge">Active</span>
-            <div class="team-icons">📞 ✉</div>
-          </div>
-          <div class="team-row">
-            <div class="team-avatar" style="background:#7fa88a;">P</div>
-            <div class="team-info"><div class="team-name">Priya K.</div><div class="team-role">Design</div></div>
-            <span class="active-badge">Active</span>
-            <div class="team-icons">📞 ✉</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header"><h2>Payment overview</h2></div>
-          <div class="card-sub">Monthly payments · column chart</div>
-          <div class="chart-wrap">
-            <div class="bar-col"><span class="bar-val">$1K</span><div class="bar" style="height:20%;"></div><span class="bar-label">Oct</span></div>
-            <div class="bar-col"><span class="bar-val">$2K</span><div class="bar" style="height:38%;"></div><span class="bar-label">Nov</span></div>
-            <div class="bar-col"><span class="bar-val">$3K</span><div class="bar" style="height:55%;"></div><span class="bar-label">Dec</span></div>
-            <div class="bar-col"><span class="bar-val">$3K</span><div class="bar" style="height:55%;"></div><span class="bar-label">Jan</span></div>
-            <div class="bar-col"><span class="bar-val">$5K</span><div class="bar" style="height:95%;"></div><span class="bar-label">Feb</span></div>
-            <div class="bar-col"><span class="bar-val">$3K</span><div class="bar" style="height:55%;"></div><span class="bar-label">Mar</span></div>
-          </div>
+      
+      <div class="user-profile-header">
+        <div class="user-avatar-h">C</div>
+        <div class="user-info-h">
+          <span>Creative Agency Co.</span>
+          <span>Client Account #8241</span>
         </div>
       </div>
-    </div>
+    </header>
+
+    <main class="dashboard-grid">
+      <!-- HERO CARD (Large: spans 2 cols, 2 rows) -->
+      <section class="glass-card hero-card">
+        <div class="hero-top">
+          <div class="badge">
+            <span class="badge-dot"></span>
+            Active Phase: Development & QA
+          </div>
+          <h2 class="hero-heading">Welcome back to your client portal</h2>
+          <p class="secondary-text">Your primary project, the Webbheads CMS client integration, is on track and moving smoothly. Let's see the current status of your deliverables below.</p>
+          
+          <div class="hero-progress-section">
+            <div class="progress-info">
+              <span class="progress-title">Overall Project Implementation</span>
+              <span class="progress-percentage">78% Complete</span>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="hero-footer">
+          <div class="milestone-item">
+            <span class="milestone-label">Next Milestone</span>
+            <span class="milestone-val">API Integration Handoff</span>
+          </div>
+          <div class="milestone-item">
+            <span class="milestone-label">Due Date</span>
+            <span class="milestone-val">July 18, 2026</span>
+          </div>
+          <div class="milestone-item" style="text-align: right;">
+            <span class="milestone-label">Assigned Lead</span>
+            <span class="milestone-val">Ram Sri (PM)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- STAT CARD (Supporting 1: spans 1 col, 1 row) -->
+      <article class="glass-card stat-card">
+        <div>
+          <span class="card-label">Client Health Score</span>
+          <h3 style="font-size: 18px; margin-top: 4px;">Excellent Stability</h3>
+        </div>
+        <div>
+          <div class="stat-number">98.4%</div>
+          <div class="stat-trend">
+            <span>▲</span> +1.2% this sprint
+          </div>
+        </div>
+      </article>
+
+      <!-- CHART CARD (Supporting 2: spans 1 col, 1 row) -->
+      <article class="glass-card chart-card">
+        <div class="chart-container">
+          <div>
+            <span class="card-label">Weekly Activity Tracker</span>
+            <h3>Server API Requests</h3>
+          </div>
+          <div class="chart-graphic">
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar-tooltip">2.4k req</div>
+              <div class="chart-bar" style="height: 40%;"></div>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar-tooltip">3.8k req</div>
+              <div class="chart-bar" style="height: 60%;"></div>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar-tooltip">5.1k req</div>
+              <div class="chart-bar" style="height: 80%;"></div>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar-tooltip">4.2k req</div>
+              <div class="chart-bar" style="height: 68%;"></div>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar-tooltip">6.3k req</div>
+              <div class="chart-bar" style="height: 95%;"></div>
+            </div>
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar-tooltip">5.7k req</div>
+              <div class="chart-bar" style="height: 88%;"></div>
+            </div>
+          </div>
+          <div class="chart-labels">
+            <div class="chart-label">M</div>
+            <div class="chart-label">T</div>
+            <div class="chart-label">W</div>
+            <div class="chart-label">T</div>
+            <div class="chart-label">F</div>
+            <div class="chart-label">S</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- PROFILE CARD (Supporting 3: spans 1 col, 1 row) -->
+      <article class="glass-card profile-card">
+        <div>
+          <span class="card-label">Success Manager</span>
+          <div class="profile-info-block">
+            <div class="profile-avatar-large">RS</div>
+            <div class="profile-meta">
+              <h4>Ram Sri</h4>
+              <p>Senior Technical PM</p>
+            </div>
+          </div>
+        </div>
+        <div class="contact-list">
+          <a href="mailto:ram@webbheads.com" class="contact-item">
+            <span class="contact-icon">✉</span>
+            ram@webbheads.com
+          </a>
+          <a href="tel:+15550198273" class="contact-item">
+            <span class="contact-icon">📞</span>
+            +1 (555) 019-8273
+          </a>
+        </div>
+      </article>
+
+      <!-- CTA CARD (Supporting 4: spans 2 cols, 1 row) -->
+      <article class="glass-card cta-card">
+        <div class="cta-left">
+          <div class="cta-icon-badge">🚀</div>
+          <h3>Need custom integrations?</h3>
+          <p class="secondary-text" style="font-size: 14px;">Easily submit a request to commission new milestones, schedule QA testing sessions, or review your current subscription.</p>
+        </div>
+        <div class="cta-right">
+          <a href="#" class="cta-button">Initiate Project Request</a>
+        </div>
+      </article>
+    </main>
   </div>
-</div>
 
 </body>
 </html>
