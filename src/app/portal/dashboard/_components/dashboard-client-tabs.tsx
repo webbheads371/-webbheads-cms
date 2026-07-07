@@ -563,9 +563,9 @@ export function DashboardClientTabs({
 
         {/* ==================== SUPPORT TAB ==================== */}
         {activeTopTab === "support" && (
-          <div className="grid md:grid-cols-2 gap-8 items-start animate-fade-in">
+          <div className="grid md:grid-cols-2 gap-8 items-stretch animate-fade-in">
             {/* Assigned Project Leads */}
-            <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-4">
+            <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-4 h-full">
               <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
                 <UserCheck className="h-5 w-5 text-amber-500" />
                 Assigned Project Leads
@@ -624,7 +624,7 @@ export function DashboardClientTabs({
             </div>
 
             {/* General Support & Inquiries */}
-            <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-4">
+            <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-4 h-full">
               <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
                 <Phone className="h-5 w-5 text-amber-500" />
                 Contact WebbHeads Support
