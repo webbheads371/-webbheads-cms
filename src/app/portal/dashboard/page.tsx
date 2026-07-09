@@ -93,7 +93,7 @@ export default async function DashboardPage() {
           />
         </div>
         
-        <div className="flex-1 flex flex-wrap items-start md:items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2">
           <MobileDashboardActions />
         </div>
       </div>
