@@ -25,7 +25,7 @@ export function PortalSidebar() {
             <img
               src="/logo.png"
               alt="WebbHeads Logo"
-              className="h-9 w-9 rounded-full object-contain hover:scale-110 transition-transform duration-300"
+              className="h-9 w-9 rounded-xl bg-black p-0.5 object-contain hover:scale-110 transition-transform duration-300"
             />
           </div>
           {items.map((item) => {

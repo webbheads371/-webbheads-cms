@@ -19,7 +19,7 @@ function OnboardingWrapper({ currentStep, children }: { currentStep: number; chi
           <img
             src="/logo.png"
             alt="WebbHeads Logo"
-            className="h-9 w-9 rounded-full object-contain shadow-sm"
+            className="h-9 w-9 rounded-xl bg-black p-0.5 object-contain shadow-sm"
           />
         </div>
         <form action="/api/auth/signout" method="POST">

@@ -32,7 +32,7 @@ export function StepWelcome({ clientName, projectId }: StepWelcomeProps) {
           <img
             src="/logo.png"
             alt="WebbHeads Logo"
-            className="h-12 w-12 object-cover rounded-2xl shadow-md"
+            className="h-12 w-12 object-cover rounded-2xl bg-black p-1 shadow-md"
           />
         </div>
       </div>
