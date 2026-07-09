@@ -4,7 +4,7 @@ import { useState } from "react"
 import { updateClientPassword } from "@/lib/supabase/portal-actions"
 import { Lock, Eye, EyeOff } from "lucide-react"
 
-export function ChangePasswordForm() {
+export function ChangePasswordForm({ variant = "default" }: { variant?: "default" | "dropdown" }) {
   const [isOpen, setIsOpen] = useState(false)
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -36,6 +36,18 @@ export function ChangePasswordForm() {
   }
 
   if (!isOpen) {
+    if (variant === "dropdown") {
+      return (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="flex w-full items-center gap-2 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all duration-200"
+        >
+          <Lock className="h-4 w-4" />
+          <span className="text-sm font-medium">Change Password</span>
+        </button>
+      )
+    }
+
     return (
     <button
       onClick={() => setIsOpen(true)}
