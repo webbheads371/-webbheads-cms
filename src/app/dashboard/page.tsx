@@ -18,7 +18,9 @@ export default async function DashboardPage() {
     .from("payments")
     .select("amount")
 
-  const totalPendingPayments = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0)
+  const totalProjectValue = (projects || []).reduce((sum, p) => sum + (Number(p.project_value) || 0), 0)
+  const totalPaid = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0)
+  const totalPendingPayments = Math.max(0, totalProjectValue - totalPaid)
 
   return (
     <DashboardClient

@@ -29,7 +29,7 @@ export function StepPayment({
 
   const advanceAmount =
     project.project_value && project.advance_percent
-      ? (project.project_value * project.advance_percent) / 100
+      ? Math.round((project.project_value * project.advance_percent) / 100)
       : null
 
   const formatCurrency = (amount: number) =>
