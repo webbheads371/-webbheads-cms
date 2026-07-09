@@ -110,7 +110,7 @@ export function Sidebar() {
         )}
       >
         <div className="p-6 border-b flex items-center gap-3">
-          <img src="/logo.png" alt="WebbHeads Logo" className="h-9 w-9 rounded-lg object-contain bg-black p-0.5 shadow-sm" />
+          <img src="/logo.png" alt="WebbHeads Logo" className="h-9 w-9 object-contain shadow-sm" />
           <div>
             <h1 className="text-base font-bold tracking-tight leading-none">WebbHeads</h1>
             <p className="text-xs text-muted-foreground mt-1">Staff Portal</p>

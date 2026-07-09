@@ -38,7 +38,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <img src="/logo.png" alt="WebbHeads Logo" className="h-16 w-16 mx-auto mb-4 rounded-xl object-contain bg-black p-1 shadow-md" />
+          <img src="/logo.png" alt="WebbHeads Logo" className="h-16 w-16 mx-auto mb-4 object-contain shadow-md" />
           <CardTitle className="text-2xl">WebbHeads Portal</CardTitle>
           <CardDescription>Enter your credentials to sign in</CardDescription>
         </CardHeader>

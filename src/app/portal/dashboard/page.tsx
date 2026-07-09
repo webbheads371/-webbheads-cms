@@ -89,7 +89,7 @@ export default async function DashboardPage() {
           <img
             src="/logo.png"
             alt="WebbHeads Logo"
-            className="h-9 w-9 rounded-xl bg-black p-0.5 object-contain shadow-sm"
+            className="h-9 w-9 object-contain shadow-sm"
           />
         </div>
         
