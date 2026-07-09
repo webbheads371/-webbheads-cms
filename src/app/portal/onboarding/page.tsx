@@ -7,6 +7,42 @@ import { StepAgreement } from "./_components/step-agreement"
 import { StepPayment } from "./_components/step-payment"
 import { StepProfile } from "./_components/step-profile"
 import type { Agreement, BankSettings, PaymentRequest, FormTemplate, FormResponse, ClientType } from "@/types"
+import { LogOut } from "lucide-react"
+import { ReactNode } from "react"
+
+function OnboardingWrapper({ currentStep, children }: { currentStep: number; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-4 w-full">
+      {/* Mobile Logo & Logout Header */}
+      <div className="flex md:hidden items-center justify-between gap-2 px-2">
+        <div className="flex items-center shrink-0">
+          <img
+            src="/logo.png"
+            alt="WebbHeads Logo"
+            className="h-9 w-9 rounded-full object-contain shadow-sm"
+          />
+        </div>
+        <form action="/api/auth/signout" method="POST">
+          <button
+            type="submit"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-slate-800/40 bg-white dark:bg-slate-900 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all duration-300"
+            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03)' }}
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            <span className="text-xs font-medium">Logout</span>
+          </button>
+        </form>
+      </div>
+
+      <div className="wizard-layout">
+        <WizardStepper currentStep={currentStep} />
+        <div className="wizard-card">
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default async function OnboardingPage() {
   const clientUser = await getCurrentClientUser()
@@ -56,18 +92,15 @@ export default async function OnboardingPage() {
       currentStep = 2
 
       return (
-        <div className="wizard-layout">
-          <WizardStepper currentStep={currentStep} />
-          <div className="wizard-card">
-            {agreement ? (
-              <StepAgreement projectId={project.id} agreement={agreement as Agreement} />
-            ) : (
-              <div className="info-banner">
-                Your agreement is being prepared. Please check back shortly.
-              </div>
-            )}
-          </div>
-        </div>
+        <OnboardingWrapper currentStep={currentStep}>
+          {agreement ? (
+            <StepAgreement projectId={project.id} agreement={agreement as Agreement} />
+          ) : (
+            <div className="info-banner">
+              Your agreement is being prepared. Please check back shortly.
+            </div>
+          )}
+        </OnboardingWrapper>
       )
     }
 
@@ -119,20 +152,17 @@ export default async function OnboardingPage() {
         .single()
 
       return (
-        <div className="wizard-layout">
-          <WizardStepper currentStep={currentStep} />
-          <div className="wizard-card">
-            <StepPayment
-              projectId={project.id}
-              project={{
-                project_value: project.project_value,
-                advance_percent: project.advance_percent ?? 50,
-              }}
-              bankSettings={bankSettings as BankSettings | null}
-              paymentRequest={advancePayment as PaymentRequest | null}
-            />
-          </div>
-        </div>
+        <OnboardingWrapper currentStep={currentStep}>
+          <StepPayment
+            projectId={project.id}
+            project={{
+              project_value: project.project_value,
+              advance_percent: project.advance_percent ?? 50,
+            }}
+            bankSettings={bankSettings as BankSettings | null}
+            paymentRequest={advancePayment as PaymentRequest | null}
+          />
+        </OnboardingWrapper>
       )
     }
 
@@ -160,29 +190,23 @@ export default async function OnboardingPage() {
       .eq("project_id", project.id)
 
     return (
-      <div className="wizard-layout">
-        <WizardStepper currentStep={currentStep} />
-        <div className="wizard-card">
-          <StepProfile
-            projectId={project.id}
-            templates={templates}
-            existingResponses={(existingResponses ?? []) as FormResponse[]}
-          />
-        </div>
-      </div>
+      <OnboardingWrapper currentStep={currentStep}>
+        <StepProfile
+          projectId={project.id}
+          templates={templates}
+          existingResponses={(existingResponses ?? []) as FormResponse[]}
+        />
+      </OnboardingWrapper>
     )
   }
 
   // Default render for Step 1 (Welcome)
   return (
-    <div className="wizard-layout">
-      <WizardStepper currentStep={1} />
-      <div className="wizard-card">
-        <StepWelcome
-          clientName={clientUser.full_name}
-          projectId={project.id}
-        />
-      </div>
-    </div>
+    <OnboardingWrapper currentStep={1}>
+      <StepWelcome
+        clientName={clientUser.full_name}
+        projectId={project.id}
+      />
+    </OnboardingWrapper>
   )
 }

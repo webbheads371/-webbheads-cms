@@ -189,7 +189,7 @@ export async function submitProfileForm(
   revalidatePath("/portal")
   revalidatePath("/portal/onboarding")
   revalidatePath("/portal/dashboard")
-  redirect("/portal/dashboard")
+  return { error: null }
 }
 
 // ─── File upload for form responses ──────────────────────────────────────────
