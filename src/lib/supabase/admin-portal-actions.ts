@@ -371,6 +371,7 @@ export async function postStatusUpdate(
 
 export async function saveBankSettings(formData: FormData) {
   const supabase = createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const data: Record<string, string | null> = {
@@ -386,12 +387,12 @@ export async function saveBankSettings(formData: FormData) {
   // Handle QR image upload
   const qrFile = formData.get("qr_image") as File | null
   if (qrFile && qrFile.size > 0) {
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await adminClient.storage
       .from("client-uploads")
       .upload("bank-qr/qr.png", qrFile, { upsert: true })
     if (uploadError) return { error: uploadError.message }
 
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = adminClient.storage
       .from("client-uploads")
       .getPublicUrl("bank-qr/qr.png")
     data.qr_image_url = publicUrl
