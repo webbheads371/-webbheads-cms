@@ -219,16 +219,17 @@ export async function uploadAgreementPdf(projectId: string, formData: FormData) 
 
 export async function approvePaymentRequest(paymentRequestId: string, projectId: string) {
   const supabase = createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   // Fetch the request to compute final invoice if advance
-  const { data: req } = await supabase
+  const { data: req } = await adminClient
     .from("payment_requests")
     .select("request_type, amount, project_id")
     .eq("id", paymentRequestId)
     .single()
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from("payment_requests")
     .update({
       status: "approved",
@@ -240,7 +241,7 @@ export async function approvePaymentRequest(paymentRequestId: string, projectId:
 
   // Auto-record in payments table for accounting/staff view
   if (req) {
-    await supabase.from("payments").insert({
+    await adminClient.from("payments").insert({
       project_id: req.project_id,
       amount: req.amount,
       payment_type: req.request_type,
@@ -252,7 +253,7 @@ export async function approvePaymentRequest(paymentRequestId: string, projectId:
 
   // If advance approved, auto-create final payment_request (if not yet existing)
   if (req?.request_type === "advance") {
-    const { data: project } = await supabase
+    const { data: project } = await adminClient
       .from("projects")
       .select("project_value")
       .eq("id", req.project_id)
@@ -260,7 +261,7 @@ export async function approvePaymentRequest(paymentRequestId: string, projectId:
 
     const finalAmount = (project?.project_value ?? 0) - req.amount
 
-    await supabase.from("payment_requests").upsert(
+    await adminClient.from("payment_requests").upsert(
       {
         project_id: req.project_id,
         request_type: "final",
@@ -284,9 +285,10 @@ export async function rejectPaymentRequest(
   rejectionReason: string
 ) {
   const supabase = createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from("payment_requests")
     .update({
       status: "rejected",
@@ -307,9 +309,10 @@ export async function rejectPaymentRequest(
 
 export async function releaseFinalInvoice(projectId: string) {
   const supabase = createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from("payment_requests")
     .update({
       released: true,

@@ -41,14 +41,16 @@ export function FinalInvoiceSection({ projectId, paymentRequest, bankSettings }:
         <Receipt className="h-5 w-5 text-primary" />
         Final Invoice
       </h2>
-      <div className="payment-amount-card">
-        <div className="payment-amount-row payment-advance-row">
-          <span className="payment-amount-label">Remaining Balance</span>
-          <span className="payment-amount-highlight">{formatCurrency(paymentRequest.amount)}</span>
+      {status !== "approved" && (
+        <div className="payment-amount-card">
+          <div className="payment-amount-row payment-advance-row">
+            <span className="payment-amount-label">Remaining Balance</span>
+            <span className="payment-amount-highlight">{formatCurrency(paymentRequest.amount)}</span>
+          </div>
         </div>
-      </div>
+      )}
 
-      {bankSettings && (
+      {bankSettings && status !== "approved" && (
         <div className="payment-bank-card">
           <div className="payment-bank-left">
             {bankSettings.qr_image_url && (

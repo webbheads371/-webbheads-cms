@@ -23,11 +23,26 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       setError(error.message)
       setLoading(false)
       return
+    }
+
+    // Check if this user is a client portal user
+    if (data.user) {
+      const { data: clientUser } = await supabase
+        .from("client_users")
+        .select("id")
+        .eq("id", data.user.id)
+        .single()
+
+      if (clientUser) {
+        router.push("/portal")
+        router.refresh()
+        return
+      }
     }
 
     router.push("/dashboard")
