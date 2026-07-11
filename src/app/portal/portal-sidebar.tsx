@@ -22,11 +22,13 @@ export function PortalSidebar() {
         {/* Logo + Nav Links */}
         <div className="flex flex-row gap-1 lg:gap-4 items-center">
           <div className="portal-brand flex items-center justify-center mr-2">
-            <img
-              src="/logo.png"
-              alt="WebbHeads Logo"
-              className="h-9 w-9 object-contain hover:scale-110 transition-transform duration-300"
-            />
+            <div className="h-9 w-9 rounded-xl bg-slate-900 flex items-center justify-center flex-shrink-0 shadow-sm hover:scale-110 transition-transform duration-300">
+              <img
+                src="/logo.png"
+                alt="WebbHeads Logo"
+                className="h-7 w-7 object-contain"
+              />
+            </div>
           </div>
           {items.map((item) => {
             const Icon = item.icon
@@ -80,7 +82,7 @@ export function PortalSidebar() {
           }}
         >
           <div className="flex items-center justify-around px-1 py-1">
-            {items.filter(i => !["credentials", "support"].includes(i.tabName)).map((item) => {
+            {items.map((item) => {
               const Icon = item.icon
               const isActive = activeTab === item.tabName
               return (
