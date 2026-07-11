@@ -38,7 +38,15 @@ export function TopBar() {
 
   return (
     <header className="h-16 border-b bg-card flex items-center justify-between px-6 lg:px-8">
-      <div />
+      {/* Logo — visible on mobile; sidebar shows it on desktop */}
+      <div className="flex items-center gap-2 lg:hidden">
+        <div className="h-8 w-8 rounded-xl bg-slate-900 flex items-center justify-center flex-shrink-0">
+          <img src="/logo.png" alt="WebbHeads Logo" className="h-6 w-6 object-contain" />
+        </div>
+        <span className="text-sm font-bold tracking-tight">WebbHeads</span>
+      </div>
+      {/* Spacer on desktop so right-side content stays right-aligned */}
+      <div className="hidden lg:block" />
       <div className="flex items-center gap-4">
         {staff && (
           <>
