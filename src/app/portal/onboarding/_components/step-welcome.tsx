@@ -27,12 +27,11 @@ export function StepWelcome({ clientName, projectId }: StepWelcomeProps) {
     <div className="wizard-step-content flex flex-col items-center text-center animate-fade-in duration-500">
       {/* Company Logo */}
       <div className="relative mb-6">
-        <div className="absolute inset-0 bg-amber-500/20 rounded-3xl blur-xl animate-pulse" />
-        <div className="relative p-4 bg-gradient-to-tr from-amber-500/10 to-yellow-500/10 dark:from-amber-500/20 dark:to-yellow-500/20 rounded-3xl border border-amber-500/20 dark:border-amber-500/30 shadow-inner hover:scale-110 transition-transform duration-300 flex items-center justify-center">
+        <div className="relative p-4 bg-black rounded-3xl border border-black/80 shadow-lg hover:scale-110 transition-transform duration-300 flex items-center justify-center">
           <img
             src="/logo.png"
             alt="WebbHeads Logo"
-            className="h-12 w-12 object-contain shadow-md"
+            className="h-12 w-12 object-contain"
           />
         </div>
       </div>
