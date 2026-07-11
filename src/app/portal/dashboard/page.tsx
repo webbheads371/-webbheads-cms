@@ -86,11 +86,13 @@ export default async function DashboardPage() {
       <div className="flex flex-row items-start md:items-center justify-between gap-2 md:gap-6 w-full">
         {/* Mobile Logo (hidden on md and above since PortalSidebar handles it) */}
         <div className="flex md:hidden items-center shrink-0">
-          <img
-            src="/logo.png"
-            alt="WebbHeads Logo"
-            className="h-9 w-9 object-contain shadow-sm"
-          />
+          <div className="h-9 w-9 rounded-xl bg-slate-900 flex items-center justify-center flex-shrink-0 shadow-sm">
+            <img
+              src="/logo.png"
+              alt="WebbHeads Logo"
+              className="h-7 w-7 object-contain"
+            />
+          </div>
         </div>
         
         <div className="flex items-center justify-end gap-2">
