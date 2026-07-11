@@ -18,6 +18,8 @@ export function AgreementTab({ projectId, agreement }: AgreementTabProps) {
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    setUploading(true)
+    setError(null)
     const formData = new FormData()
     formData.append("file", file)
     const result = await uploadAgreementPdf(projectId, formData)
