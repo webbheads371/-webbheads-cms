@@ -64,9 +64,18 @@ export async function POST() {
   const existingStaffIds = new Set((existingStaff ?? []).map((s) => s.id))
   const existingStaffEmails = new Set((existingStaff ?? []).map((s) => s.email))
 
-  // Find auth users not yet in the staff table
+  // Get all existing client ids to prevent merging clients into staff
+  const { data: existingClients } = await adminClient.from("clients").select("id, email")
+  const existingClientIds = new Set((existingClients ?? []).map((c) => c.id))
+  const existingClientEmails = new Set((existingClients ?? []).map((c) => c.email))
+
+  // Find auth users not yet in the staff table and not in the clients table
   const orphaned = authUsers.filter(
-    (u) => !existingStaffIds.has(u.id) && !existingStaffEmails.has(u.email ?? "")
+    (u) => 
+      !existingStaffIds.has(u.id) && 
+      !existingStaffEmails.has(u.email ?? "") &&
+      !existingClientIds.has(u.id) &&
+      !existingClientEmails.has(u.email ?? "")
   )
 
   if (orphaned.length === 0) {
