@@ -247,12 +247,6 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
             {/* Conversation Header */}
             <div className="p-4 border-b border-slate-200/60 dark:border-slate-800/60 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm shrink-0">
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setSelectedConv(null)}
-                  className="lg:hidden p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </button>
                 <div className="h-10 w-10 rounded-full bg-amber-500/10 text-[#D6A33C] flex items-center justify-center font-bold text-sm shrink-0">
                   {selectedConv.clientName.substring(0, 2).toUpperCase()}
                 </div>
@@ -266,7 +260,7 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
                 </div>
               </div>
 
-              {/* Channel Selector for Admins */}
+              {/* Channel Selector + Back Button */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 {channelsList.map((c) => {
                   if (!c.allowed) return null
@@ -291,6 +285,15 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
                     </button>
                   )
                 })}
+                {/* Back to conversations list */}
+                <button
+                  onClick={() => setSelectedConv(null)}
+                  title="Back to conversations"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 border border-transparent hover:border-red-200 dark:hover:border-red-800/50 transition-all duration-300"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Back
+                </button>
               </div>
             </div>
 
