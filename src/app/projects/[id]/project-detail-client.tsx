@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertTriangle, Trash2 } from "lucide-react"
+import { AlertTriangle, Trash2, ArrowLeft } from "lucide-react"
 import { useState, lazy, Suspense } from "react"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
@@ -158,16 +158,25 @@ export function ProjectDetailClient({
       <PageHeader
         title={project.name}
         description={
-          <div className="flex items-center gap-2 mt-1">
-            <span>{project.client?.company_name}</span>
-            <Badge variant="outline" className="capitalize">
-              {project.current_stage.replace(/_/g, " ")}
-            </Badge>
-            {project.status !== "active" && (
-              <Badge variant={project.status === "closed_won" ? "default" : "destructive"}>
-                {project.status.replace("_", " ")}
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={() => router.back()}
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors group"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              Back
+            </button>
+            <div className="flex items-center gap-2">
+              <span>{project.client?.company_name}</span>
+              <Badge variant="outline" className="capitalize">
+                {project.current_stage.replace(/_/g, " ")}
               </Badge>
-            )}
+              {project.status !== "active" && (
+                <Badge variant={project.status === "closed_won" ? "default" : "destructive"}>
+                  {project.status.replace("_", " ")}
+                </Badge>
+              )}
+            </div>
           </div>
         }
       />
