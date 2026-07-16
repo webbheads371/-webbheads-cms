@@ -80,13 +80,17 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
           table: 'messages',
           filter: `project_id=eq.${projectId}`
         },
-        () => {
-          fetchMessages()
+        (payload) => {
+          const newMsg = payload.new as any
+          setMessages(prev => {
+            if (prev.find(m => m.id === newMsg.id)) return prev
+            return [...prev, newMsg]
+          })
         }
       )
       .subscribe()
 
-    const interval = setInterval(fetchMessages, 3000)
+    const interval = setInterval(fetchMessages, 15000)
 
     return () => {
       supabase.removeChannel(channel)
@@ -142,9 +146,10 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
     if (res.error) {
       alert("Failed to send message: " + res.error)
       // Rollback optimistic update
-      fetchMessages()
-    } else {
-      fetchMessages()
+      setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
+    } else if (res.data) {
+      // Replace optimistic with real
+      setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? { ...res.data, sender_name: "You (Client)" } : m))
     }
   }
 

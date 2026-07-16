@@ -70,17 +70,21 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
           table: 'messages',
           filter: `project_id=eq.${selectedConv.projectId}`
         },
-        () => {
-          loadMessages(selectedConv.projectId)
+        (payload) => {
+          const newMsg = payload.new as any
+          setMessages(prev => {
+            if (prev.find(m => m.id === newMsg.id)) return prev
+            return [...prev, newMsg]
+          })
           loadConversations()
         }
       )
       .subscribe()
 
-    // 2. Setup backup polling (every 3 seconds)
+    // 2. Setup backup polling (every 15 seconds)
     const interval = setInterval(() => {
       loadMessages(selectedConv.projectId)
-    }, 3000)
+    }, 15000)
 
     return () => {
       supabase.removeChannel(channel)
@@ -136,9 +140,11 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
     setSending(false)
     if (res.error) {
       alert("Failed to send message: " + res.error)
-      if (selectedConv) loadMessages(selectedConv.projectId)
-    } else {
-      if (selectedConv) loadMessages(selectedConv.projectId)
+      // Rollback optimistic update
+      setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
+    } else if (res.data) {
+      // Replace optimistic with real
+      setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? { ...res.data, sender_name: optimisticMsg.sender_name } : m))
       loadConversations()
     }
   }

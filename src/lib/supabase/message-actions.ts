@@ -103,7 +103,7 @@ export async function sendMessage({
     senderRole = staff.role as any
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("messages")
     .insert({
       project_id: projectId,
@@ -114,13 +114,15 @@ export async function sendMessage({
       message: messageText,
       created_at: new Date().toISOString()
     })
+    .select()
+    .single()
 
   if (error) {
     console.error("Error sending message:", error)
     return { error: error.message }
   }
 
-  return { error: null }
+  return { error: null, data }
 }
 
 // ─── Fetch Active Conversations for Staff ────────────────────────────────────
