@@ -24,6 +24,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
   const [sending, setSending] = useState(false)
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -93,10 +94,10 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
     }
   }, [projectId])
 
-  // Scroll to bottom when channel changes, messages load, or keyboard state toggles
+  // Scroll to bottom when channel changes or messages load
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages, activeChannel, isKeyboardOpen])
+  }, [messages, activeChannel])
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -105,6 +106,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
     const messageText = inputText.trim()
     setInputText("")
     setSending(true)
+    inputRef.current?.focus()
 
     // Optimistic UI update
     const optimisticMsg = {
@@ -320,6 +322,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
           <form onSubmit={handleSend} className="p-3 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-2 bg-slate-50/50 dark:bg-slate-950/20">
             <input
               type="text"
+              ref={inputRef}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onFocus={() => setIsKeyboardOpen(true)}
@@ -329,6 +332,8 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
             />
             <button
               type="submit"
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
               disabled={!inputText.trim() || sending}
               className="p-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold hover:from-amber-600 hover:to-amber-700 disabled:opacity-40 disabled:hover:from-amber-500 disabled:hover:to-amber-600 transition-all duration-300"
             >
