@@ -1,13 +1,24 @@
 import { redirect } from "next/navigation"
 import { getCurrentClientUser } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import type { ReactNode } from "react"
-import { PortalNav } from "./portal-nav"
 import { PortalSidebar } from "./portal-sidebar"
 import { PortalTabProvider } from "./portal-tab-context"
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {
   const clientUser = await getCurrentClientUser()
   if (!clientUser) redirect("/login")
+
+  // Fetch client type to conditionally show Schedule tab
+  const supabase = createClient()
+  const { data: project } = await supabase
+    .from("projects")
+    .select("client:clients(client_type)")
+    .eq("client_id", clientUser.client_id)
+    .single()
+
+  const clientType = (project?.client as any)?.client_type ?? "tech"
+  const showSchedule = clientType === "content" || clientType === "both"
 
   return (
     <PortalTabProvider>
@@ -25,7 +36,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
         {/* Outer Grid layout to manage floating navbar and content space */}
         <div className="w-full max-w-[1400px] mx-auto flex flex-col gap-0 items-start relative z-10 flex-1">
           {/* Top Navbar */}
-          <PortalSidebar />
+          <PortalSidebar showSchedule={showSchedule} />
 
           {/* Bottom Floating Content Container */}
           <div className="w-full flex-1 flex flex-col min-w-0 pt-1 md:pt-4">

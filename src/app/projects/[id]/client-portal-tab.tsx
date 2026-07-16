@@ -55,6 +55,14 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
   const [timelineReview, setTimelineReview] = useState<string>(project.timeline_review_status || "")
   const [timelineSuccess, setTimelineSuccess] = useState(false)
 
+  const initialDesignName = project.timeline_design_name || "Design Phase"
+  const initialDevName = project.timeline_dev_name || "Development"
+  const initialReviewName = project.timeline_review_name || "Review"
+
+  const [timelineDesignName, setTimelineDesignName] = useState(initialDesignName)
+  const [timelineDevName, setTimelineDevName] = useState(initialDevName)
+  const [timelineReviewName, setTimelineReviewName] = useState(initialReviewName)
+
   const handleSaveTimelineStages = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
@@ -64,7 +72,10 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
         project.id,
         timelineDesign || null,
         timelineDev || null,
-        timelineReview || null
+        timelineReview || null,
+        timelineDesignName,
+        timelineDevName,
+        timelineReviewName
       )
       if (result.error) {
         setError(result.error)
@@ -169,7 +180,16 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
           </p>
           <div className="form-grid-3col shadow-xs" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
             <div className="form-field">
-              <label className="form-label" htmlFor="timeline-design" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Design Phase</label>
+              <label className="form-label" htmlFor="timeline-design-name" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Phase 1 Name</label>
+              <input
+                id="timeline-design-name"
+                type="text"
+                value={timelineDesignName}
+                onChange={(e) => setTimelineDesignName(e.target.value)}
+                className="form-input mb-2"
+                placeholder="e.g. Design Phase"
+              />
+              <label className="form-label" htmlFor="timeline-design" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Phase 1 Status</label>
               <select
                 id="timeline-design"
                 value={timelineDesign}
@@ -183,7 +203,16 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
               </select>
             </div>
             <div className="form-field">
-              <label className="form-label" htmlFor="timeline-dev">Development Phase</label>
+              <label className="form-label" htmlFor="timeline-dev-name" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Phase 2 Name</label>
+              <input
+                id="timeline-dev-name"
+                type="text"
+                value={timelineDevName}
+                onChange={(e) => setTimelineDevName(e.target.value)}
+                className="form-input mb-2"
+                placeholder="e.g. Development Phase"
+              />
+              <label className="form-label" htmlFor="timeline-dev" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Phase 2 Status</label>
               <select
                 id="timeline-dev"
                 value={timelineDev}
@@ -197,7 +226,16 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
               </select>
             </div>
             <div className="form-field">
-              <label className="form-label" htmlFor="timeline-review">Review Phase</label>
+              <label className="form-label" htmlFor="timeline-review-name" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Phase 3 Name</label>
+              <input
+                id="timeline-review-name"
+                type="text"
+                value={timelineReviewName}
+                onChange={(e) => setTimelineReviewName(e.target.value)}
+                className="form-input mb-2"
+                placeholder="e.g. Review Phase"
+              />
+              <label className="form-label" htmlFor="timeline-review" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Phase 3 Status</label>
               <select
                 id="timeline-review"
                 value={timelineReview}

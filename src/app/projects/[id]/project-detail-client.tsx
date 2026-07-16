@@ -15,7 +15,7 @@ import { PageHeader } from "@/components/page-header"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { useSupabase } from "@/hooks/use-supabase"
 import { StageStepper } from "./stage-stepper"
-import type { Project, PipelineStage, ProjectChecklistItem, Payment, Document, ActivityLog, Staff, Agreement, PaymentRequest, FormResponse, ProjectStatusUpdate } from "@/types"
+import type { Project, PipelineStage, ProjectChecklistItem, Payment, Document, ActivityLog, Staff, Agreement, PaymentRequest, FormResponse, ProjectStatusUpdate, ContentSchedule } from "@/types"
 
 const ChecklistPanel = dynamic(() => import("./checklist-panel").then((m) => ({ default: m.ChecklistPanel })), { ssr: false })
 const PaymentsTab = dynamic(() => import("./payments-tab").then((m) => ({ default: m.PaymentsTab })), { ssr: false })
@@ -25,6 +25,7 @@ const AgreementTab = dynamic(() => import("./agreement-tab").then((m) => ({ defa
 const FormResponsesTab = dynamic(() => import("./form-responses-tab").then((m) => ({ default: m.FormResponsesTab })), { ssr: false })
 const ClientPortalTab = dynamic(() => import("./client-portal-tab").then((m) => ({ default: m.ClientPortalTab })), { ssr: false })
 const WorkUpdatesTab = dynamic(() => import("./work-updates-tab").then((m) => ({ default: m.WorkUpdatesTab })), { ssr: false })
+const ContentScheduleTabAdmin = dynamic(() => import("./content-schedule-tab").then((m) => ({ default: m.ContentScheduleTab })), { ssr: false })
 
 
 interface Props {
@@ -40,11 +41,12 @@ interface Props {
   paymentRequests: PaymentRequest[]
   formResponses: FormResponse[]
   statusUpdates: ProjectStatusUpdate[]
+  contentSchedule: ContentSchedule[]
 }
 
 export function ProjectDetailClient({
   project, stages, checklistItems, payments, documents, activity, currentStaff,
-  agreement, paymentRequests, formResponses, statusUpdates,
+  agreement, paymentRequests, formResponses, statusUpdates, contentSchedule,
 }: Props) {
   const [showForceDialog, setShowForceDialog] = useState(false)
   const [showCloseDialog, setShowCloseDialog] = useState(false)
@@ -316,6 +318,7 @@ export function ProjectDetailClient({
               <TabsTrigger value="agreement">Agreement</TabsTrigger>
               <TabsTrigger value="form-responses">Form Responses</TabsTrigger>
               <TabsTrigger value="client-portal">Client Portal</TabsTrigger>
+              <TabsTrigger value="content-schedule">Content Schedule</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
             </>
           ) : (
@@ -382,6 +385,12 @@ export function ProjectDetailClient({
             <TabsContent value="activity">
               <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading activity...</div>}>
                 <ActivityTimeline activity={activity} />
+              </Suspense>
+            </TabsContent>
+
+            <TabsContent value="content-schedule">
+              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading schedule...</div>}>
+                <ContentScheduleTabAdmin projectId={project.id} items={contentSchedule} />
               </Suspense>
             </TabsContent>
           </>

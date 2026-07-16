@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 
-type TabType = "home" | "credentials" | "documents" | "payments" | "support"
+type TabType = "home" | "credentials" | "documents" | "payments" | "support" | "schedule"
 
 interface PortalTabContextProps {
   activeTab: TabType
@@ -12,18 +12,17 @@ interface PortalTabContextProps {
 
 const PortalTabContext = createContext<PortalTabContextProps | undefined>(undefined)
 
+const VALID_TABS: TabType[] = ["home", "credentials", "documents", "payments", "support", "schedule"]
+
 function PortalTabContextInner({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab") as TabType | null
-  const initialTab = tabParam && ["home", "credentials", "documents", "payments", "support"].includes(tabParam)
-    ? tabParam
-    : "home"
+  const initialTab = tabParam && VALID_TABS.includes(tabParam) ? tabParam : "home"
   const [activeTab, setActiveTabState] = useState<TabType>(initialTab)
 
-  // Keep state in sync if URL changes externally (e.g. initial load)
   useEffect(() => {
     const tab = searchParams.get("tab") as TabType
-    if (tab && ["home", "credentials", "documents", "payments", "support"].includes(tab)) {
+    if (tab && VALID_TABS.includes(tab)) {
       setActiveTabState(tab)
     } else if (!tab) {
       setActiveTabState("home")
@@ -32,7 +31,6 @@ function PortalTabContextInner({ children }: { children: ReactNode }) {
 
   const setActiveTab = (tab: TabType) => {
     setActiveTabState(tab)
-    // Update the URL client-side without triggering Next.js server-side re-render
     const newUrl = tab === "home" ? "/portal/dashboard" : `/portal/dashboard?tab=${tab}`
     window.history.pushState({ ...window.history.state, as: newUrl, url: newUrl }, "", newUrl)
   }

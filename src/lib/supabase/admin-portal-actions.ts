@@ -639,7 +639,10 @@ export async function saveProjectTimelineStages(
   projectId: string,
   designStatus: string | null,
   devStatus: string | null,
-  reviewStatus: string | null
+  reviewStatus: string | null,
+  designName: string,
+  devName: string,
+  reviewName: string
 ) {
   const adminClient = createAdminClient()
 
@@ -649,6 +652,9 @@ export async function saveProjectTimelineStages(
       timeline_design_status: designStatus || null,
       timeline_dev_status: devStatus || null,
       timeline_review_status: reviewStatus || null,
+      timeline_design_name: designName || "Design Phase",
+      timeline_dev_name: devName || "Development",
+      timeline_review_name: reviewName || "Review",
     })
     .eq("id", projectId)
 
@@ -658,7 +664,7 @@ export async function saveProjectTimelineStages(
   await adminClient.from("activity_log").insert({
     project_id: projectId,
     action: "timeline_stages_updated",
-    detail: { designStatus, devStatus, reviewStatus },
+    detail: { designStatus, devStatus, reviewStatus, designName, devName, reviewName },
   })
 
   revalidatePath(`/projects/${projectId}`)
@@ -666,4 +672,85 @@ export async function saveProjectTimelineStages(
   return { error: null }
 }
 
+// ─── Content Schedule ─────────────────────────────────────────────────────────
 
+export async function createContentScheduleItem(
+  projectId: string,
+  contentName: string,
+  caption: string,
+  scheduledAt: string
+) {
+  const supabase = createClient()
+  const adminClient = createAdminClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { error } = await adminClient.from("content_schedule").insert({
+    project_id: projectId,
+    content_name: contentName,
+    caption: caption || null,
+    scheduled_at: scheduledAt,
+    is_posted: false,
+    created_by: user?.id,
+    updated_by: user?.id,
+  })
+  if (error) return { error: error.message }
+
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath("/portal/dashboard")
+  return { error: null }
+}
+
+export async function updateContentScheduleItem(
+  itemId: string,
+  projectId: string,
+  contentName: string,
+  caption: string,
+  scheduledAt: string
+) {
+  const supabase = createClient()
+  const adminClient = createAdminClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { error } = await adminClient
+    .from("content_schedule")
+    .update({
+      content_name: contentName,
+      caption: caption || null,
+      scheduled_at: scheduledAt,
+      updated_by: user?.id,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", itemId)
+  if (error) return { error: error.message }
+
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath("/portal/dashboard")
+  return { error: null }
+}
+
+export async function deleteContentScheduleItem(itemId: string, projectId: string) {
+  const adminClient = createAdminClient()
+  const { error } = await adminClient.from("content_schedule").delete().eq("id", itemId)
+  if (error) return { error: error.message }
+
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath("/portal/dashboard")
+  return { error: null }
+}
+
+export async function toggleContentSchedulePosted(itemId: string, projectId: string, isPosted: boolean) {
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
+    .from("content_schedule")
+    .update({
+      is_posted: isPosted,
+      posted_at: isPosted ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", itemId)
+  if (error) return { error: error.message }
+
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath("/portal/dashboard")
+  return { error: null }
+}

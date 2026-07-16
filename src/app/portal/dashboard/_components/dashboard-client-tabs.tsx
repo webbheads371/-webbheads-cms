@@ -6,7 +6,9 @@ import { CredentialsForm } from "./credentials-form"
 import { FinalInvoiceSection } from "./final-invoice-section"
 import { HandlesSection } from "./handles-section"
 import { ClientGreeting } from "./client-greeting"
-import type { Project, PaymentRequest, BankSettings, ProjectStatusUpdate, FormTemplate, FormResponse } from "@/types"
+import { ScheduleContentTab } from "./schedule-content-tab"
+import { ClientSupportChat } from "./client-support-chat"
+import type { Project, PaymentRequest, BankSettings, ProjectStatusUpdate, FormTemplate, FormResponse, ContentSchedule } from "@/types"
 import { 
   Home, KeyRound, UserCheck, Rocket, FileText, Calendar, Settings, 
   FileSignature, Receipt, CreditCard, Mail, MessageCircle, Phone, 
@@ -26,6 +28,7 @@ interface DashboardClientTabsProps {
   documents: any[]
   formTemplates: FormTemplate[]
   formResponses: FormResponse[]
+  contentSchedule: ContentSchedule[]
 }
 
 export function DashboardClientTabs({
@@ -36,8 +39,10 @@ export function DashboardClientTabs({
   documents,
   formResponses,
   formTemplates,
+  contentSchedule,
 }: DashboardClientTabsProps) {
   const { activeTab: activeTopTab } = usePortalTab()
+  const [showChat, setShowChat] = useState(false)
 
   const advancePayment = paymentRequests.find((p) => p.request_type === "advance")
   const finalPayment = paymentRequests.find((p) => p.request_type === "final" && p.released)
@@ -109,6 +114,10 @@ export function DashboardClientTabs({
 
   const { designStatus, devStatus, reviewStatus } = getStageStatus(project.current_stage || "design")
 
+  const designPhaseName = project.timeline_design_name || "Design Phase"
+  const devPhaseName = project.timeline_dev_name || "Development"
+  const reviewPhaseName = project.timeline_review_name || "Review"
+
   return (
     <div className="w-full flex flex-col gap-6 animate-fade-in duration-300">
       {/* Tab Contents */}
@@ -162,7 +171,7 @@ export function DashboardClientTabs({
                       )}
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold text-[#111827] dark:text-slate-200 leading-none">Design Phase</span>
+                      <span className="text-sm font-bold text-[#111827] dark:text-slate-200 leading-none">{designPhaseName}</span>
                       <span className="text-[11px] text-[#6B7280] dark:text-slate-500 mt-1">
                         {designStatus === "completed" ? "Completed" : designStatus === "in_progress" ? "In Progress" : "Upcoming"}
                       </span>
@@ -187,7 +196,7 @@ export function DashboardClientTabs({
                       )}
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold text-[#111827] dark:text-slate-200 leading-none">Development</span>
+                      <span className="text-sm font-bold text-[#111827] dark:text-slate-200 leading-none">{devPhaseName}</span>
                       <span className="text-[11px] text-[#6B7280] dark:text-slate-500 mt-1">
                         {devStatus === "completed" ? "Completed" : devStatus === "in_progress" ? "In Progress" : "Upcoming"}
                       </span>
@@ -212,7 +221,7 @@ export function DashboardClientTabs({
                       )}
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold text-[#111827] dark:text-slate-200 leading-none">Review</span>
+                      <span className="text-sm font-bold text-[#111827] dark:text-slate-200 leading-none">{reviewPhaseName}</span>
                       <span className="text-[11px] text-[#6B7280] dark:text-slate-500 mt-1">
                         {reviewStatus === "completed" ? "Completed" : reviewStatus === "in_progress" ? "In Progress" : "Upcoming"}
                       </span>
@@ -248,7 +257,7 @@ export function DashboardClientTabs({
                 {/* Status Pill Button at Bottom */}
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                   <span className="text-[11px] px-3 py-1 rounded-full font-bold bg-[#E8EAEE] text-[#6B7280] dark:bg-slate-800 dark:text-slate-300">
-                    Active Phase: {devStatus === "completed" ? "Review" : devStatus === "in_progress" ? "Development" : "Design"}
+                    Active Phase: {devStatus === "completed" ? reviewPhaseName : devStatus === "in_progress" ? devPhaseName : designPhaseName}
                   </span>
                   <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                     Updated {new Date(project.created_at).toLocaleDateString("en-IN")}
@@ -563,126 +572,158 @@ export function DashboardClientTabs({
 
         {/* ==================== SUPPORT TAB ==================== */}
         {activeTopTab === "support" && (
-          <div className="grid md:grid-cols-2 gap-8 items-stretch animate-fade-in">
-            {/* Assigned Project Leads */}
-            <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-4 h-full">
-              <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
-                <UserCheck className="h-5 w-5 text-amber-500" />
-                Assigned Project Leads
-              </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                Your direct technical and creative contact points at WebbHeads.
-              </p>
+          showChat ? (
+            <ClientSupportChat
+              projectId={project.id}
+              project={project}
+              onBack={() => setShowChat(false)}
+            />
+          ) : (
+            <div className="grid md:grid-cols-2 gap-8 items-stretch animate-fade-in">
+              {/* Assigned Project Leads */}
+              <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-4 h-full">
+                <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
+                  <UserCheck className="h-5 w-5 text-amber-500" />
+                  Assigned Project Leads
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Your direct technical and creative contact points at WebbHeads.
+                </p>
 
-              <div className="flex flex-col gap-4 mt-2">
-                {/* Tech Lead */}
-                <div className="p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm flex flex-col gap-2 shadow-sm">
-                  <div className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                    Tech Lead
-                  </div>
-                  {project.tech_lead ? (
-                    <>
-                      <div className="font-bold text-base text-slate-800 dark:text-slate-200">{project.tech_lead.full_name}</div>
-                      <a
-                        href={`mailto:${project.tech_lead.email}`}
-                        className="text-sm text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 transition-colors hover:underline inline-flex items-center gap-2"
-                      >
-                        <Mail className="h-4 w-4" />
-                        {project.tech_lead.email}
-                      </a>
-                    </>
-                  ) : (
-                    <div className="text-sm text-slate-400 italic py-1">
-                      To be assigned shortly
+                <div className="flex flex-col gap-4 mt-2">
+                  {/* Tech Lead */}
+                  <div className="p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm flex flex-col gap-2 shadow-sm">
+                    <div className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                      Tech Lead
                     </div>
-                  )}
+                    {project.tech_lead ? (
+                      <>
+                        <div className="font-bold text-base text-slate-800 dark:text-slate-200">{project.tech_lead.full_name}</div>
+                        <a
+                          href={`mailto:${project.tech_lead.email}`}
+                          className="text-sm text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 transition-colors hover:underline inline-flex items-center gap-2"
+                        >
+                          <Mail className="h-4 w-4" />
+                          {project.tech_lead.email}
+                        </a>
+                      </>
+                    ) : (
+                      <div className="text-sm text-slate-400 italic py-1">
+                        To be assigned shortly
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content Lead */}
+                  <div className="p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm flex flex-col gap-2 shadow-sm">
+                    <div className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                      Content Lead
+                    </div>
+                    {project.content_lead ? (
+                      <>
+                        <div className="font-bold text-base text-slate-800 dark:text-slate-200">{project.content_lead.full_name}</div>
+                        <a
+                          href={`mailto:${project.content_lead.email}`}
+                          className="text-sm text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 transition-colors hover:underline inline-flex items-center gap-2"
+                        >
+                          <Mail className="h-4 w-4" />
+                          {project.content_lead.email}
+                        </a>
+                      </>
+                    ) : (
+                      <div className="text-sm text-slate-400 italic py-1">
+                        To be assigned shortly
+                      </div>
+                    )}
+                  </div>
                 </div>
+              </div>
 
-                {/* Content Lead */}
-                <div className="p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm flex flex-col gap-2 shadow-sm">
-                  <div className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                    Content Lead
-                  </div>
-                  {project.content_lead ? (
-                    <>
-                      <div className="font-bold text-base text-slate-800 dark:text-slate-200">{project.content_lead.full_name}</div>
-                      <a
-                        href={`mailto:${project.content_lead.email}`}
-                        className="text-sm text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 transition-colors hover:underline inline-flex items-center gap-2"
-                      >
-                        <Mail className="h-4 w-4" />
-                        {project.content_lead.email}
-                      </a>
-                    </>
-                  ) : (
-                    <div className="text-sm text-slate-400 italic py-1">
-                      To be assigned shortly
-                    </div>
-                  )}
+              {/* General Support & Inquiries */}
+              <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-4 h-full">
+                <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
+                  <Phone className="h-5 w-5 text-amber-500" />
+                  Contact WebbHeads Support
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Need help or have general queries? Use the channels below to connect with us.
+                </p>
+
+                <div className="flex flex-col gap-3 mt-4">
+                  {/* Email Support */}
+                  <a
+                    href={`mailto:${generalEmail}`}
+                    className="flex items-center justify-between p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm hover:bg-white/50 dark:hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-semibold hover:border-amber-500/50"
+                    id="poc-email-link"
+                  >
+                    <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                      <Mail className="h-4 w-4 text-amber-500" />
+                      Email Support
+                    </span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                      {generalEmail} <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </a>
+
+                  {/* WhatsApp Support */}
+                  <a
+                    href={`https://wa.me/${generalWhatsapp.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm hover:bg-white/50 dark:hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-semibold hover:border-amber-500/50"
+                    id="poc-whatsapp-link"
+                  >
+                    <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                      <MessageCircle className="h-4 w-4 text-amber-500" />
+                      WhatsApp Us
+                    </span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                      Chat live <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </a>
+
+                  {/* Call Support */}
+                  <a
+                    href={`tel:${generalPhone.replace(/\D/g, "")}`}
+                    className="flex items-center justify-between p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm hover:bg-white/50 dark:hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-semibold hover:border-amber-500/50"
+                    id="poc-phone-link"
+                  >
+                    <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                      <Phone className="h-4 w-4 text-amber-500" />
+                      Call Support
+                    </span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                      {generalPhone} <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </a>
+
+                  {/* Click to Chat */}
+                  <button
+                    onClick={() => setShowChat(true)}
+                    className="flex items-center justify-between p-4 border border-amber-500/30 rounded-xl bg-gradient-to-r from-amber-500/10 to-amber-600/10 hover:from-amber-500/20 hover:to-amber-600/20 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-bold text-amber-700 dark:text-amber-400 hover:border-amber-500"
+                    id="click-to-chat-btn"
+                  >
+                    <span className="flex items-center gap-2 text-sm">
+                      <MessageCircle className="h-4 w-4" />
+                      Click to Chat
+                    </span>
+                    <span className="text-xs flex items-center gap-1">
+                      Message leads/admin <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
+          )
+        )}
 
-            {/* General Support & Inquiries */}
-            <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-4 h-full">
-              <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
-                <Phone className="h-5 w-5 text-amber-500" />
-                Contact WebbHeads Support
-              </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                Need help or have general queries? Use the channels below to connect with us.
-              </p>
-
-              <div className="flex flex-col gap-3 mt-4">
-                {/* Email Support */}
-                <a
-                  href={`mailto:${generalEmail}`}
-                  className="flex items-center justify-between p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm hover:bg-white/50 dark:hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-semibold hover:border-amber-500/50"
-                  id="poc-email-link"
-                >
-                  <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                    <Mail className="h-4 w-4 text-amber-500" />
-                    Email Support
-                  </span>
-                  <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                    {generalEmail} <ArrowRight className="h-3 w-3" />
-                  </span>
-                </a>
-
-                {/* WhatsApp Support */}
-                <a
-                  href={`https://wa.me/${generalWhatsapp.replace(/\D/g, "")}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm hover:bg-white/50 dark:hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-semibold hover:border-amber-500/50"
-                  id="poc-whatsapp-link"
-                >
-                  <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                    <MessageCircle className="h-4 w-4 text-amber-500" />
-                    WhatsApp Us
-                  </span>
-                  <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                    Chat live <ArrowRight className="h-3 w-3" />
-                  </span>
-                </a>
-
-                {/* Call Support */}
-                <a
-                  href={`tel:${generalPhone.replace(/\D/g, "")}`}
-                  className="flex items-center justify-between p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm hover:bg-white/50 dark:hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-semibold hover:border-amber-500/50"
-                  id="poc-phone-link"
-                >
-                  <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                    <Phone className="h-4 w-4 text-amber-500" />
-                    Call Support
-                  </span>
-                  <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                    {generalPhone} <ArrowRight className="h-3 w-3" />
-                  </span>
-                </a>
-              </div>
-            </div>
-          </div>
+        {/* ==================== SCHEDULE TAB ==================== */}
+        {activeTopTab === "schedule" && (
+          <ScheduleContentTab
+            contentItems={contentSchedule}
+            projectStartDate={project.profile_submitted_at || project.created_at}
+            projectEndDate={project.expected_close_date}
+          />
         )}
       </div>
     </div>

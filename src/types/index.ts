@@ -54,6 +54,9 @@ export interface Project {
   timeline_design_status?: "completed" | "in_progress" | "upcoming" | null
   timeline_dev_status?: "completed" | "in_progress" | "upcoming" | null
   timeline_review_status?: "completed" | "in_progress" | "upcoming" | null
+  timeline_design_name?: string | null
+  timeline_dev_name?: string | null
+  timeline_review_name?: string | null
 }
 
 export type ChecklistCategory = "tech" | "content" | "sales" | "general"
@@ -205,3 +208,18 @@ export interface ProjectStatusUpdate {
   visible_to_client: boolean
   staff?: Staff
 }
+
+export interface ContentSchedule {
+  id: string
+  project_id: string
+  content_name: string
+  caption: string | null
+  scheduled_at: string
+  is_posted: boolean
+  posted_at: string | null
+  created_by: string | null
+  created_at: string
+  updated_by: string | null
+  updated_at: string
+}
+

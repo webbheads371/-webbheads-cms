@@ -78,6 +78,7 @@ export default async function ProjectDetailPage({
     { data: paymentRequests },
     { data: formResponses },
     { data: statusUpdates },
+    { data: contentSchedule },
   ] = await Promise.all([
     supabase.from("payments").select("*").eq("project_id", params.id).order("created_at", { ascending: false }),
     supabase.from("documents").select("*").eq("project_id", params.id).order("uploaded_at", { ascending: false }),
@@ -86,6 +87,7 @@ export default async function ProjectDetailPage({
     supabase.from("payment_requests").select("*").eq("project_id", params.id).order("created_at"),
     supabase.from("form_responses").select("*, template:form_templates(*)").eq("project_id", params.id),
     supabase.from("project_status_updates").select("*").eq("project_id", params.id).order("posted_at", { ascending: false }),
+    supabase.from("content_schedule").select("*").eq("project_id", params.id).order("scheduled_at", { ascending: true }),
   ])
 
   const user = await supabase.auth.getUser()
@@ -108,6 +110,7 @@ export default async function ProjectDetailPage({
       paymentRequests={paymentRequests || []}
       formResponses={formResponses || []}
       statusUpdates={statusUpdates || []}
+      contentSchedule={contentSchedule || []}
     />
   )
 }

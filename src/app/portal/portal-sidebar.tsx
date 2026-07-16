@@ -1,19 +1,27 @@
 "use client"
 
 import { usePortalTab } from "./portal-tab-context"
-import { Home, KeyRound, FileText, CreditCard, LifeBuoy, LogOut } from "lucide-react"
+import { Home, KeyRound, FileText, CreditCard, LifeBuoy, LogOut, CalendarDays } from "lucide-react"
 import { ChangePasswordForm } from "./dashboard/_components/change-password-form"
 
-export function PortalSidebar() {
+interface PortalSidebarProps {
+  showSchedule?: boolean
+}
+
+export function PortalSidebar({ showSchedule = false }: PortalSidebarProps) {
   const { activeTab, setActiveTab } = usePortalTab()
 
-  const items = [
+  const baseItems = [
     { tabName: "home" as const, icon: Home, label: "Home" },
     { tabName: "credentials" as const, icon: KeyRound, label: "Credentials" },
     { tabName: "documents" as const, icon: FileText, label: "Documents" },
     { tabName: "payments" as const, icon: CreditCard, label: "Payments" },
     { tabName: "support" as const, icon: LifeBuoy, label: "Support" },
   ]
+
+  const scheduleItem = { tabName: "schedule" as const, icon: CalendarDays, label: "Schedule" }
+
+  const items = showSchedule ? [...baseItems, scheduleItem] : baseItems
 
   return (
     <>

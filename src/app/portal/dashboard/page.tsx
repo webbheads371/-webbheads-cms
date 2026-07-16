@@ -4,7 +4,7 @@ import { getCurrentClientUser } from "@/lib/supabase/server"
 import { createClient } from "@/lib/supabase/server"
 import { DashboardClientTabs } from "./_components/dashboard-client-tabs"
 import { MobileDashboardActions } from "./_components/mobile-dashboard-actions"
-import type { Document, PaymentRequest, BankSettings, ProjectStatusUpdate, FormTemplate, FormResponse } from "@/types"
+import type { Document, PaymentRequest, BankSettings, ProjectStatusUpdate, FormTemplate, FormResponse, ContentSchedule } from "@/types"
 
 export default async function DashboardPage() {
   const clientUser = await getCurrentClientUser()
@@ -40,6 +40,7 @@ export default async function DashboardPage() {
     { data: statusUpdates },
     { data: formResponses },
     { data: allTemplates },
+    { data: contentSchedule },
   ] = await Promise.all([
     supabase
       .from("documents")
@@ -71,6 +72,11 @@ export default async function DashboardPage() {
       .from("form_templates")
       .select("*")
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("content_schedule")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("scheduled_at", { ascending: true }),
   ])
 
   // Filter form templates to match client type
@@ -109,6 +115,7 @@ export default async function DashboardPage() {
           documents={documents ?? []}
           formTemplates={(formTemplates ?? []) as FormTemplate[]}
           formResponses={(formResponses ?? []) as FormResponse[]}
+          contentSchedule={(contentSchedule ?? []) as ContentSchedule[]}
         />
       </Suspense>
     </div>

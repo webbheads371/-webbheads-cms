@@ -21,6 +21,7 @@ import {
   FileText,
   ChevronDown,
   ChevronRight,
+  MessageSquare,
 } from "lucide-react"
 
 type NavItem = {
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/clients", label: "Clients", icon: Users },
+  { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/staff", label: "Staff", icon: UserCog, exact: true, adminOnly: true },
   { href: "/payments/queue", label: "Payment Queue", icon: CreditCard, adminOnly: true },
   {
