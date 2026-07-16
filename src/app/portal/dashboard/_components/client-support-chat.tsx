@@ -23,7 +23,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
@@ -96,11 +96,13 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
 
   // Scroll to bottom when channel changes or messages load
   useEffect(() => {
-    // Small timeout ensures DOM has painted new messages before scrolling
+    // Only scroll the specific container to avoid full-page jumps on mobile Safari
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto" })
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
+      }
     }, 10)
-  }, [messages, activeChannel])
+  }, [messages.length, activeChannel])
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -275,7 +277,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
           </div>
 
           {/* Messages Area */}
-          <div className={`flex-1 p-4 overflow-y-auto flex flex-col gap-3 transition-all duration-300 ${isKeyboardOpen ? 'max-h-[160px] md:max-h-none' : ''}`}>
+          <div ref={scrollContainerRef} className={`flex-1 p-4 overflow-y-auto flex flex-col gap-3 transition-all duration-300 ${isKeyboardOpen ? 'max-h-[160px] md:max-h-none' : ''}`}>
             {loading ? (
               <div className="flex-1 flex flex-col items-center justify-center text-slate-400 text-xs gap-2">
                 <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
@@ -318,9 +320,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
                 )
               })
             )}
-            <div ref={messagesEndRef} />
           </div>
-
           {/* Input Form */}
           <form onSubmit={handleSend} className="p-3 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-2 bg-slate-50/50 dark:bg-slate-950/20">
             <input
