@@ -9,7 +9,7 @@ interface PortalSidebarProps {
 }
 
 export function PortalSidebar({ showSchedule = false }: PortalSidebarProps) {
-  const { activeTab, setActiveTab } = usePortalTab()
+  const { activeTab, setActiveTab, hideMobileNav } = usePortalTab()
 
   const baseItems = [
     { tabName: "home" as const, icon: Home, label: "Home" },
@@ -79,7 +79,7 @@ export function PortalSidebar({ showSchedule = false }: PortalSidebarProps) {
       </div>
 
       {/* ── Mobile bottom tab bar (below md) ── */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 px-2 pb-2">
+      <div className={`md:hidden fixed bottom-0 inset-x-0 z-50 px-2 pb-2 transition-all duration-300 ${hideMobileNav ? 'opacity-0 translate-y-10 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
         <div className="rounded-2xl overflow-hidden"
           style={{
             background: "rgba(255,255,255,0.82)",

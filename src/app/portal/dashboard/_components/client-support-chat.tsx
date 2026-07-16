@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { getProjectMessages, sendMessage } from "@/lib/supabase/message-actions"
 import { createClient } from "@/lib/supabase/client"
 import { ArrowLeft, Send, User, ShieldAlert, Laptop, FileSignature, Landmark, Loader2 } from "lucide-react"
+import { usePortalTab } from "../../portal-tab-context"
 
 interface ClientSupportChatProps {
   projectId: string
@@ -14,6 +15,7 @@ interface ClientSupportChatProps {
 type ChatChannel = 'admin' | 'tech_lead' | 'content_lead' | 'sales'
 
 export function ClientSupportChat({ projectId, project, onBack }: ClientSupportChatProps) {
+  const { setHideMobileNav } = usePortalTab()
   const [activeChannel, setActiveChannel] = useState<ChatChannel>('admin')
   const [viewMode, setViewMode] = useState<'list' | 'chat'>('list')
   const [messages, setMessages] = useState<any[]>([])
@@ -22,6 +24,20 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
+
+  useEffect(() => {
+    if (viewMode === 'chat') {
+      setHideMobileNav(true)
+    } else {
+      setHideMobileNav(false)
+    }
+  }, [viewMode, setHideMobileNav])
+
+  useEffect(() => {
+    return () => {
+      setHideMobileNav(false)
+    }
+  }, [setHideMobileNav])
 
   const fetchMessages = async () => {
     const msgs = await getProjectMessages(projectId)

@@ -8,6 +8,8 @@ type TabType = "home" | "credentials" | "documents" | "payments" | "support" | "
 interface PortalTabContextProps {
   activeTab: TabType
   setActiveTab: (tab: TabType) => void
+  hideMobileNav: boolean
+  setHideMobileNav: (hide: boolean) => void
 }
 
 const PortalTabContext = createContext<PortalTabContextProps | undefined>(undefined)
@@ -19,6 +21,7 @@ function PortalTabContextInner({ children }: { children: ReactNode }) {
   const tabParam = searchParams.get("tab") as TabType | null
   const initialTab = tabParam && VALID_TABS.includes(tabParam) ? tabParam : "home"
   const [activeTab, setActiveTabState] = useState<TabType>(initialTab)
+  const [hideMobileNav, setHideMobileNav] = useState(false)
 
   useEffect(() => {
     const tab = searchParams.get("tab") as TabType
@@ -36,7 +39,7 @@ function PortalTabContextInner({ children }: { children: ReactNode }) {
   }
 
   return (
-    <PortalTabContext.Provider value={{ activeTab, setActiveTab }}>
+    <PortalTabContext.Provider value={{ activeTab, setActiveTab, hideMobileNav, setHideMobileNav }}>
       {children}
     </PortalTabContext.Provider>
   )
