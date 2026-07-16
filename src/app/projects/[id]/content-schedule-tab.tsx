@@ -219,7 +219,7 @@ export function ContentScheduleTab({ projectId, items: initialItems }: ContentSc
                   </div>
                 ) : (
                   /* View mode */
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <div className={`mt-0.5 flex-shrink-0 ${item.is_posted ? "text-emerald-500" : "text-amber-400"}`}>
                         {item.is_posted ? <CheckCircle2 className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
@@ -247,7 +247,7 @@ export function ContentScheduleTab({ projectId, items: initialItems }: ContentSc
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-1.5 mt-2 sm:mt-0 self-end sm:self-start flex-shrink-0">
                       {/* Mark as posted toggle */}
                       <button
                         onClick={() => handleTogglePosted(item)}

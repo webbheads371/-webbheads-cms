@@ -130,8 +130,11 @@ export function ScheduleContentTab({ contentItems, projectStartDate, projectEndD
 
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-2">
-            {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d => (
-              <div key={d} className="text-center text-xs font-bold text-slate-400 dark:text-slate-500 py-1">{d}</div>
+            {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d, i) => (
+              <div key={d} className="text-center text-xs font-bold text-slate-400 dark:text-slate-500 py-1">
+                <span className="hidden sm:inline">{d}</span>
+                <span className="sm:hidden">{"SMTWTFS"[i]}</span>
+              </div>
             ))}
           </div>
 
@@ -180,8 +183,8 @@ export function ScheduleContentTab({ contentItems, projectStartDate, projectEndD
                   {/* Start/End labels */}
                   {!isSelected && (
                     <>
-                      {isStart && <span className="absolute top-1 text-[7px] font-black tracking-tight text-emerald-600 dark:text-emerald-400 uppercase">Start</span>}
-                      {isEnd && <span className="absolute top-1 text-[7px] font-black tracking-tight text-rose-600 dark:text-rose-400 uppercase">End</span>}
+                      {isStart && <span className="absolute top-1 text-[7px] font-black tracking-tight text-emerald-600 dark:text-emerald-400 uppercase hidden sm:block">Start</span>}
+                      {isEnd && <span className="absolute top-1 text-[7px] font-black tracking-tight text-rose-600 dark:text-rose-400 uppercase hidden sm:block">End</span>}
                     </>
                   )}
                 </button>

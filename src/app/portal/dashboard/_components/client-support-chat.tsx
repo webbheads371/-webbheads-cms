@@ -15,6 +15,7 @@ type ChatChannel = 'admin' | 'tech_lead' | 'content_lead' | 'sales'
 
 export function ClientSupportChat({ projectId, project, onBack }: ClientSupportChatProps) {
   const [activeChannel, setActiveChannel] = useState<ChatChannel>('admin')
+  const [viewMode, setViewMode] = useState<'list' | 'chat'>('list')
   const [messages, setMessages] = useState<any[]>([])
   const [inputText, setInputText] = useState("")
   const [loading, setLoading] = useState(true)
@@ -169,7 +170,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
       <div className="grid md:grid-cols-[240px_1fr] border border-slate-200/60 dark:border-slate-800/60 rounded-2xl overflow-hidden h-[550px] bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
         
         {/* Left Side: Channel Selector */}
-        <div className="border-r border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/20 p-4 flex flex-col gap-2">
+        <div className={`border-r border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/20 p-4 flex flex-col gap-2 ${viewMode === 'chat' ? 'hidden md:flex' : 'flex'}`}>
           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 mb-2 block">
             Select Chat Channel
           </span>
@@ -181,7 +182,10 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
                 <button
                   key={chan.id}
                   disabled={!chan.available}
-                  onClick={() => setActiveChannel(chan.id)}
+                  onClick={() => {
+                    setActiveChannel(chan.id)
+                    setViewMode('chat')
+                  }}
                   className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-300 text-left ${
                     !chan.available 
                       ? 'opacity-40 cursor-not-allowed' 
@@ -206,9 +210,15 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
         </div>
 
         {/* Right Side: Message Thread */}
-        <div className="flex flex-col h-full overflow-hidden">
+        <div className={`flex flex-col h-full overflow-hidden ${viewMode === 'list' ? 'hidden md:flex' : 'flex'}`}>
           {/* Active Chat Header */}
           <div className="p-4 border-b border-slate-200/60 dark:border-slate-800/60 flex items-center gap-3 bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm">
+            <button
+              onClick={() => setViewMode('list')}
+              className="md:hidden p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white mr-1"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
             <div className="h-10 w-10 rounded-full bg-amber-500/10 text-[#D6A33C] flex items-center justify-center font-bold text-sm shrink-0">
               {activeChannel === 'admin' ? 'A' : activeChannel === 'tech_lead' ? 'TL' : activeChannel === 'content_lead' ? 'CL' : 'SL'}
             </div>
