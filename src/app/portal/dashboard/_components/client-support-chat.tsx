@@ -153,8 +153,8 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
   ]
 
   return (
-    <div className="w-full flex flex-col gap-6 animate-fade-in">
-      <div className="flex items-center justify-between pb-4 border-b border-slate-200/60 dark:border-slate-800/60">
+    <div className="fixed inset-0 z-50 bg-slate-50 dark:bg-slate-950 p-4 flex flex-col gap-4 md:relative md:inset-auto md:z-auto md:bg-transparent md:p-0 md:w-full md:flex md:flex-col md:gap-6 animate-fade-in">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-slate-800/60 shrink-0">
         <button
           onClick={onBack}
           className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
@@ -167,10 +167,10 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
         </span>
       </div>
 
-      <div className="grid md:grid-cols-[240px_1fr] border border-slate-200/60 dark:border-slate-800/60 rounded-2xl overflow-hidden h-[60vh] md:h-[550px] bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
+      <div className="grid md:grid-cols-[240px_1fr] border border-slate-200/60 dark:border-slate-800/60 rounded-2xl overflow-hidden flex-1 min-h-0 md:h-[550px] bg-white dark:bg-slate-900 md:bg-white/40 md:dark:bg-slate-900/40 backdrop-blur-md">
         
         {/* Left Side: Channel Selector */}
-        <div className={`border-r border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/20 p-4 flex flex-col gap-2 ${viewMode === 'chat' ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`border-r border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-950/20 md:bg-slate-50/50 md:dark:bg-slate-950/20 p-4 flex flex-col gap-2 h-full overflow-y-auto ${viewMode === 'chat' ? 'hidden md:flex' : 'flex'}`}>
           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 mb-2 block">
             Select Chat Channel
           </span>
