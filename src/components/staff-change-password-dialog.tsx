@@ -27,7 +27,7 @@ export function StaffChangePasswordDialog() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (newPassword.length < 6) {
+    if (!newPassword || newPassword.length < 6) {
       setError("Password must be at least 6 characters")
       return
     }

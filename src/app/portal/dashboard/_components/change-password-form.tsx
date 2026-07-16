@@ -14,7 +14,7 @@ export function ChangePasswordForm({ variant = "default" }: { variant?: "default
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password.length < 6) {
+    if (!password || password.length < 6) {
       setError("Password must be at least 6 characters")
       return
     }

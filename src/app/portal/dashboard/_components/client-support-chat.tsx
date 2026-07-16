@@ -96,7 +96,10 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
 
   // Scroll to bottom when channel changes or messages load
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    // Small timeout ensures DOM has painted new messages before scrolling
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "auto" })
+    }, 10)
   }, [messages, activeChannel])
 
   const handleSend = async (e: React.FormEvent) => {
@@ -106,7 +109,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
     const messageText = inputText.trim()
     setInputText("")
     setSending(true)
-    inputRef.current?.focus()
+    inputRef.current?.focus({ preventScroll: true })
 
     // Optimistic UI update
     const optimisticMsg = {
