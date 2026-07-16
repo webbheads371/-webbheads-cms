@@ -10,7 +10,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog"
 import { formatDate } from "@/lib/utils"
-import { Plus, ExternalLink, Key, RefreshCw, Trash2 } from "lucide-react"
+import { Plus, ExternalLink, Key, RefreshCw, Trash2, ArrowLeft } from "lucide-react"
 import { generateClientPortalLogin, updateClientType, resetClientPortalPassword } from "@/lib/supabase/admin-portal-actions"
 import type { Client, Project, Staff, ClientUser } from "@/types"
 
@@ -92,7 +92,18 @@ export function ClientDetailClient({ client, projects, role }: Props) {
 
   return (
     <div>
-      <PageHeader title={client.company_name} description="Client details and projects">
+      <PageHeader
+        title={client.company_name}
+        description={
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors group mt-0.5"
+          >
+            <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
+            Back to Clients
+          </button>
+        }
+      >
         <div className="flex items-center gap-2">
           {role === "admin" && (
             <Dialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
