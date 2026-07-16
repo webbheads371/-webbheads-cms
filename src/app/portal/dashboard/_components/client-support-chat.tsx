@@ -26,8 +26,27 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
   const supabase = createClient()
 
   useEffect(() => {
+    const isMobile = window.innerWidth < 768
     if (viewMode === 'chat') {
       setHideMobileNav(true)
+      if (isMobile) {
+        const scrollY = window.scrollY
+        document.body.style.overflow = 'hidden'
+        document.body.style.position = 'fixed'
+        document.body.style.top = `-${scrollY}px`
+        document.body.style.width = '100%'
+        document.body.style.height = '100%'
+
+        return () => {
+          setHideMobileNav(false)
+          document.body.style.overflow = ''
+          document.body.style.position = ''
+          document.body.style.top = ''
+          document.body.style.width = ''
+          document.body.style.height = ''
+          window.scrollTo(0, scrollY)
+        }
+      }
     } else {
       setHideMobileNav(false)
     }
@@ -169,7 +188,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
   ]
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-50 dark:bg-slate-950 p-4 flex flex-col gap-4 md:relative md:inset-auto md:z-auto md:bg-transparent md:p-0 md:w-full md:flex md:flex-col md:gap-6 animate-fade-in">
+    <div className="fixed inset-x-0 top-0 bottom-0 h-[100dvh] z-50 bg-slate-50 dark:bg-slate-950 p-4 flex flex-col gap-4 md:relative md:inset-auto md:z-auto md:bg-transparent md:p-0 md:w-full md:flex md:flex-col md:gap-6 animate-fade-in">
       <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-slate-800/60 shrink-0">
         <button
           onClick={onBack}
