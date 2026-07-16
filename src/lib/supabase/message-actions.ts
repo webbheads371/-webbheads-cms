@@ -31,10 +31,21 @@ export async function getProjectMessages(projectId: string) {
     return []
   }
 
-  // To display names, we can fetch all client users and staff members for the project
+  if (messages.length === 0) return []
+
+  // Extract unique sender IDs from messages to optimize the database query
+  const senderIds = Array.from(new Set(messages.map((m: any) => m.sender_id)))
+
   const adminClient = createAdminClient()
-  const { data: staffMembers } = await adminClient.from("staff").select("id, full_name, role")
-  const { data: clientUsers } = await adminClient.from("client_users").select("id, full_name")
+  const { data: staffMembers } = await adminClient
+    .from("staff")
+    .select("id, full_name, role")
+    .in("id", senderIds)
+
+  const { data: clientUsers } = await adminClient
+    .from("client_users")
+    .select("id, full_name")
+    .in("id", senderIds)
 
   const userMap = new Map<string, { name: string; role: string }>()
   staffMembers?.forEach(s => userMap.set(s.id, { name: s.full_name, role: s.role }))
@@ -109,9 +120,6 @@ export async function sendMessage({
     return { error: error.message }
   }
 
-  revalidatePath("/portal/dashboard")
-  revalidatePath("/messages")
-  revalidatePath(`/projects/${projectId}`)
   return { error: null }
 }
 
@@ -161,40 +169,55 @@ export async function getStaffConversations() {
     return []
   }
 
-  // For each project, fetch client user details and last message
+  // 1. Fetch client users for these clients in one query
+  const clientIds = Array.from(new Set(projects.map(p => (p.client as any)?.id).filter(Boolean)))
   const adminClient = createAdminClient()
-  const conversations = []
+  const { data: allClientUsers } = await adminClient
+    .from("client_users")
+    .select("id, full_name, email, client_id")
+    .in("client_id", clientIds)
 
-  for (const project of projects) {
-    // Get client users for this project's client
-    const { data: clientUsers } = await adminClient
-      .from("client_users")
-      .select("id, full_name, email")
-      .eq("client_id", (project.client as any)?.id)
+  // 2. Fetch last messages in one query (ordered by created_at desc)
+  const projectIds = projects.map(p => p.id)
+  const { data: allMessages } = await supabase
+    .from("messages")
+    .select("project_id, message, created_at, sender_role")
+    .in("project_id", projectIds)
+    .order("created_at", { ascending: false })
 
-    // Get last message in the project
-    const { data: lastMessages } = await supabase
-      .from("messages")
-      .select("message, created_at, sender_role")
-      .eq("project_id", project.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
+  // Group client users and messages by ID
+  const clientUsersByClientId = new Map<string, any[]>()
+  allClientUsers?.forEach(cu => {
+    const list = clientUsersByClientId.get(cu.client_id) || []
+    list.push(cu)
+    clientUsersByClientId.set(cu.client_id, list)
+  })
 
-    const lastMsg = lastMessages && lastMessages.length > 0 ? lastMessages[0] : null
+  const lastMessageByProjectId = new Map<string, any>()
+  allMessages?.forEach(m => {
+    if (!lastMessageByProjectId.has(m.project_id)) {
+      lastMessageByProjectId.set(m.project_id, m)
+    }
+  })
 
-    conversations.push({
+  const conversations = projects.map(project => {
+    const clientId = (project.client as any)?.id
+    const clientUsers = clientUsersByClientId.get(clientId) || []
+    const lastMsg = lastMessageByProjectId.get(project.id)
+
+    return {
       projectId: project.id,
       projectName: project.name,
       clientName: (project.client as any)?.company_name || (project.client as any)?.contact_name || "Unknown Client",
-      clientUsers: clientUsers || [],
+      clientUsers,
       lastMessage: lastMsg ? lastMsg.message : "No messages yet",
       lastMessageAt: lastMsg ? lastMsg.created_at : null,
       lastMessageSender: lastMsg ? lastMsg.sender_role : null,
       techLeadId: project.tech_lead_id,
       contentLeadId: project.content_lead_id,
       salesLeadId: project.sales_lead_id,
-    })
-  }
+    }
+  })
 
   // Sort conversations by last message timestamp desc
   conversations.sort((a, b) => {
