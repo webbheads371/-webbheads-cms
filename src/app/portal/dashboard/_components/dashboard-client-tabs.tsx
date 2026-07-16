@@ -650,20 +650,20 @@ export function DashboardClientTabs({
                 </p>
 
                 <div className="flex flex-col gap-3 mt-4">
-                  {/* Email Support */}
-                  <a
-                    href={`mailto:${generalEmail}`}
-                    className="flex items-center justify-between p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm hover:bg-white/50 dark:hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-semibold hover:border-amber-500/50"
-                    id="poc-email-link"
+                  {/* Click to Chat */}
+                  <button
+                    onClick={() => setShowChat(true)}
+                    className="flex items-center justify-between p-4 border border-amber-500/30 rounded-xl bg-gradient-to-r from-amber-500/10 to-amber-600/10 hover:from-amber-500/20 hover:to-amber-600/20 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-bold text-amber-700 dark:text-amber-400 hover:border-amber-500"
+                    id="click-to-chat-btn"
                   >
-                    <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                      <Mail className="h-4 w-4 text-amber-500" />
-                      Email Support
+                    <span className="flex items-center gap-2 text-sm">
+                      <MessageCircle className="h-4 w-4" />
+                      Click to Chat
                     </span>
-                    <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                      {generalEmail} <ArrowRight className="h-3 w-3" />
+                    <span className="text-xs flex items-center gap-1">
+                      Message leads/admin <ArrowRight className="h-3 w-3" />
                     </span>
-                  </a>
+                  </button>
 
                   {/* WhatsApp Support */}
                   <a
@@ -697,20 +697,20 @@ export function DashboardClientTabs({
                     </span>
                   </a>
 
-                  {/* Click to Chat */}
-                  <button
-                    onClick={() => setShowChat(true)}
-                    className="flex items-center justify-between p-4 border border-amber-500/30 rounded-xl bg-gradient-to-r from-amber-500/10 to-amber-600/10 hover:from-amber-500/20 hover:to-amber-600/20 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-bold text-amber-700 dark:text-amber-400 hover:border-amber-500"
-                    id="click-to-chat-btn"
+                  {/* Email Support */}
+                  <a
+                    href={`mailto:${generalEmail}`}
+                    className="flex items-center justify-between p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm hover:bg-white/50 dark:hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 font-semibold hover:border-amber-500/50"
+                    id="poc-email-link"
                   >
-                    <span className="flex items-center gap-2 text-sm">
-                      <MessageCircle className="h-4 w-4" />
-                      Click to Chat
+                    <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                      <Mail className="h-4 w-4 text-amber-500" />
+                      Email Support
                     </span>
-                    <span className="text-xs flex items-center gap-1">
-                      Message leads/admin <ArrowRight className="h-3 w-3" />
+                    <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                      {generalEmail} <ArrowRight className="h-3 w-3" />
                     </span>
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
