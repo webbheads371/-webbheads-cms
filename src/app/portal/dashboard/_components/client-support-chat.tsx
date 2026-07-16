@@ -86,7 +86,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
       )
       .subscribe()
 
-    const interval = setInterval(fetchMessages, 8000)
+    const interval = setInterval(fetchMessages, 3000)
 
     return () => {
       supabase.removeChannel(channel)

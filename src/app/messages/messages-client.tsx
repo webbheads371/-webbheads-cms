@@ -77,10 +77,10 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
       )
       .subscribe()
 
-    // 2. Setup backup polling (every 8 seconds)
+    // 2. Setup backup polling (every 3 seconds)
     const interval = setInterval(() => {
       loadMessages(selectedConv.projectId)
-    }, 8000)
+    }, 3000)
 
     return () => {
       supabase.removeChannel(channel)

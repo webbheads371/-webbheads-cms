@@ -23,6 +23,10 @@ CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON public.messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_messages_recipient_id ON public.messages(recipient_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON public.messages(created_at);
 
+-- ---------- Enable Realtime ----------
+-- IMPORTANT: This is required for instant chat messages!
+ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+
 -- ---------- RLS Policies ----------
 
 -- 1. Clients can read all messages for their projects
