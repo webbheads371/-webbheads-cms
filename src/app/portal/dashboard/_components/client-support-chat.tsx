@@ -22,6 +22,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
   const [inputText, setInputText] = useState("")
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
@@ -92,10 +93,10 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
     }
   }, [projectId])
 
-  // Scroll to bottom when channel changes or messages load
+  // Scroll to bottom when channel changes, messages load, or keyboard state toggles
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages, activeChannel])
+  }, [messages, activeChannel, isKeyboardOpen])
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -269,7 +270,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3">
+          <div className={`flex-1 p-4 overflow-y-auto flex flex-col gap-3 transition-all duration-300 ${isKeyboardOpen ? 'max-h-[160px] md:max-h-none' : ''}`}>
             {loading ? (
               <div className="flex-1 flex flex-col items-center justify-center text-slate-400 text-xs gap-2">
                 <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
@@ -321,6 +322,8 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
+              onFocus={() => setIsKeyboardOpen(true)}
+              onBlur={() => setIsKeyboardOpen(false)}
               placeholder="Type your message..."
               className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all text-slate-800 dark:text-slate-100"
             />
