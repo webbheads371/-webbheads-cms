@@ -167,7 +167,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
         </span>
       </div>
 
-      <div className="grid md:grid-cols-[240px_1fr] border border-slate-200/60 dark:border-slate-800/60 rounded-2xl overflow-hidden h-[550px] bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
+      <div className="grid md:grid-cols-[240px_1fr] border border-slate-200/60 dark:border-slate-800/60 rounded-2xl overflow-hidden h-[60vh] md:h-[550px] bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
         
         {/* Left Side: Channel Selector */}
         <div className={`border-r border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/20 p-4 flex flex-col gap-2 ${viewMode === 'chat' ? 'hidden md:flex' : 'flex'}`}>

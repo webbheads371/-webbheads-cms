@@ -164,7 +164,7 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
   const activeChannelObj = channelsList.find(c => c.id === activeChannel)
 
   return (
-    <div className="grid lg:grid-cols-[320px_1fr] gap-6 items-stretch border border-slate-200/60 dark:border-slate-800/60 rounded-2xl overflow-hidden h-[650px] bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
+    <div className="grid lg:grid-cols-[320px_1fr] gap-6 items-stretch border border-slate-200/60 dark:border-slate-800/60 rounded-2xl overflow-hidden h-[70vh] lg:h-[650px] bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
       
       {/* Left Column: Conversations List */}
       <div className={`border-r border-slate-200/60 dark:border-slate-800/60 flex flex-col h-full overflow-hidden bg-slate-50/50 dark:bg-slate-950/20 ${selectedConv ? 'hidden lg:flex' : 'flex'}`}>
