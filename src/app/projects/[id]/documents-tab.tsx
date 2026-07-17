@@ -75,6 +75,8 @@ export function DocumentsTab({ documents, projectId }: Props) {
     setLoading(false)
   }
 
+  const displayDocuments = documents.filter(d => !d.doc_type.startsWith("poc_"))
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -133,7 +135,7 @@ export function DocumentsTab({ documents, projectId }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {documents.map((doc) => (
+            {displayDocuments.map((doc) => (
               <TableRow key={doc.id}>
                 <TableCell>
                   <Badge variant="outline">{docTypeLabels[doc.doc_type] || doc.doc_type}</Badge>
@@ -159,7 +161,7 @@ export function DocumentsTab({ documents, projectId }: Props) {
                 </TableCell>
               </TableRow>
             ))}
-            {documents.length === 0 && (
+            {displayDocuments.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                   No documents added yet.

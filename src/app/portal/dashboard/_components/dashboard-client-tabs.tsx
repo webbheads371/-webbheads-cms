@@ -49,7 +49,7 @@ export function DashboardClientTabs({
 
   // Filter out POC-related metadata documents from client-visible documents
   const importantDocs = documents.filter(
-    (d) => d.is_client_visible && !["poc_email", "poc_whatsapp", "poc_phone"].includes(d.doc_type)
+    (d) => d.is_client_visible && !d.doc_type.startsWith("poc_")
   )
 
   // Extract general company POC values from documents if configured
