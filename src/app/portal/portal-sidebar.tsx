@@ -90,7 +90,7 @@ export function PortalSidebar({ showSchedule = false }: PortalSidebarProps) {
           }}
         >
           <div className="flex items-center justify-around px-1 py-1">
-            {items.map((item) => {
+            {items.filter(item => item.tabName !== 'credentials').map((item) => {
               const Icon = item.icon
               const isActive = activeTab === item.tabName
               return (

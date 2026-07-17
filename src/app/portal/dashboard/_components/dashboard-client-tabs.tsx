@@ -273,30 +273,34 @@ export function DashboardClientTabs({
               
               <div className="flex flex-col gap-4 mt-2">
                 {/* Tech Lead Profile Card */}
-                <div className="flex items-center gap-4 p-4 border border-white/30 dark:border-white/10 rounded-2xl bg-white/40 dark:bg-white/5 backdrop-blur-sm shadow-xs hover:shadow-md hover:bg-white/50 dark:hover:bg-white/10 transition-all duration-300">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#E8C56B] to-[#D6A33C] text-white font-bold text-sm shadow-xs">
-                    {project.tech_lead ? project.tech_lead.full_name.split(' ').map((n) => n[0]).join('') : "TL"}
+                {!(project.client?.client_type === 'content' && !project.tech_lead) && (
+                  <div className="flex items-center gap-4 p-4 border border-white/30 dark:border-white/10 rounded-2xl bg-white/40 dark:bg-white/5 backdrop-blur-sm shadow-xs hover:shadow-md hover:bg-white/50 dark:hover:bg-white/10 transition-all duration-300">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#E8C56B] to-[#D6A33C] text-white font-bold text-sm shadow-xs">
+                      {project.tech_lead ? project.tech_lead.full_name.split(' ').map((n) => n[0]).join('') : "TL"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[10px] text-[#6B7280] font-bold uppercase tracking-wider block">Tech Lead</span>
+                      <span className="font-semibold text-base text-[#111827] dark:text-white truncate block">
+                        {project.tech_lead ? project.tech_lead.full_name : "To be assigned"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[10px] text-[#6B7280] font-bold uppercase tracking-wider block">Tech Lead</span>
-                    <span className="font-semibold text-base text-[#111827] dark:text-white truncate block">
-                      {project.tech_lead ? project.tech_lead.full_name : "To be assigned"}
-                    </span>
-                  </div>
-                </div>
+                )}
 
                 {/* Content Lead Profile Card */}
-                <div className="flex items-center gap-4 p-4 border border-white/30 dark:border-white/10 rounded-2xl bg-white/40 dark:bg-white/5 backdrop-blur-sm shadow-xs hover:shadow-md hover:bg-white/50 dark:hover:bg-white/10 transition-all duration-300">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#E8EAEE] to-slate-400 text-white font-bold text-sm shadow-xs">
-                    {project.content_lead ? project.content_lead.full_name.split(' ').map((n) => n[0]).join('') : "CL"}
+                {!(project.client?.client_type === 'tech' && !project.content_lead) && (
+                  <div className="flex items-center gap-4 p-4 border border-white/30 dark:border-white/10 rounded-2xl bg-white/40 dark:bg-white/5 backdrop-blur-sm shadow-xs hover:shadow-md hover:bg-white/50 dark:hover:bg-white/10 transition-all duration-300">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#E8EAEE] to-slate-400 text-white font-bold text-sm shadow-xs">
+                      {project.content_lead ? project.content_lead.full_name.split(' ').map((n) => n[0]).join('') : "CL"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[10px] text-[#6B7280] font-bold uppercase tracking-wider block">Content Lead</span>
+                      <span className="font-semibold text-base text-[#111827] dark:text-white truncate block">
+                        {project.content_lead ? project.content_lead.full_name : "To be assigned"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[10px] text-[#6B7280] font-bold uppercase tracking-wider block">Content Lead</span>
-                    <span className="font-semibold text-base text-[#111827] dark:text-white truncate block">
-                      {project.content_lead ? project.content_lead.full_name : "To be assigned"}
-                    </span>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -592,50 +596,54 @@ export function DashboardClientTabs({
 
                 <div className="flex flex-col gap-4 mt-2">
                   {/* Tech Lead */}
-                  <div className="p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm flex flex-col gap-2 shadow-sm">
-                    <div className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                      Tech Lead
-                    </div>
-                    {project.tech_lead ? (
-                      <>
-                        <div className="font-bold text-base text-slate-800 dark:text-slate-200">{project.tech_lead.full_name}</div>
-                        <a
-                          href={`mailto:${project.tech_lead.email}`}
-                          className="text-sm text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 transition-colors hover:underline inline-flex items-center gap-2"
-                        >
-                          <Mail className="h-4 w-4" />
-                          {project.tech_lead.email}
-                        </a>
-                      </>
-                    ) : (
-                      <div className="text-sm text-slate-400 italic py-1">
-                        To be assigned shortly
+                  {!(project.client?.client_type === 'content' && !project.tech_lead) && (
+                    <div className="p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm flex flex-col gap-2 shadow-sm">
+                      <div className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                        Tech Lead
                       </div>
-                    )}
-                  </div>
+                      {project.tech_lead ? (
+                        <>
+                          <div className="font-bold text-base text-slate-800 dark:text-slate-200">{project.tech_lead.full_name}</div>
+                          <a
+                            href={`mailto:${project.tech_lead.email}`}
+                            className="text-sm text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 transition-colors hover:underline inline-flex items-center gap-2"
+                          >
+                            <Mail className="h-4 w-4" />
+                            {project.tech_lead.email}
+                          </a>
+                        </>
+                      ) : (
+                        <div className="text-sm text-slate-400 italic py-1">
+                          To be assigned shortly
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Content Lead */}
-                  <div className="p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm flex flex-col gap-2 shadow-sm">
-                    <div className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                      Content Lead
-                    </div>
-                    {project.content_lead ? (
-                      <>
-                        <div className="font-bold text-base text-slate-800 dark:text-slate-200">{project.content_lead.full_name}</div>
-                        <a
-                          href={`mailto:${project.content_lead.email}`}
-                          className="text-sm text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 transition-colors hover:underline inline-flex items-center gap-2"
-                        >
-                          <Mail className="h-4 w-4" />
-                          {project.content_lead.email}
-                        </a>
-                      </>
-                    ) : (
-                      <div className="text-sm text-slate-400 italic py-1">
-                        To be assigned shortly
+                  {!(project.client?.client_type === 'tech' && !project.content_lead) && (
+                    <div className="p-4 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm flex flex-col gap-2 shadow-sm">
+                      <div className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                        Content Lead
                       </div>
-                    )}
-                  </div>
+                      {project.content_lead ? (
+                        <>
+                          <div className="font-bold text-base text-slate-800 dark:text-slate-200">{project.content_lead.full_name}</div>
+                          <a
+                            href={`mailto:${project.content_lead.email}`}
+                            className="text-sm text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 transition-colors hover:underline inline-flex items-center gap-2"
+                          >
+                            <Mail className="h-4 w-4" />
+                            {project.content_lead.email}
+                          </a>
+                        </>
+                      ) : (
+                        <div className="text-sm text-slate-400 italic py-1">
+                          To be assigned shortly
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -95,9 +95,9 @@ export function ScheduleContentTab({ contentItems, projectStartDate, projectEndD
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] xl:grid-cols-[420px_1fr] gap-6 xl:gap-8 items-start">
         {/* ── CALENDAR ── */}
-        <div className="rounded-3xl border border-white/40 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-xl p-6 shadow-lg">
+        <div className="rounded-3xl border border-white/40 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-xl p-4 sm:p-5 shadow-lg mx-auto w-full max-w-[450px] lg:max-w-none">
           {/* Month nav */}
           <div className="flex items-center justify-between mb-5">
             <button
