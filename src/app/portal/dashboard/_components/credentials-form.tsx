@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
 import { submitProfileForm, uploadFormFile } from "@/lib/supabase/portal-actions"
 import type { FormTemplate, FormResponse } from "@/types"
 import { CheckCircle2, Paperclip } from "lucide-react"
@@ -20,6 +20,21 @@ export function CredentialsForm({ projectId, templates, existingResponses }: Cre
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    setValues((prev) => {
+      const newValues = { ...prev }
+      let changed = false
+      existingResponses.forEach((r) => {
+        const val = r.value ?? ""
+        if (newValues[r.template_id] !== val) {
+          newValues[r.template_id] = val
+          changed = true
+        }
+      })
+      return changed ? newValues : prev
+    })
+  }, [existingResponses])
 
   const setValue = (templateId: string, value: string) => {
     setValues((prev) => ({ ...prev, [templateId]: value }))

@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { usePortalTab } from "../../portal-tab-context"
+import { createClient } from "@/lib/supabase/client"
 import { CredentialsForm } from "./credentials-form"
 import { FinalInvoiceSection } from "./final-invoice-section"
 import { HandlesSection } from "./handles-section"
@@ -33,16 +34,95 @@ interface DashboardClientTabsProps {
 
 export function DashboardClientTabs({
   project,
-  paymentRequests,
-  bankSettings,
-  statusUpdates,
-  documents,
-  formResponses,
+  paymentRequests: initialPaymentRequests,
+  bankSettings: initialBankSettings,
+  statusUpdates: initialStatusUpdates,
+  documents: initialDocuments,
+  formResponses: initialFormResponses,
   formTemplates,
-  contentSchedule,
+  contentSchedule: initialContentSchedule,
 }: DashboardClientTabsProps) {
   const { activeTab: activeTopTab } = usePortalTab()
   const [showChat, setShowChat] = useState(false)
+  const supabase = createClient()
+
+  const [paymentRequests, setPaymentRequests] = useState(initialPaymentRequests)
+  const [bankSettings, setBankSettings] = useState(initialBankSettings)
+  const [statusUpdates, setStatusUpdates] = useState(initialStatusUpdates)
+  const [documents, setDocuments] = useState(initialDocuments)
+  const [formResponses, setFormResponses] = useState(initialFormResponses)
+  const [contentSchedule, setContentSchedule] = useState(initialContentSchedule)
+
+  useEffect(() => {
+    setPaymentRequests(initialPaymentRequests)
+    setBankSettings(initialBankSettings)
+    setStatusUpdates(initialStatusUpdates)
+    setDocuments(initialDocuments)
+    setFormResponses(initialFormResponses)
+    setContentSchedule(initialContentSchedule)
+  }, [initialPaymentRequests, initialBankSettings, initialStatusUpdates, initialDocuments, initialFormResponses, initialContentSchedule])
+
+  useEffect(() => {
+    if (!project?.id) return
+
+    const channel = supabase
+      .channel('client_dashboard_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'documents', filter: `project_id=eq.${project.id}` }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setDocuments((prev) => [payload.new as any, ...prev].sort((a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime()))
+        } else if (payload.eventType === 'UPDATE') {
+          setDocuments((prev) => prev.map(d => d.id === payload.new.id ? payload.new as any : d))
+        } else if (payload.eventType === 'DELETE') {
+          setDocuments((prev) => prev.filter(d => d.id !== payload.old.id))
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_requests', filter: `project_id=eq.${project.id}` }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setPaymentRequests((prev) => [...prev, payload.new as PaymentRequest].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()))
+        } else if (payload.eventType === 'UPDATE') {
+          setPaymentRequests((prev) => prev.map(p => p.id === payload.new.id ? payload.new as PaymentRequest : p))
+        } else if (payload.eventType === 'DELETE') {
+          setPaymentRequests((prev) => prev.filter(p => p.id !== payload.old.id))
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'form_responses', filter: `project_id=eq.${project.id}` }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setFormResponses((prev) => [...prev, payload.new as FormResponse])
+        } else if (payload.eventType === 'UPDATE') {
+          setFormResponses((prev) => prev.map(f => f.id === payload.new.id ? payload.new as FormResponse : f))
+        } else if (payload.eventType === 'DELETE') {
+          setFormResponses((prev) => prev.filter(f => f.id !== payload.old.id))
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'project_status_updates', filter: `project_id=eq.${project.id}` }, (payload) => {
+         if (payload.eventType === 'INSERT') {
+          setStatusUpdates((prev) => [payload.new as ProjectStatusUpdate, ...prev].sort((a, b) => new Date(b.posted_at).getTime() - new Date(a.posted_at).getTime()))
+        } else if (payload.eventType === 'UPDATE') {
+          setStatusUpdates((prev) => prev.map(s => s.id === payload.new.id ? payload.new as ProjectStatusUpdate : s))
+        } else if (payload.eventType === 'DELETE') {
+          setStatusUpdates((prev) => prev.filter(s => s.id !== payload.old.id))
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'content_schedule', filter: `project_id=eq.${project.id}` }, (payload) => {
+         if (payload.eventType === 'INSERT') {
+          setContentSchedule((prev) => [...prev, payload.new as ContentSchedule].sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()))
+        } else if (payload.eventType === 'UPDATE') {
+          setContentSchedule((prev) => prev.map(c => c.id === payload.new.id ? payload.new as ContentSchedule : c))
+        } else if (payload.eventType === 'DELETE') {
+          setContentSchedule((prev) => prev.filter(c => c.id !== payload.old.id))
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bank_settings' }, (payload) => {
+         if (payload.eventType === 'UPDATE' && payload.new.id === 1) {
+          setBankSettings(payload.new as BankSettings)
+        }
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [project?.id, supabase])
 
   const advancePayment = paymentRequests.find((p) => p.request_type === "advance")
   const finalPayment = paymentRequests.find((p) => p.request_type === "final" && p.released)
