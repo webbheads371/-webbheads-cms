@@ -65,7 +65,8 @@ export function DashboardClientTabs({
   const paidAmount = paymentRequests
     .filter((req) => req.status === "approved")
     .reduce((sum, req) => sum + req.amount, 0)
-  const outstandingAmount = totalInvoiced - paidAmount
+  const displayTotal = project.project_value || totalInvoiced
+  const outstandingAmount = displayTotal - paidAmount
 
   const isAdvanceApproved = paymentRequests.some(
     (req) => req.request_type === "advance" && req.status === "approved"
@@ -312,9 +313,9 @@ export function DashboardClientTabs({
               
               {/* Large Invoice Amount Text */}
               <div className="flex flex-col gap-1 mt-2">
-                <span className="text-xs text-[#6B7280] font-medium uppercase tracking-wider block">Total Invoiced</span>
+                <span className="text-xs text-[#6B7280] font-medium uppercase tracking-wider block">Total Project Value</span>
                 <span className="text-4xl font-extrabold text-[#111827] dark:text-white tracking-tight">
-                  {totalInvoiced > 0 ? formatCurrency(totalInvoiced) : project.project_value ? formatCurrency(project.project_value) : "TBD"}
+                  {displayTotal > 0 ? formatCurrency(displayTotal) : "TBD"}
                 </span>
               </div>
 

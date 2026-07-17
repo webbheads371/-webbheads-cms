@@ -39,17 +39,20 @@ export function ContentScheduleTab({ projectId, items: initialItems }: ContentSc
   const [addName, setAddName] = useState("")
   const [addCaption, setAddCaption] = useState("")
   const [addDate, setAddDate] = useState("")
+  const [addTime, setAddTime] = useState("10:00")
 
   // Edit form state
   const [editName, setEditName] = useState("")
   const [editCaption, setEditCaption] = useState("")
   const [editDate, setEditDate] = useState("")
+  const [editTime, setEditTime] = useState("10:00")
 
   const handleAdd = () => {
-    if (!addName.trim() || !addDate) return
+    if (!addName.trim() || !addDate || !addTime) return
     setError(null)
     startTransition(async () => {
-      const result = await createContentScheduleItem(projectId, addName, addCaption, new Date(addDate).toISOString())
+      const scheduledAt = new Date(`${addDate}T${addTime}`).toISOString()
+      const result = await createContentScheduleItem(projectId, addName, addCaption, scheduledAt)
       if (result.error) {
         setError(result.error)
       } else {
@@ -58,7 +61,7 @@ export function ContentScheduleTab({ projectId, items: initialItems }: ContentSc
           project_id: projectId,
           content_name: addName,
           caption: addCaption || null,
-          scheduled_at: new Date(addDate).toISOString(),
+          scheduled_at: new Date(`${addDate}T${addTime}`).toISOString(),
           is_posted: false,
           posted_at: null,
           created_by: null,
@@ -66,7 +69,7 @@ export function ContentScheduleTab({ projectId, items: initialItems }: ContentSc
           updated_by: null,
           updated_at: new Date().toISOString(),
         }, ...prev])
-        setAddName(""); setAddCaption(""); setAddDate("")
+        setAddName(""); setAddCaption(""); setAddDate(""); setAddTime("10:00")
         setShowAddForm(false)
       }
     })
@@ -76,19 +79,23 @@ export function ContentScheduleTab({ projectId, items: initialItems }: ContentSc
     setEditingId(item.id)
     setEditName(item.content_name)
     setEditCaption(item.caption || "")
-    setEditDate(formatDateTimeLocal(item.scheduled_at))
+    const local = formatDateTimeLocal(item.scheduled_at)
+    const [d, t] = local.split('T')
+    setEditDate(d)
+    setEditTime(t)
   }
 
   const handleUpdate = (itemId: string) => {
-    if (!editName.trim() || !editDate) return
+    if (!editName.trim() || !editDate || !editTime) return
     setError(null)
     startTransition(async () => {
-      const result = await updateContentScheduleItem(itemId, projectId, editName, editCaption, new Date(editDate).toISOString())
+      const scheduledAt = new Date(`${editDate}T${editTime}`).toISOString()
+      const result = await updateContentScheduleItem(itemId, projectId, editName, editCaption, scheduledAt)
       if (result.error) {
         setError(result.error)
       } else {
         setItems(prev => prev.map(i => i.id === itemId
-          ? { ...i, content_name: editName, caption: editCaption || null, scheduled_at: new Date(editDate).toISOString(), updated_at: new Date().toISOString() }
+          ? { ...i, content_name: editName, caption: editCaption || null, scheduled_at: scheduledAt, updated_at: new Date().toISOString() }
           : i
         ))
         setEditingId(null)
@@ -140,7 +147,7 @@ export function ContentScheduleTab({ projectId, items: initialItems }: ContentSc
         {showAddForm && (
           <div className="mb-6 p-4 border border-amber-200 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900/40">
             <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-300 mb-3">New Content Item</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
               <div className="form-field">
                 <label className="form-label">Content Name *</label>
                 <input
@@ -162,17 +169,26 @@ export function ContentScheduleTab({ projectId, items: initialItems }: ContentSc
                 />
               </div>
               <div className="form-field">
-                <label className="form-label">Scheduled Date & Time *</label>
+                <label className="form-label">Scheduled Date *</label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   value={addDate}
                   onChange={e => setAddDate(e.target.value)}
                   className="form-input"
                 />
               </div>
+              <div className="form-field">
+                <label className="form-label">Scheduled Time *</label>
+                <input
+                  type="time"
+                  value={addTime}
+                  onChange={e => setAddTime(e.target.value)}
+                  className="form-input"
+                />
+              </div>
             </div>
             <div className="flex gap-2">
-              <button onClick={handleAdd} disabled={isPending || !addName.trim() || !addDate} className="btn-primary btn-sm flex items-center gap-1">
+              <button onClick={handleAdd} disabled={isPending || !addName.trim() || !addDate || !addTime} className="btn-primary btn-sm flex items-center gap-1">
                 <Save className="h-4 w-4" /> {isPending ? "Saving..." : "Save Item"}
               </button>
               <button onClick={() => setShowAddForm(false)} className="btn-secondary btn-sm flex items-center gap-1">
@@ -194,7 +210,7 @@ export function ContentScheduleTab({ projectId, items: initialItems }: ContentSc
                 {editingId === item.id ? (
                   /* Edit mode */
                   <div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
                       <div className="form-field">
                         <label className="form-label">Content Name *</label>
                         <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="form-input" />
@@ -204,8 +220,12 @@ export function ContentScheduleTab({ projectId, items: initialItems }: ContentSc
                         <input type="text" value={editCaption} onChange={e => setEditCaption(e.target.value)} className="form-input" />
                       </div>
                       <div className="form-field">
-                        <label className="form-label">Scheduled Date & Time *</label>
-                        <input type="datetime-local" value={editDate} onChange={e => setEditDate(e.target.value)} className="form-input" />
+                        <label className="form-label">Scheduled Date *</label>
+                        <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} className="form-input" />
+                      </div>
+                      <div className="form-field">
+                        <label className="form-label">Scheduled Time *</label>
+                        <input type="time" value={editTime} onChange={e => setEditTime(e.target.value)} className="form-input" />
                       </div>
                     </div>
                     <div className="flex gap-2">
