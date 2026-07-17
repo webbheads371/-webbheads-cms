@@ -416,11 +416,12 @@ export function DashboardClientTabs({
 
         {/* ==================== DOCUMENTS TAB ==================== */}
         {activeTopTab === "documents" && (
-          <div className="dashboard-section p-6 rounded-2xl glass-card-silver animate-fade-in">
-            <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2 text-slate-900 dark:text-white">
-              <FileText className="h-5 w-5 text-amber-500" />
-              Important Documents
-            </h2>
+          <div className="flex flex-col gap-6 animate-fade-in">
+            <div className="dashboard-section p-6 rounded-2xl glass-card-silver">
+              <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2 text-slate-900 dark:text-white">
+                <FileText className="h-5 w-5 text-amber-500" />
+                Important Documents
+              </h2>
 
             {importantDocs.length > 0 ? (
               <div className="grid sm:grid-cols-2 gap-4">
@@ -468,6 +469,22 @@ export function DashboardClientTabs({
                 No files shared yet. Your project agreement and technical assets will appear here.
               </div>
             )}
+            </div>
+
+            {/* Mobile Credentials section under documents */}
+            <div className="md:hidden dashboard-section p-6 rounded-2xl glass-card-silver">
+              <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2 text-slate-900 dark:text-white">
+                <KeyRound className="h-5 w-5 text-amber-500" />
+                Project Credentials
+              </h2>
+              <div className="w-full">
+                <CredentialsForm
+                  projectId={project.id}
+                  templates={formTemplates}
+                  existingResponses={formResponses}
+                />
+              </div>
+            </div>
           </div>
         )}
 
