@@ -43,6 +43,7 @@ export function NewProjectForm({ clients, staff, preselectedClientId }: Props) {
       project_value: formData.get("project_value")
         ? Number(formData.get("project_value"))
         : null,
+      expected_start_date: (formData.get("expected_start_date") as string) || null,
       expected_close_date: (formData.get("expected_close_date") as string) || null,
     }
 
@@ -169,10 +170,14 @@ export function NewProjectForm({ clients, staff, preselectedClientId }: Props) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="project_value">Project Value (INR)</Label>
                 <Input id="project_value" name="project_value" type="number" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="expected_start_date">Expected Start Date</Label>
+                <Input id="expected_start_date" name="expected_start_date" type="date" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="expected_close_date">Expected Close Date</Label>

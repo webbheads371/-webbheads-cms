@@ -42,6 +42,7 @@ export interface Project {
   advance_percent: number | null
   created_at: string
   expected_close_date: string | null
+  expected_start_date: string | null
   // Phase 2 fields
   welcome_seen_at: string | null
   profile_submitted_at: string | null

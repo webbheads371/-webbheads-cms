@@ -335,6 +335,24 @@ export function DashboardClientTabs({
                   </div>
                 )}
 
+                {/* Expected Dates Section */}
+                {(project.expected_start_date || project.expected_close_date) && (
+                  <div className="flex flex-col gap-1 mt-3 mb-1 px-1 border border-white/30 dark:border-white/10 rounded-xl bg-white/40 dark:bg-white/5 backdrop-blur-sm p-3">
+                    {project.expected_start_date && (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-[#6B7280] dark:text-slate-400 font-semibold">Expected Start Date:</span>
+                        <span className="text-slate-700 dark:text-slate-300 font-bold">{new Date(project.expected_start_date).toLocaleDateString("en-IN")}</span>
+                      </div>
+                    )}
+                    {project.expected_close_date && (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-[#6B7280] dark:text-slate-400 font-semibold">Expected Close Date:</span>
+                        <span className="text-slate-700 dark:text-slate-300 font-bold">{new Date(project.expected_close_date).toLocaleDateString("en-IN")}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Status Pill Button at Bottom */}
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                   <span className="text-[11px] px-3 py-1 rounded-full font-bold bg-[#E8EAEE] text-[#6B7280] dark:bg-slate-800 dark:text-slate-300">
