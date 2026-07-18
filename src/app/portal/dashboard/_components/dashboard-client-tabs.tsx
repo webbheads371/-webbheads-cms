@@ -845,7 +845,7 @@ export function DashboardClientTabs({
         {activeTopTab === "schedule" && (
           <ScheduleContentTab
             contentItems={contentSchedule}
-            projectStartDate={project.profile_submitted_at || project.created_at}
+            projectStartDate={project.expected_start_date || project.profile_submitted_at || project.created_at}
             projectEndDate={project.expected_close_date}
           />
         )}
