@@ -26,6 +26,7 @@ const FormResponsesTab = dynamic(() => import("./form-responses-tab").then((m) =
 const ClientPortalTab = dynamic(() => import("./client-portal-tab").then((m) => ({ default: m.ClientPortalTab })), { ssr: false })
 const WorkUpdatesTab = dynamic(() => import("./work-updates-tab").then((m) => ({ default: m.WorkUpdatesTab })), { ssr: false })
 const ContentScheduleTabAdmin = dynamic(() => import("./content-schedule-tab").then((m) => ({ default: m.ContentScheduleTab })), { ssr: false })
+const EditDetailsTab = dynamic(() => import("./edit-details-tab").then((m) => ({ default: m.EditDetailsTab })), { ssr: false })
 
 
 interface Props {
@@ -42,11 +43,12 @@ interface Props {
   formResponses: FormResponse[]
   statusUpdates: ProjectStatusUpdate[]
   contentSchedule: ContentSchedule[]
+  staffList: Staff[]
 }
 
 export function ProjectDetailClient({
   project, stages, checklistItems, payments, documents, activity, currentStaff,
-  agreement, paymentRequests, formResponses, statusUpdates, contentSchedule,
+  agreement, paymentRequests, formResponses, statusUpdates, contentSchedule, staffList
 }: Props) {
   const [showForceDialog, setShowForceDialog] = useState(false)
   const [showCloseDialog, setShowCloseDialog] = useState(false)
@@ -329,6 +331,7 @@ export function ProjectDetailClient({
               <TabsTrigger value="client-portal">Client Portal</TabsTrigger>
               <TabsTrigger value="content-schedule">Content Schedule</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
+              <TabsTrigger value="edit-details">Edit Details</TabsTrigger>
             </>
           ) : (
             <>
@@ -400,6 +403,12 @@ export function ProjectDetailClient({
             <TabsContent value="content-schedule">
               <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading schedule...</div>}>
                 <ContentScheduleTabAdmin projectId={project.id} items={contentSchedule} />
+              </Suspense>
+            </TabsContent>
+
+            <TabsContent value="edit-details">
+              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading form...</div>}>
+                <EditDetailsTab project={project} staff={staffList} />
               </Suspense>
             </TabsContent>
           </>
