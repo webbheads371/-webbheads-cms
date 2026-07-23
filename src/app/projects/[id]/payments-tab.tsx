@@ -106,7 +106,7 @@ export function PaymentsTab({ payments, projectId, projectValue }: Props) {
             <form onSubmit={handleAddPayment} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount (INR) *</Label>
-                <Input id="amount" name="amount" type="number" required />
+                <Input id="amount" name="amount" type="number" step="any" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="payment_type">Type *</Label>

@@ -3,6 +3,7 @@ import { getCurrentClientUser } from "@/lib/supabase/server"
 import { createClient, createAdminClient } from "@/lib/supabase/server"
 import { WizardStepper } from "./_components/wizard-stepper"
 import { StepWelcome } from "./_components/step-welcome"
+import { StepDeliverables } from "./_components/step-deliverables"
 import { StepAgreement } from "./_components/step-agreement"
 import { StepPayment } from "./_components/step-payment"
 import { StepProfile } from "./_components/step-profile"
@@ -78,7 +79,18 @@ export default async function OnboardingPage() {
   if (!project.welcome_seen_at) {
     currentStep = 1
   } else {
-    // Step 2: Agreement agreed AND signature uploaded?
+    // Step 2: Deliverables Approved?
+    if (!project.deliverables_approved) {
+      currentStep = 2
+
+      return (
+        <OnboardingWrapper currentStep={currentStep}>
+          <StepDeliverables project={project} />
+        </OnboardingWrapper>
+      )
+    }
+
+    // Step 3: Agreement agreed AND signature uploaded?
     const { data: agreement } = await supabase
       .from("agreements")
       .select("*")
@@ -89,7 +101,7 @@ export default async function OnboardingPage() {
       agreement?.client_agreed === true && !!agreement?.signature_url
 
     if (!agreementComplete) {
-      currentStep = 2
+      currentStep = 3
 
       return (
         <OnboardingWrapper currentStep={currentStep}>
@@ -142,7 +154,7 @@ export default async function OnboardingPage() {
     const advanceApproved = advancePayment?.status === "approved"
 
     if (!advanceApproved) {
-      currentStep = 3
+      currentStep = 4
 
       // Fetch bank settings
       const { data: bankSettings } = await supabase
@@ -166,8 +178,8 @@ export default async function OnboardingPage() {
       )
     }
 
-    // Step 4: Profile submitted?
-    currentStep = 4
+    // Step 5: Profile submitted?
+    currentStep = 5
 
     const clientType = (project.client as { client_type?: ClientType })?.client_type ?? "both"
 

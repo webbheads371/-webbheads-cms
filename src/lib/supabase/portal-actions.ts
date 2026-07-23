@@ -17,6 +17,19 @@ export async function markWelcomeSeen(projectId: string) {
   redirect("/portal/onboarding")
 }
 
+// ─── Step 1.5: Approve Deliverables ──────────────────────────────────────────
+
+export async function approveDeliverables(projectId: string) {
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
+    .from("projects")
+    .update({ deliverables_approved: true, deliverables_approved_at: new Date().toISOString() })
+    .eq("id", projectId)
+  if (error) return { error: error.message }
+  revalidatePath("/portal/onboarding")
+  redirect("/portal/onboarding")
+}
+
 // ─── Update password (client) ────────────────────────────────────────────────
 
 export async function updateClientPassword(newPassword: string) {

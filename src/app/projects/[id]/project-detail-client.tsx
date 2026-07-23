@@ -27,6 +27,7 @@ const ClientPortalTab = dynamic(() => import("./client-portal-tab").then((m) => 
 const WorkUpdatesTab = dynamic(() => import("./work-updates-tab").then((m) => ({ default: m.WorkUpdatesTab })), { ssr: false })
 const ContentScheduleTabAdmin = dynamic(() => import("./content-schedule-tab").then((m) => ({ default: m.ContentScheduleTab })), { ssr: false })
 const EditDetailsTab = dynamic(() => import("./edit-details-tab").then((m) => ({ default: m.EditDetailsTab })), { ssr: false })
+const DeliverablesTab = dynamic(() => import("./deliverables-tab").then((m) => ({ default: m.DeliverablesTab })), { ssr: false })
 
 
 interface Props {
@@ -327,6 +328,7 @@ export function ProjectDetailClient({
               <TabsTrigger value="payments">Payments</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
               <TabsTrigger value="agreement">Agreement</TabsTrigger>
+              <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
               <TabsTrigger value="form-responses">Form Responses</TabsTrigger>
               <TabsTrigger value="client-portal">Client Portal</TabsTrigger>
               <TabsTrigger value="content-schedule">Content Schedule</TabsTrigger>
@@ -373,6 +375,12 @@ export function ProjectDetailClient({
             <TabsContent value="agreement">
               <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading agreement...</div>}>
                 <AgreementTab projectId={project.id} agreement={agreement} />
+              </Suspense>
+            </TabsContent>
+
+            <TabsContent value="deliverables">
+              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading deliverables...</div>}>
+                <DeliverablesTab project={project} />
               </Suspense>
             </TabsContent>
 

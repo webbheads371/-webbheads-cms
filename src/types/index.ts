@@ -58,6 +58,9 @@ export interface Project {
   timeline_design_name?: string | null
   timeline_dev_name?: string | null
   timeline_review_name?: string | null
+  deliverables_content?: string | null
+  deliverables_approved?: boolean
+  deliverables_approved_at?: string | null
 }
 
 export type ChecklistCategory = "tech" | "content" | "sales" | "general"
@@ -134,6 +137,8 @@ export interface ClientUser {
 export interface Agreement {
   id: string
   project_id: string
+  agreement_type: "pdf" | "text"
+  content_text: string | null
   pdf_url: string
   uploaded_by: string | null
   uploaded_at: string

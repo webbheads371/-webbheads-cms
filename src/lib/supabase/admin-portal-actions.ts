@@ -203,6 +203,7 @@ export async function uploadAgreementPdf(projectId: string, formData: FormData) 
   const { error } = await adminClient.from("agreements").upsert(
     {
       project_id: projectId,
+      agreement_type: "pdf",
       pdf_url: publicUrl,
       uploaded_by: user?.id,
       uploaded_at: new Date().toISOString(),
@@ -213,6 +214,60 @@ export async function uploadAgreementPdf(projectId: string, formData: FormData) 
 
   revalidatePath(`/projects/${projectId}`)
   return { error: null, url: publicUrl }
+}
+
+// ─── Save text agreement (admin) ──────────────────────────────────────────────
+
+export async function saveAgreementText(projectId: string, contentText: string) {
+  const adminClient = createAdminClient()
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { error } = await adminClient.from("agreements").upsert(
+    {
+      project_id: projectId,
+      agreement_type: "text",
+      content_text: contentText,
+      uploaded_by: user?.id,
+      uploaded_at: new Date().toISOString(),
+      pdf_url: "", // Needs a string, can be empty
+    },
+    { onConflict: "project_id" }
+  )
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/projects/${projectId}`)
+  return { error: null }
+}
+
+// ─── Save Project Deliverables (admin) ────────────────────────────────────────
+
+export async function saveProjectDeliverables(projectId: string, content: string) {
+  const adminClient = createAdminClient()
+
+  const { error } = await adminClient
+    .from("projects")
+    .update({ deliverables_content: content })
+    .eq("id", projectId)
+    
+  if (error) return { error: error.message }
+
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (user) {
+    await adminClient.from("activity_log").insert({
+      project_id: projectId,
+      actor_id: user.id,
+      action: "deliverables_updated",
+      detail: { message: "Updated project deliverables" },
+    })
+  }
+
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath("/portal/onboarding")
+  return { error: null }
 }
 
 // ─── Approve / Reject payment request ────────────────────────────────────────

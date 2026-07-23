@@ -2,9 +2,10 @@
 
 const STEPS = [
   { number: 1, label: "Welcome" },
-  { number: 2, label: "Agreement" },
-  { number: 3, label: "Advance Payment" },
-  { number: 4, label: "Profile Handover" },
+  { number: 2, label: "Deliverables" },
+  { number: 3, label: "Agreement" },
+  { number: 4, label: "Advance Payment" },
+  { number: 5, label: "Profile Handover" },
 ]
 
 interface WizardStepperProps {

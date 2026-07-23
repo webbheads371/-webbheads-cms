@@ -113,8 +113,8 @@
   @apply flex flex-col gap-4 md:grid md:grid-cols-[240px_1fr] md:gap-8 md:items-start;
 }
 .wizard-card {
-  @apply bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/40 rounded-2xl p-4 sm:p-6 md:p-10;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04);
+  @apply bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/60 dark:border-slate-700/50 rounded-3xl p-4 sm:p-6 md:p-10;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
 }
 .wizard-stepper {
   @apply flex flex-col gap-6 sticky top-24;

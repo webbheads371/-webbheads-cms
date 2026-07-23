@@ -215,7 +215,12 @@ export function StepPayment({
 
       {error && <div className="error-banner mt-4">{error}</div>}
 
-      <div className="wizard-step-actions mt-8">
+      <div className="wizard-step-actions mt-8 flex flex-col sm:flex-col items-center justify-center w-full">
+        {!canProceed && localStatus !== "submitted" && (
+          <p className="wizard-step-hint text-center mb-3">
+            Payment must be approved by our team before you can continue.
+          </p>
+        )}
         <button
           disabled={!canProceed}
           className="btn-primary btn-large flex items-center justify-center gap-2 mx-auto"
@@ -225,11 +230,6 @@ export function StepPayment({
           <span>Next: Profile Handover</span>
           <ArrowRight className="h-4 w-4" />
         </button>
-        {!canProceed && localStatus !== "submitted" && (
-          <p className="wizard-step-hint text-center mt-2">
-            Payment must be approved by our team before you can continue.
-          </p>
-        )}
       </div>
     </div>
   )
