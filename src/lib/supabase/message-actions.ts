@@ -230,3 +230,54 @@ export async function getStaffConversations() {
 
   return conversations
 }
+
+// ─── Unread Messages Logic ───────────────────────────────────────────────────
+export async function getUnreadMessagesCount() {
+  noStore()
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 0
+
+  const { data: staff } = await supabase
+    .from("staff")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+
+  if (!staff) return 0
+
+  let query = supabase
+    .from("messages")
+    .select("*", { count: 'exact', head: true })
+    .eq("is_read", false)
+    .eq("sender_role", "client")
+
+  if (staff.role === 'tech_lead' || staff.role === 'content_lead') {
+    query = query.eq("recipient_role", staff.role)
+  }
+
+  const { count, error } = await query
+
+  if (error) {
+    // If column doesn't exist yet, ignore
+    return 0
+  }
+
+  return count || 0
+}
+
+export async function markMessagesAsRead(projectId: string, recipientRole: string) {
+  noStore()
+  const supabase = createClient()
+  
+  const { error } = await supabase
+    .from("messages")
+    .update({ is_read: true })
+    .eq("project_id", projectId)
+    .eq("recipient_role", recipientRole)
+    .eq("is_read", false)
+  
+  if (error) {
+    console.error("Error marking messages as read:", error)
+  }
+}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { getStaffConversations, getProjectMessages, sendMessage } from "@/lib/supabase/message-actions"
+import { getStaffConversations, getProjectMessages, sendMessage, markMessagesAsRead } from "@/lib/supabase/message-actions"
 import { createClient } from "@/lib/supabase/client"
 import { 
   MessageSquare, Send, User, Laptop, FileSignature, 
@@ -45,6 +45,8 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
     const msgs = await getProjectMessages(projId)
     setMessages(msgs)
     setLoadingMessages(false)
+    // Mark as read for this channel
+    markMessagesAsRead(projId, activeChannel)
   }
 
   // Load conversations on mount

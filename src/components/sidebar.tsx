@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
+import { getUnreadMessagesCount } from "@/lib/supabase/message-actions"
 import type { Staff } from "@/types"
 import {
   LayoutDashboard,
@@ -58,6 +59,7 @@ export function Sidebar() {
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [staff, setStaff] = useState<Staff | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith("/settings"))
 
   // Load current staff to filter admin-only items
@@ -71,6 +73,22 @@ export function Sidebar() {
     }
     loadStaff()
   }, [])
+
+  // Poll for unread messages
+  useEffect(() => {
+    async function loadUnreadCount() {
+      if (!staff) return
+      try {
+        const count = await getUnreadMessagesCount()
+        setUnreadCount(count)
+      } catch (err) {
+        console.error("Failed to load unread count", err)
+      }
+    }
+    loadUnreadCount()
+    const interval = setInterval(loadUnreadCount, 15000) // Poll every 15s
+    return () => clearInterval(interval)
+  }, [staff])
 
   // Keep settings section open when on a settings route
   useEffect(() => {
@@ -200,13 +218,21 @@ export function Sidebar() {
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors relative",
                   active
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
               >
-                <Icon className="h-4 w-4" />
+                <div className="relative">
+                  <Icon className="h-4 w-4" />
+                  {item.href === "/messages" && unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white dark:border-slate-900"></span>
+                    </span>
+                  )}
+                </div>
                 {item.label}
               </Link>
             )
