@@ -14,7 +14,7 @@ export function AgreementTab({ projectId, agreement }: AgreementTabProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  
+
   const [mode, setMode] = useState<"pdf" | "text">(agreement?.agreement_type || "pdf")
   const [textContent, setTextContent] = useState(agreement?.content_text || "")
   const [savingText, setSavingText] = useState(false)
@@ -51,6 +51,24 @@ export function AgreementTab({ projectId, agreement }: AgreementTabProps) {
     }
   }
 
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      window.open(url, '_blank');
+    }
+  }
+
   return (
     <div className="tab-panel">
       <div className="tab-section">
@@ -59,21 +77,19 @@ export function AgreementTab({ projectId, agreement }: AgreementTabProps) {
           <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
             <button
               onClick={() => setMode("pdf")}
-              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                mode === "pdf" 
-                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" 
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${mode === "pdf"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
                   : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-              }`}
+                }`}
             >
               PDF Upload
             </button>
             <button
               onClick={() => setMode("text")}
-              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                mode === "text" 
-                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" 
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${mode === "text"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
                   : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-              }`}
+                }`}
             >
               Rich Text
             </button>
@@ -129,7 +145,7 @@ export function AgreementTab({ projectId, agreement }: AgreementTabProps) {
                 Warning: Saving this will replace the current PDF agreement with text.
               </div>
             ) : null}
-            
+
             <div>
               <label className="form-label block mb-2">Agreement Content</label>
               <textarea
@@ -192,25 +208,22 @@ export function AgreementTab({ projectId, agreement }: AgreementTabProps) {
                   </div>
                 </div>
                 <div className="flex gap-4 mt-2">
-                  <a 
-                    href={currentAgreement.signature_url} 
-                    target="_blank" 
+                  <a
+                    href={currentAgreement.signature_url}
+                    target="_blank"
                     rel="noreferrer"
                     className="text-sm font-medium text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 flex items-center gap-1.5 transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                     View
                   </a>
-                  <a 
-                    href={currentAgreement.signature_url} 
-                    download="client_signature.png"
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    onClick={() => handleDownload(currentAgreement.signature_url!, "client_signature.png")}
                     className="text-sm font-medium text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 flex items-center gap-1.5 transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                     Download
-                  </a>
+                  </button>
                 </div>
               </div>
             ) : (
