@@ -175,18 +175,43 @@ export function AgreementTab({ projectId, agreement }: AgreementTabProps) {
           <div className="agreement-status-item">
             <span className="agreement-status-label">Signature Uploaded</span>
             {currentAgreement?.signature_url ? (
-              <div className="agreement-signature-preview">
-                <img
-                  src={currentAgreement.signature_url}
-                  alt="Client signature"
-                  className="signature-img-sm"
-                />
-                <span className="badge-success">✓ Uploaded</span>
-                {currentAgreement.signature_uploaded_at && (
-                  <span className="agreement-status-date">
-                    {new Date(currentAgreement.signature_uploaded_at).toLocaleString("en-IN")}
-                  </span>
-                )}
+              <div className="flex flex-col gap-2">
+                <div className="agreement-signature-preview">
+                  <img
+                    src={currentAgreement.signature_url}
+                    alt="Client signature"
+                    className="signature-img-sm"
+                  />
+                  <div className="flex flex-col gap-1 items-start">
+                    <span className="badge-success">✓ Uploaded</span>
+                    {currentAgreement.signature_uploaded_at && (
+                      <span className="agreement-status-date">
+                        {new Date(currentAgreement.signature_uploaded_at).toLocaleString("en-IN")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-4 mt-2">
+                  <a 
+                    href={currentAgreement.signature_url} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="text-sm font-medium text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 flex items-center gap-1.5 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    View
+                  </a>
+                  <a 
+                    href={currentAgreement.signature_url} 
+                    download="client_signature.png"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-medium text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 flex items-center gap-1.5 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    Download
+                  </a>
+                </div>
               </div>
             ) : (
               <span className="badge-pending">Pending</span>
