@@ -1,34 +1,39 @@
 import { Suspense } from "react"
-import { createClient } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { projects, pipeline_stages, clients } from "@/db/schema"
+import { asc, desc, eq } from "drizzle-orm"
+import { getCurrentStaff } from "@/lib/supabase/server"
 import { PipelineBoardLoader } from "./pipeline-board-loader"
 
 export default async function PipelinePage() {
-  const supabase = createClient()
+  const currentStaff = await getCurrentStaff()
 
-  const { data: projects } = await supabase
-    .from("projects")
-    .select("*, client:clients(company_name), tech_lead:staff!projects_tech_lead_id_fkey(id, full_name), content_lead:staff!projects_content_lead_id_fkey(id, full_name), sales_lead:staff!projects_sales_lead_id_fkey(id, full_name)")
-    .order("created_at", { ascending: false })
+  const allProjectsRaw = await db
+    .select({
+      project: projects,
+      client: { company_name: clients.company_name },
+    })
+    .from(projects)
+    .leftJoin(clients, eq(projects.client_id, clients.id))
+    .orderBy(desc(projects.created_at))
     .limit(100)
 
-  const { data: stages } = await supabase
-    .from("pipeline_stages")
-    .select("*")
-    .order("sort_order")
+  const projectsData = allProjectsRaw.map((row) => ({
+    ...row.project,
+    client: row.client ?? null,
+  }))
 
-  const user = await supabase.auth.getUser()
-  const { data: currentStaff } = await supabase
-    .from("staff")
-    .select("*")
-    .eq("id", user.data.user?.id)
-    .single()
+  const stagesData = await db
+    .select()
+    .from(pipeline_stages)
+    .orderBy(asc(pipeline_stages.sort_order))
 
   return (
     <Suspense fallback={<PipelineFallback />}>
       <PipelineBoardLoader
-        projects={projects || []}
-        stages={stages || []}
-        currentStaff={currentStaff}
+        projects={projectsData as any}
+        stages={stagesData}
+        currentStaff={currentStaff as any}
       />
     </Suspense>
   )

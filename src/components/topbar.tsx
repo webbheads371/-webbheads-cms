@@ -1,30 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useSession } from "next-auth/react"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { StaffChangePasswordDialog } from "@/components/staff-change-password-dialog"
-import type { Staff } from "@/types"
-import { useRouter } from "next/navigation"
 
 export function TopBar() {
-  const [staff, setStaff] = useState<Staff | null>(null)
-  const supabase = createClient()
-  const router = useRouter()
+  const { data: session } = useSession()
 
-  useEffect(() => {
-    async function loadStaff() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data } = await supabase.from("staff").select("*").eq("id", user.id).single()
-      if (data) setStaff(data)
-    }
-    loadStaff()
-  }, [])
+  const userName = session?.user?.name || "User"
+  const userRole = session?.user?.role || "staff"
 
-  const initials = staff?.full_name
-    ?.split(" ")
+  const initials = userName
+    .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase()
@@ -48,17 +36,17 @@ export function TopBar() {
       {/* Spacer on desktop so right-side content stays right-aligned */}
       <div className="hidden lg:block" />
       <div className="flex items-center gap-4">
-        {staff && (
+        {session?.user && (
           <>
             <StaffChangePasswordDialog />
-            <Badge variant="outline" className={roleColors[staff.role]}>
-              {staff.role.replace("_", " ")}
+            <Badge variant="outline" className={roleColors[userRole] || "bg-slate-100 text-slate-800"}>
+              {userRole.replace("_", " ")}
             </Badge>
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="text-xs">{initials}</AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium hidden sm:inline">{staff.full_name}</span>
+              <span className="text-sm font-medium hidden sm:inline">{userName}</span>
             </div>
           </>
         )}

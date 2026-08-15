@@ -16,7 +16,7 @@ export function StepWelcome({ clientName, projectId }: StepWelcomeProps) {
   const handleNext = () => {
     setError(null)
     startTransition(async () => {
-      const result = await markWelcomeSeen(projectId)
+      const result = (await markWelcomeSeen(projectId)) as any
       if (result && result.error) {
         setError(result.error)
       }

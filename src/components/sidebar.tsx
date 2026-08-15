@@ -1,13 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { createClient } from "@/lib/supabase/client"
+import { useSession, signOut } from "next-auth/react"
 import { getUnreadMessagesCount } from "@/lib/supabase/message-actions"
-import type { Staff } from "@/types"
 import {
   LayoutDashboard,
   Kanban,
@@ -56,28 +55,15 @@ const navItems: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const router = useRouter()
+  const { data: session } = useSession()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [staff, setStaff] = useState<Staff | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith("/settings"))
-
-  // Load current staff to filter admin-only items
-  useEffect(() => {
-    async function loadStaff() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data } = await supabase.from("staff").select("*").eq("id", user.id).single()
-      if (data) setStaff(data)
-    }
-    loadStaff()
-  }, [])
 
   // Poll for unread messages
   useEffect(() => {
     async function loadUnreadCount() {
-      if (!staff) return
+      if (!session?.user) return
       try {
         const count = await getUnreadMessagesCount()
         setUnreadCount(count)
@@ -86,18 +72,17 @@ export function Sidebar() {
       }
     }
     loadUnreadCount()
-    const interval = setInterval(loadUnreadCount, 15000) // Poll every 15s
+    const interval = setInterval(loadUnreadCount, 15000)
     return () => clearInterval(interval)
-  }, [staff])
+  }, [session])
 
-  // Keep settings section open when on a settings route
   useEffect(() => {
     if (pathname.startsWith("/settings")) {
       setSettingsOpen(true)
     }
   }, [pathname])
 
-  const isAdmin = staff?.role === "admin"
+  const isAdmin = session?.user?.role === "admin"
 
   function isActive(item: NavItem) {
     if (item.exact) return pathname === item.href
@@ -105,15 +90,11 @@ export function Sidebar() {
   }
 
   async function handleLogout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/login")
-    router.refresh()
+    await signOut({ callbackUrl: "/login" })
   }
 
   return (
     <>
-      {/* Mobile menu toggle button */}
       <button
         className="lg:hidden fixed top-4 left-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl bg-white/90 border border-slate-200/60 shadow-md backdrop-blur-sm text-slate-700 font-medium text-sm hover:bg-white transition-all duration-200"
         onClick={() => setMobileOpen(!mobileOpen)}
@@ -131,8 +112,8 @@ export function Sidebar() {
       >
         <div className="p-6 border-b flex items-center gap-3">
           <div className="h-9 w-9 rounded-xl bg-slate-900 flex items-center justify-center flex-shrink-0 shadow-sm">
-              <img src="/logo.png" alt="WebbHeads Logo" className="h-7 w-7 object-contain" />
-            </div>
+            <img src="/logo.png" alt="WebbHeads Logo" className="h-7 w-7 object-contain" />
+          </div>
           <div>
             <h1 className="text-base font-bold tracking-tight leading-none">WebbHeads</h1>
             <p className="text-xs text-muted-foreground mt-1">Staff Portal</p>
@@ -141,14 +122,12 @@ export function Sidebar() {
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
-            // Skip admin-only items for non-admin users (unless staff not loaded yet)
-            if (item.adminOnly && staff && !isAdmin) return null
+            if (item.adminOnly && session?.user && !isAdmin) return null
 
             const Icon = item.icon
             const active = isActive(item)
 
             if (item.children) {
-              // Collapsible settings section
               const anyChildActive = item.children.some((c) => pathname === c.href)
               const sectionActive = active || anyChildActive
 
@@ -178,9 +157,11 @@ export function Sidebar() {
                       )}
                       aria-label="Toggle settings submenu"
                     >
-                      {settingsOpen
-                        ? <ChevronDown className="h-3.5 w-3.5" />
-                        : <ChevronRight className="h-3.5 w-3.5" />}
+                      {settingsOpen ? (
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      ) : (
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      )}
                     </button>
                   </div>
 

@@ -1,82 +1,103 @@
 import { NextResponse } from "next/server"
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { db } from "@/db"
+import { staff, client_users, projects, activity_log } from "@/db/schema"
+import { eq, inArray } from "drizzle-orm"
+import bcrypt from "bcryptjs"
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user?.id || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Only admins can invite staff members" }, { status: 403 })
+  }
+
   const { email, fullName, role, password, projectIds, clientIds } = await request.json()
 
-  const cookieStore = cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        get(name: string) { return cookieStore.get(name)?.value },
-        set() {},
-        remove() {},
-      },
-    }
-  )
+  if (!email || !fullName || !role || !password) {
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+  }
 
-  // Create user directly using auth admin API with password and auto-confirm email
-  const { data: invite, error } = await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  })
+  const normalizedEmail = email.trim().toLowerCase()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  // Check if email exists in staff
+  const [existingStaff] = await db
+    .select({ id: staff.id })
+    .from(staff)
+    .where(eq(staff.email, normalizedEmail))
 
-  if (invite?.user) {
-    const newStaffId = invite.user.id
+  if (existingStaff) {
+    return NextResponse.json({ error: "A staff member with this email already exists" }, { status: 400 })
+  }
 
-    // Insert staff record
-    const { error: staffError } = await supabase.from("staff").insert({
-      id: newStaffId,
+  // Check if email exists in client_users
+  const [existingClientUser] = await db
+    .select({ id: client_users.id })
+    .from(client_users)
+    .where(eq(client_users.email, normalizedEmail))
+
+  if (existingClientUser) {
+    return NextResponse.json({ error: "This email is registered as a client user" }, { status: 400 })
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10)
+
+  // Insert staff member
+  const [newStaff] = await db
+    .insert(staff)
+    .values({
       full_name: fullName,
-      email,
-      role,
+      email: normalizedEmail,
+      password_hash: passwordHash,
+      role: role,
     })
-    
-    if (staffError) return NextResponse.json({ error: staffError.message }, { status: 400 })
+    .returning({ id: staff.id })
 
-    // Process Project Assignments
-    const allProjectIdsToAssign = new Set<string>(projectIds || [])
+  if (!newStaff) {
+    return NextResponse.json({ error: "Failed to create staff member" }, { status: 500 })
+  }
 
-    // If clientIds are selected, also assign to all projects of those clients
-    if (clientIds && clientIds.length > 0) {
-      const { data: clientProjects } = await supabase
-        .from("projects")
-        .select("id")
-        .in("client_id", clientIds)
-      
-      if (clientProjects) {
-        clientProjects.forEach((p) => allProjectIdsToAssign.add(p.id))
-      }
+  const newStaffId = newStaff.id
+
+  // Process Project Assignments
+  const allProjectIdsToAssign = new Set<string>(projectIds || [])
+
+  if (clientIds && clientIds.length > 0) {
+    const clientProjects = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(inArray(projects.client_id, clientIds))
+
+    clientProjects.forEach((p) => allProjectIdsToAssign.add(p.id))
+  }
+
+  const projectIdsArray = Array.from(allProjectIdsToAssign)
+  if (projectIdsArray.length > 0) {
+    if (role === "tech_lead") {
+      await db
+        .update(projects)
+        .set({ tech_lead_id: newStaffId })
+        .where(inArray(projects.id, projectIdsArray))
+    } else if (role === "content_lead") {
+      await db
+        .update(projects)
+        .set({ content_lead_id: newStaffId })
+        .where(inArray(projects.id, projectIdsArray))
+    } else if (role === "sales") {
+      await db
+        .update(projects)
+        .set({ sales_lead_id: newStaffId })
+        .where(inArray(projects.id, projectIdsArray))
     }
 
-    const projectIdsArray = Array.from(allProjectIdsToAssign)
-    if (projectIdsArray.length > 0) {
-      if (role === "tech_lead") {
-        await supabase
-          .from("projects")
-          .update({ tech_lead_id: newStaffId })
-          .in("id", projectIdsArray)
-      } else if (role === "content_lead") {
-        await supabase
-          .from("projects")
-          .update({ content_lead_id: newStaffId })
-          .in("id", projectIdsArray)
-      }
+    const logs = projectIdsArray.map((projectId) => ({
+      project_id: projectId,
+      action: "staff_assigned",
+      detail: { staff_id: newStaffId, role },
+    }))
 
-      // Insert log entries
-      const logs = projectIdsArray.map((projectId) => ({
-        project_id: projectId,
-        action: "staff_assigned",
-        detail: { staff_id: newStaffId, role },
-      }))
-      await supabase.from("activity_log").insert(logs)
-    }
+    await db.insert(activity_log).values(logs)
   }
 
   return NextResponse.json({ ok: true })

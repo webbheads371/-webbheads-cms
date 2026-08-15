@@ -1,90 +1,59 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
+import { getToken } from "next-auth/jwt"
 
 const STAFF_ROUTES = ["/dashboard", "/pipeline", "/clients", "/staff", "/projects", "/payments", "/settings"]
 const PORTAL_ROUTES = ["/portal"]
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request: { headers: request.headers } })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({ name, value, ...options })
-          response = NextResponse.next({ request: { headers: request.headers } })
-          response.cookies.set({ name, value, ...options })
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({ name, value: "", ...options })
-          response = NextResponse.next({ request: { headers: request.headers } })
-          response.cookies.set({ name, value: "", ...options })
-        },
-      },
-    }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
-
   const { pathname } = request.nextUrl
 
-  // Allow logo.png to bypass auth checks so it loads on the login page
-  if (pathname === "/logo.png") {
-    return response
+  // Allow static logo or NextAuth api routes to bypass middleware
+  if (pathname === "/logo.png" || pathname.startsWith("/api/auth")) {
+    return NextResponse.next()
   }
 
-  // Not logged in → redirect to /login (except login page itself)
-  if (!user && pathname !== "/login") {
-    return NextResponse.redirect(new URL("/login", request.url))
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  })
+
+  const PUBLIC_ROUTES = ["/login", "/forgot-password", "/reset-password"]
+  const isPublicRoute = PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(r))
+
+  // Not logged in → redirect to /login (except public auth pages)
+  if (!token) {
+    if (!isPublicRoute) {
+      const loginUrl = new URL("/login", request.url)
+      loginUrl.searchParams.set("callbackUrl", pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+    return NextResponse.next()
   }
 
-  // Already logged in and hitting /login → figure out where to send them
-  if (user && pathname === "/login") {
-    // Check if this user is a client
-    const { data: clientUser } = await supabase
-      .from("client_users")
-      .select("id")
-      .eq("id", user.id)
-      .single()
-
-    if (clientUser) {
+  // Already logged in and trying to access public auth routes → redirect appropriately
+  if (isPublicRoute) {
+    if (token.userType === "client") {
       return NextResponse.redirect(new URL("/portal", request.url))
     }
     return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
   // Logged in — enforce role separation
-  if (user) {
-    const isPortalRoute = PORTAL_ROUTES.some(r => pathname.startsWith(r))
-    const isStaffRoute = STAFF_ROUTES.some(r => pathname.startsWith(r))
+  const isPortalRoute = PORTAL_ROUTES.some((r) => pathname.startsWith(r))
+  const isStaffRoute = STAFF_ROUTES.some((r) => pathname.startsWith(r))
+  const isClient = token.userType === "client"
 
-    if (isPortalRoute || isStaffRoute) {
-      const { data: clientUser } = await supabase
-        .from("client_users")
-        .select("id")
-        .eq("id", user.id)
-        .single()
-
-      const isClient = !!clientUser
-
-      // Client trying to access staff routes → send to portal
-      if (isClient && isStaffRoute) {
-        return NextResponse.redirect(new URL("/portal", request.url))
-      }
-
-      // Staff/Admin trying to access portal → send to dashboard
-      if (!isClient && isPortalRoute) {
-        return NextResponse.redirect(new URL("/dashboard", request.url))
-      }
-    }
+  // Client trying to access staff routes → send to portal
+  if (isClient && isStaffRoute) {
+    return NextResponse.redirect(new URL("/portal", request.url))
   }
 
-  return response
+  // Staff trying to access portal routes → send to dashboard
+  if (!isClient && isPortalRoute) {
+    return NextResponse.redirect(new URL("/dashboard", request.url))
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {

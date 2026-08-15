@@ -1,4 +1,7 @@
-import { createClient, getCurrentStaff } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { clients, staff } from "@/db/schema"
+import { asc, inArray } from "drizzle-orm"
+import { getCurrentStaff } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { NewProjectForm } from "./new-project-form"
 
@@ -12,26 +15,24 @@ export default async function NewProjectPage({
     redirect("/dashboard")
   }
 
-  const supabase = createClient()
+  const clientsData = await db
+    .select({ id: clients.id, company_name: clients.company_name })
+    .from(clients)
+    .orderBy(asc(clients.company_name))
 
-  const { data: clients } = await supabase
-    .from("clients")
-    .select("id, company_name")
-    .order("company_name")
+  const staffData = await db
+    .select({ id: staff.id, full_name: staff.full_name, role: staff.role })
+    .from(staff)
+    .where(inArray(staff.role, ["tech_lead", "content_lead", "sales"]))
 
-  const { data: staff } = await supabase
-    .from("staff")
-    .select("id, full_name, role")
-    .in("role", ["tech_lead", "content_lead", "sales"])
-
-  if (!clients?.length) {
+  if (!clientsData?.length) {
     redirect("/clients?noClients=true")
   }
 
   return (
     <NewProjectForm
-      clients={clients}
-      staff={staff || []}
+      clients={clientsData}
+      staff={staffData}
       preselectedClientId={searchParams.client_id}
     />
   )

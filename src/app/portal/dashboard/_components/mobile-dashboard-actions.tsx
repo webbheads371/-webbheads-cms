@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { usePortalTab } from "@/app/portal/portal-tab-context"
 import { KeyRound, LifeBuoy, LogOut, Menu, X } from "lucide-react"
+import { signOut } from "next-auth/react"
 import { ChangePasswordForm } from "./change-password-form"
 
 export function MobileDashboardActions() {
@@ -70,15 +71,14 @@ export function MobileDashboardActions() {
 
           <div className="h-px bg-slate-100 dark:bg-slate-800 my-1 mx-2" />
 
-          <form action="/api/auth/signout" method="POST" className="w-full">
-            <button
-              type="submit"
-              className="flex w-full items-center gap-2 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all duration-200"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="text-sm font-medium">Logout</span>
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="flex w-full items-center gap-2 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all duration-200"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="text-sm font-medium">Logout</span>
+          </button>
         </div>
       )}
     </div>

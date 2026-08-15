@@ -1,182 +1,64 @@
 import { NextResponse } from "next/server"
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { db } from "@/db"
+import {
+  clients,
+  client_users,
+  projects,
+  documents,
+  agreements,
+  payment_requests,
+  payments,
+  form_responses,
+  activity_log,
+  project_status_updates,
+  project_checklist_items,
+} from "@/db/schema"
+import { eq, inArray } from "drizzle-orm"
 
-/**
- * DELETE /api/clients/[id]
- * Admin-only: deletes a client and cascades to their
- * portal login (client_users) and projects.
- * Uses service-role key to bypass RLS entirely.
- */
 export async function DELETE(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
   const clientId = params.id
-  console.log("[DELETE API] ▶ Request for client id:", clientId)
-
-  const cookieStore = cookies()
-
-  // ── Anon client – just for auth check ──────────────────────────────────────
-  const anonClient = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (n: string) => cookieStore.get(n)?.value, set: () => {}, remove: () => {} } }
-  )
-
-  // ── Admin client – service role bypasses ALL RLS ────────────────────────────
-  const adminClient = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { cookies: { get: (n: string) => cookieStore.get(n)?.value, set: () => {}, remove: () => {} } }
-  )
-
-  // ── 0. Verify caller is authenticated ──────────────────────────────────────
-  const { data: { user } } = await anonClient.auth.getUser()
-  console.log("[DELETE API] Auth user:", user?.email ?? "none")
-  if (!user) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized – please log in" }, { status: 401 })
   }
 
-  // ── 1. Verify caller is admin or tech_lead ─────────────────────────────────
-  const { data: caller, error: staffErr } = await adminClient
-    .from("staff")
-    .select("role")
-    .eq("id", user.id)
-    .single()
-
-  console.log("[DELETE API] Caller role:", caller?.role, "| staffErr:", staffErr?.message)
-
-  if (!caller) {
+  if (session.user.role !== "admin" && session.user.role !== "tech_lead") {
     return NextResponse.json(
-      { error: `Staff record not found for your account. (${staffErr?.message ?? "unknown"})` },
+      { error: "Only admins and tech leads can delete clients." },
       { status: 403 }
     )
   }
 
-  if (caller.role !== "admin" && caller.role !== "tech_lead") {
-    return NextResponse.json(
-      { error: `Only admins and tech leads can delete clients. Your role: ${caller.role}` },
-      { status: 403 }
-    )
-  }
+  try {
+    const clientProjects = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(eq(projects.client_id, clientId))
 
-  // ── 2. Get all project IDs for this client ─────────────────────────────────
-  const { data: projects, error: projectsErr } = await adminClient
-    .from("projects")
-    .select("id")
-    .eq("client_id", clientId)
+    const projectIds = clientProjects.map((p) => p.id)
 
-  if (projectsErr) {
-    console.error("[DELETE API] Failed to fetch projects:", projectsErr.message)
-    return NextResponse.json({ error: "Failed to fetch client projects: " + projectsErr.message }, { status: 500 })
-  }
-
-  const projectIds = (projects ?? []).map((p) => p.id)
-  console.log("[DELETE API] Project IDs to delete:", projectIds)
-
-  // ── 3. Delete all project-related child records ───────────────────────────
-  if (projectIds.length > 0) {
-    const childTables = [
-      "documents",
-      "agreements",
-      "payment_requests",
-      "payments",
-      "form_responses",
-      "activity_log",
-      "project_status_updates",
-      "project_checklist_items",
-    ] as const
-
-    for (const table of childTables) {
-      const { error: delErr } = await adminClient
-        .from(table)
-        .delete()
-        .in("project_id", projectIds)
-
-      if (delErr) {
-        // Log but don't abort – some tables may simply have no rows (not an error)
-        console.warn(`[DELETE API] Warning deleting from ${table}:`, delErr.message)
-        // Only abort on hard errors (not "no rows affected")
-        if (!delErr.message.includes("no rows")) {
-          // Some Supabase errors indicate the table genuinely doesn't exist or
-          // there's a real FK violation – surface that
-          console.error(`[DELETE API] Hard error on ${table}:`, delErr)
-          return NextResponse.json(
-            { error: `Failed to delete records from ${table}: ${delErr.message}` },
-            { status: 500 }
-          )
-        }
-      } else {
-        console.log(`[DELETE API] ✓ Cleared ${table}`)
-      }
+    if (projectIds.length > 0) {
+      await db.delete(documents).where(inArray(documents.project_id, projectIds))
+      await db.delete(agreements).where(inArray(agreements.project_id, projectIds))
+      await db.delete(payment_requests).where(inArray(payment_requests.project_id, projectIds))
+      await db.delete(payments).where(inArray(payments.project_id, projectIds))
+      await db.delete(form_responses).where(inArray(form_responses.project_id, projectIds))
+      await db.delete(activity_log).where(inArray(activity_log.project_id, projectIds))
+      await db.delete(project_status_updates).where(inArray(project_status_updates.project_id, projectIds))
+      await db.delete(project_checklist_items).where(inArray(project_checklist_items.project_id, projectIds))
+      await db.delete(projects).where(inArray(projects.id, projectIds))
     }
 
-    // ── 4. Delete the projects themselves ──────────────────────────────────
-    const { error: projDelErr } = await adminClient
-      .from("projects")
-      .delete()
-      .in("id", projectIds)
+    await db.delete(client_users).where(eq(client_users.client_id, clientId))
+    await db.delete(clients).where(eq(clients.id, clientId))
 
-    if (projDelErr) {
-      console.error("[DELETE API] Failed to delete projects:", projDelErr.message)
-      return NextResponse.json(
-        { error: "Failed to delete projects: " + projDelErr.message },
-        { status: 500 }
-      )
-    }
-    console.log("[DELETE API] ✓ Deleted projects")
+    return NextResponse.json({ ok: true })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Failed to delete client" }, { status: 500 })
   }
-
-  // ── 5. Delete portal auth accounts (auth.users) ───────────────────────────
-  const { data: clientUsers } = await adminClient
-    .from("client_users")
-    .select("id")
-    .eq("client_id", clientId)
-
-  console.log("[DELETE API] Client portal users:", clientUsers?.length ?? 0)
-
-  if (clientUsers && clientUsers.length > 0) {
-    for (const cu of clientUsers) {
-      const { error: authDelErr } = await adminClient.auth.admin.deleteUser(cu.id)
-      if (authDelErr) {
-        console.warn(`[DELETE API] Warning: could not delete auth user ${cu.id}:`, authDelErr.message)
-        // Not a hard stop – the client_users row will still be deleted below
-      } else {
-        console.log(`[DELETE API] ✓ Deleted auth user ${cu.id}`)
-      }
-    }
-  }
-
-  // ── 6. Delete client_users rows ───────────────────────────────────────────
-  const { error: cuDelErr } = await adminClient
-    .from("client_users")
-    .delete()
-    .eq("client_id", clientId)
-
-  if (cuDelErr) {
-    console.error("[DELETE API] Failed to delete client_users:", cuDelErr.message)
-    return NextResponse.json(
-      { error: "Failed to delete client users: " + cuDelErr.message },
-      { status: 500 }
-    )
-  }
-  console.log("[DELETE API] ✓ Deleted client_users")
-
-  // ── 7. Delete the client record ───────────────────────────────────────────
-  const { error: clientDelErr } = await adminClient
-    .from("clients")
-    .delete()
-    .eq("id", clientId)
-
-  if (clientDelErr) {
-    console.error("[DELETE API] Failed to delete client:", clientDelErr.message)
-    return NextResponse.json(
-      { error: "Failed to delete client: " + clientDelErr.message },
-      { status: 500 }
-    )
-  }
-
-  console.log("[DELETE API] ✅ SUCCESS – client deleted:", clientId)
-  return NextResponse.json({ ok: true })
 }

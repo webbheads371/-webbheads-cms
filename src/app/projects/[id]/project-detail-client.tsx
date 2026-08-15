@@ -1,7 +1,7 @@
 "use client"
 
 import { AlertTriangle, Trash2, ArrowLeft } from "lucide-react"
-import { useState, lazy, Suspense } from "react"
+import { useState } from "react"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
@@ -9,36 +9,90 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import { PageHeader } from "@/components/page-header"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { useSupabase } from "@/hooks/use-supabase"
+import { moveProjectStage } from "@/lib/supabase/actions"
 import { StageStepper } from "./stage-stepper"
-import type { Project, PipelineStage, ProjectChecklistItem, Payment, Document, ActivityLog, Staff, Agreement, PaymentRequest, FormResponse, ProjectStatusUpdate, ContentSchedule } from "@/types"
+import type {
+  Project,
+  PipelineStage,
+  ProjectChecklistItem,
+  Payment,
+  Document,
+  ActivityLog,
+  Staff,
+  Agreement,
+  PaymentRequest,
+  FormResponse,
+  ProjectStatusUpdate,
+  ContentSchedule,
+} from "@/types"
 
-const ChecklistPanel = dynamic(() => import("./checklist-panel").then((m) => ({ default: m.ChecklistPanel })), { ssr: false })
-const PaymentsTab = dynamic(() => import("./payments-tab").then((m) => ({ default: m.PaymentsTab })), { ssr: false })
-const DocumentsTab = dynamic(() => import("./documents-tab").then((m) => ({ default: m.DocumentsTab })), { ssr: false })
-const ActivityTimeline = dynamic(() => import("./activity-timeline").then((m) => ({ default: m.ActivityTimeline })), { ssr: false })
-const AgreementTab = dynamic(() => import("./agreement-tab").then((m) => ({ default: m.AgreementTab })), { ssr: false })
-const FormResponsesTab = dynamic(() => import("./form-responses-tab").then((m) => ({ default: m.FormResponsesTab })), { ssr: false })
-const ClientPortalTab = dynamic(() => import("./client-portal-tab").then((m) => ({ default: m.ClientPortalTab })), { ssr: false })
-const WorkUpdatesTab = dynamic(() => import("./work-updates-tab").then((m) => ({ default: m.WorkUpdatesTab })), { ssr: false })
-const ContentScheduleTabAdmin = dynamic(() => import("./content-schedule-tab").then((m) => ({ default: m.ContentScheduleTab })), { ssr: false })
-const EditDetailsTab = dynamic(() => import("./edit-details-tab").then((m) => ({ default: m.EditDetailsTab })), { ssr: false })
-const DeliverablesTab = dynamic(() => import("./deliverables-tab").then((m) => ({ default: m.DeliverablesTab })), { ssr: false })
-
+const ChecklistPanel = dynamic(
+  () => import("./checklist-panel").then((m) => ({ default: m.ChecklistPanel })),
+  { ssr: false }
+)
+const PaymentsTab = dynamic(
+  () => import("./payments-tab").then((m) => ({ default: m.PaymentsTab })),
+  { ssr: false }
+)
+const DocumentsTab = dynamic(
+  () => import("./documents-tab").then((m) => ({ default: m.DocumentsTab })),
+  { ssr: false }
+)
+const ActivityTimeline = dynamic(
+  () => import("./activity-timeline").then((m) => ({ default: m.ActivityTimeline })),
+  { ssr: false }
+)
+const AgreementTab = dynamic(
+  () => import("./agreement-tab").then((m) => ({ default: m.AgreementTab })),
+  { ssr: false }
+)
+const FormResponsesTab = dynamic(
+  () => import("./form-responses-tab").then((m) => ({ default: m.FormResponsesTab })),
+  { ssr: false }
+)
+const ClientPortalTab = dynamic(
+  () => import("./client-portal-tab").then((m) => ({ default: m.ClientPortalTab })),
+  { ssr: false }
+)
+const WorkUpdatesTab = dynamic(
+  () => import("./work-updates-tab").then((m) => ({ default: m.WorkUpdatesTab })),
+  { ssr: false }
+)
+const ContentScheduleTabAdmin = dynamic(
+  () => import("./content-schedule-tab").then((m) => ({ default: m.ContentScheduleTab })),
+  { ssr: false }
+)
+const EditDetailsTab = dynamic(
+  () => import("./edit-details-tab").then((m) => ({ default: m.EditDetailsTab })),
+  { ssr: false }
+)
+const DeliverablesTab = dynamic(
+  () => import("./deliverables-tab").then((m) => ({ default: m.DeliverablesTab })),
+  { ssr: false }
+)
 
 interface Props {
-  project: Project & { client: any; tech_lead: Staff | null; content_lead: Staff | null; sales_lead: Staff | null }
+  project: Project & {
+    client: any
+    tech_lead: Staff | null
+    content_lead: Staff | null
+    sales_lead: Staff | null
+  }
   stages: PipelineStage[]
   checklistItems: ProjectChecklistItem[]
   payments: Payment[]
   documents: Document[]
   activity: (ActivityLog & { actor: Staff | null })[]
   currentStaff: Staff | null
-  // Phase 2
   agreement: Agreement | null
   paymentRequests: PaymentRequest[]
   formResponses: FormResponse[]
@@ -48,24 +102,38 @@ interface Props {
 }
 
 export function ProjectDetailClient({
-  project, stages, checklistItems, payments, documents, activity, currentStaff,
-  agreement, paymentRequests, formResponses, statusUpdates, contentSchedule, staffList
+  project,
+  stages,
+  checklistItems,
+  payments,
+  documents,
+  activity,
+  currentStaff,
+  agreement,
+  paymentRequests,
+  formResponses,
+  statusUpdates,
+  contentSchedule,
+  staffList,
 }: Props) {
   const [showForceDialog, setShowForceDialog] = useState(false)
   const [showCloseDialog, setShowCloseDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const router = useRouter()
-  const supabase = useSupabase()
 
   const isAdmin = currentStaff?.role === "admin"
   const currentStageIndex = stages.findIndex((s) => s.key === project.current_stage)
   const nextStage = stages[currentStageIndex + 1]
   const isTerminal = ["closed_won", "closed_lost"].includes(project.current_stage)
 
-  const currentChecklist = checklistItems.filter((i) => i.stage_key === project.current_stage)
-  const incompleteRequired = currentChecklist.filter((i) => i.is_required && !i.is_done)
+  const currentChecklist = checklistItems.filter(
+    (i) => i.stage_key === project.current_stage
+  )
+  const incompleteRequired = currentChecklist.filter(
+    (i) => i.is_required && !i.is_done
+  )
 
-  async function handleMoveStage() {
+  async function handleAdvanceStage() {
     if (!nextStage) return
 
     if (incompleteRequired.length > 0 && !isAdmin) {
@@ -76,84 +144,26 @@ export function ProjectDetailClient({
     await performMove()
   }
 
-  async function performMove(forced = false) {
+  async function performMove() {
     if (!nextStage) return
-
-    const newStatus = nextStage.key === "closed_won"
-      ? "closed_won" : nextStage.key === "closed_lost"
-      ? "closed_lost" : "active"
-
-    const { error } = await supabase
-      .from("projects")
-      .update({ current_stage: nextStage.key, status: newStatus })
-      .eq("id", project.id)
-    if (error) return
-
-    const { data: templates } = await supabase
-      .from("checklist_templates")
-      .select("*")
-      .eq("stage_key", nextStage.key)
-
-    if (templates) {
-      const existingLabels = checklistItems.map((i) => i.label)
-      const newItems = templates
-        .filter((t) => !existingLabels.includes(t.label))
-        .map((t) => ({
-          project_id: project.id,
-          template_id: t.id,
-          stage_key: t.stage_key,
-          label: t.label,
-          category: t.category,
-          is_required: t.is_required,
-          is_done: false,
-        }))
-      if (newItems.length > 0) {
-        await supabase.from("project_checklist_items").insert(newItems)
-      }
-    }
-
-    await supabase.from("activity_log").insert({
-      project_id: project.id,
-      actor_id: currentStaff?.id,
-      action: "stage_changed",
-      detail: { from: project.current_stage, to: nextStage.key, forced },
-    })
-
+    await moveProjectStage(project.id, nextStage.key)
     setShowForceDialog(false)
     router.refresh()
   }
 
   async function handleCloseProject(outcome: "closed_won" | "closed_lost") {
-    const { error } = await supabase
-      .from("projects")
-      .update({ current_stage: outcome, status: outcome })
-      .eq("id", project.id)
-    if (error) return
-
-    await supabase.from("activity_log").insert({
-      project_id: project.id,
-      actor_id: currentStaff?.id,
-      action: "stage_changed",
-      detail: { from: project.current_stage, to: outcome, forced: incompleteRequired.length > 0, closed: true },
-    })
-
+    await moveProjectStage(project.id, outcome)
     setShowCloseDialog(false)
     router.refresh()
   }
 
   async function handleDeleteProject() {
-    const { error } = await supabase
-      .from("projects")
-      .delete()
-      .eq("id", project.id)
-    if (error) {
-      console.error("Failed to delete project:", error)
-      return
+    const res = await fetch(`/api/clients/${project.client_id}`, { method: "DELETE" })
+    if (res.ok) {
+      setShowDeleteDialog(false)
+      router.push("/dashboard")
+      router.refresh()
     }
-
-    setShowDeleteDialog(false)
-    router.push("/dashboard")
-    router.refresh()
   }
 
   return (
@@ -169,285 +179,215 @@ export function ProjectDetailClient({
               <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
               Back
             </button>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span>{project.client?.company_name}</span>
-              <Badge variant="outline" className="capitalize">
-                {project.current_stage.replace(/_/g, " ")}
-              </Badge>
-              {project.status !== "active" && (
-                <Badge variant={project.status === "closed_won" ? "default" : "destructive"}>
-                  {project.status.replace("_", " ")}
-                </Badge>
-              )}
+              <span>•</span>
+              <span className="capitalize">{project.current_stage.replace("_", " ")}</span>
             </div>
           </div>
         }
-      />
-
-      <div className="flex flex-wrap gap-4 mb-6 text-sm">
-        {project.tech_lead && (
-          <Badge variant="secondary">Tech Lead: {project.tech_lead.full_name}</Badge>
-        )}
-        {project.content_lead && (
-          <Badge variant="secondary">Content Lead: {project.content_lead.full_name}</Badge>
-        )}
-        {project.sales_lead && (
-          <Badge variant="secondary">Sales Lead: {project.sales_lead.full_name}</Badge>
-        )}
-        {project.project_value && (
-          <Badge variant="secondary">Value: {formatCurrency(project.project_value)}</Badge>
-        )}
-        {project.expected_close_date && (
-          <Badge variant="secondary">Expected: {formatDate(project.expected_close_date)}</Badge>
-        )}
-      </div>
-
-      <StageStepper
-        stages={stages}
-        currentStage={project.current_stage}
-        status={project.status}
-      />
-
-      {(isAdmin || !isTerminal) && (
-        <div className="flex justify-end gap-3 mb-6">
-          {!isTerminal && nextStage && nextStage.key !== "closed_won" && (
-            <Dialog open={showForceDialog} onOpenChange={setShowForceDialog}>
-              <DialogTrigger asChild>
-                <Button onClick={handleMoveStage} size="lg">
-                  Move to {nextStage.label}
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Incomplete required items</DialogTitle>
-                  <DialogDescription>
-                    {incompleteRequired.length} required checklist item(s) are not yet complete.
-                    {isAdmin
-                      ? " You can force-move as admin."
-                      : " Ask an admin to force-move."}
-                  </DialogDescription>
-                </DialogHeader>
-                {isAdmin && (
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowForceDialog(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={() => performMove(true)}>Move anyway</Button>
-                  </DialogFooter>
-                )}
-              </DialogContent>
-            </Dialog>
+      >
+        <div className="flex gap-2">
+          {!isTerminal && nextStage && (
+            <Button onClick={handleAdvanceStage}>
+              Move to: {nextStage.label}
+            </Button>
           )}
-
-          {!isTerminal && isAdmin && (
-            <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
-              <DialogTrigger asChild>
-                <Button
-                  variant={nextStage && nextStage.key === "closed_won" ? "default" : "outline"}
-                  className={nextStage && nextStage.key === "closed_won" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-destructive text-destructive hover:bg-destructive/10"}
-                  size="lg"
-                >
-                  Close Client & Project
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Close Client & Project</DialogTitle>
-                  <DialogDescription>
-                    Confirm the closure outcome of this project. Closing the client will transition this project to a terminal status (`Closed - Won` or `Closed - Lost`).
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 space-y-3">
-                  {incompleteRequired.length > 0 && (
-                    <div className="p-3 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-xs rounded border border-amber-200 flex items-start gap-2">
-                      <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <strong>Incomplete Items:</strong> There are {incompleteRequired.length} required checklist items not yet completed in the current stage ({project.current_stage.replace(/_/g, " ")}).
-                        {!isAdmin && <p className="mt-1 font-semibold">Only admins can force-close with incomplete items.</p>}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
-                  <Button variant="outline" onClick={() => setShowCloseDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleCloseProject("closed_lost")}
-                    disabled={incompleteRequired.length > 0 && !isAdmin}
-                  >
-                    Close as Lost
-                  </Button>
-                  <Button
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                    onClick={() => handleCloseProject("closed_won")}
-                    disabled={incompleteRequired.length > 0 && !isAdmin}
-                  >
-                    Close as Won
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+          {!isTerminal && (
+            <Button variant="outline" onClick={() => setShowCloseDialog(true)}>
+              Close Project
+            </Button>
           )}
-
           {isAdmin && (
-            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-              <DialogTrigger asChild>
-                <Button variant="destructive" size="lg">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Project
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Delete Project</DialogTitle>
-                  <DialogDescription>
-                    Are you sure you want to delete this project? This action cannot be undone and will permanently remove all associated data, including checklist items, payments, documents, and activity logs.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
-                  <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button variant="destructive" onClick={handleDeleteProject}>
-                    Delete Project
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button
+              variant="destructive"
+              size="icon"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           )}
         </div>
-      )}
+      </PageHeader>
 
-      <Tabs defaultValue="checklist" className="mt-6">
-        <TabsList>
+      <div className="mb-6">
+        <StageStepper stages={stages} currentStage={project.current_stage} status={project.status} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Assigned Leads</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-sm">
+            <p>Tech: {project.tech_lead?.full_name || "—"}</p>
+            <p>Content: {project.content_lead?.full_name || "—"}</p>
+            <p>Sales: {project.sales_lead?.full_name || "—"}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Project Financials</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-sm">
+            <p>
+              Value: {project.project_value ? formatCurrency(project.project_value) : "Not Set"}
+            </p>
+            <p>Advance: {project.advance_percent ?? 50}%</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Client Info</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-sm">
+            <p>{project.client?.contact_name || "No contact name"}</p>
+            <p>{project.client?.email || "No email"}</p>
+            <p>{project.client?.phone || "No phone"}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="checklist" className="space-y-4">
+        <TabsList className="flex flex-wrap h-auto p-1 gap-1">
           <TabsTrigger value="checklist">Checklist</TabsTrigger>
-          {isAdmin ? (
-            <>
-              <TabsTrigger value="payments">Payments</TabsTrigger>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
-              <TabsTrigger value="agreement">Agreement</TabsTrigger>
-              <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
-              <TabsTrigger value="form-responses">Form Responses</TabsTrigger>
-              <TabsTrigger value="client-portal">Client Portal</TabsTrigger>
-              <TabsTrigger value="content-schedule">Content Schedule</TabsTrigger>
-              <TabsTrigger value="activity">Activity</TabsTrigger>
-              <TabsTrigger value="edit-details">Edit Details</TabsTrigger>
-            </>
-          ) : (
-            <>
-              <TabsTrigger value="work-updates">Work Updates</TabsTrigger>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
-              <TabsTrigger value="form-responses">Form Responses</TabsTrigger>
-              <TabsTrigger value="activity">Activity</TabsTrigger>
-            </>
-          )}
+          <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
+          <TabsTrigger value="agreement">Agreement</TabsTrigger>
+          <TabsTrigger value="payments">Payments & Requests</TabsTrigger>
+          <TabsTrigger value="updates">Work Updates</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="timeline">Activity Timeline</TabsTrigger>
+          <TabsTrigger value="content_schedule">Content Schedule</TabsTrigger>
+          <TabsTrigger value="forms">Client Form</TabsTrigger>
+          <TabsTrigger value="portal">Client Portal Link</TabsTrigger>
+          {isAdmin && <TabsTrigger value="edit_details">Edit Details</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="checklist">
-          <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading checklist...</div>}>
-            <ChecklistPanel
-              items={checklistItems}
-              currentStage={project.current_stage}
-              currentStaff={currentStaff}
-              projectId={project.id}
-              stages={stages}
-              onAutoAdvance={() => performMove()}
-            />
-          </Suspense>
+          <ChecklistPanel
+            items={checklistItems}
+            currentStage={project.current_stage}
+            currentStaff={currentStaff}
+            projectId={project.id}
+            stages={stages}
+            onAutoAdvance={handleAdvanceStage}
+          />
         </TabsContent>
 
-        {isAdmin ? (
-          <>
-            <TabsContent value="payments">
-              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading payments...</div>}>
-                <PaymentsTab payments={payments} projectId={project.id} projectValue={project.project_value} />
-              </Suspense>
-            </TabsContent>
+        <TabsContent value="deliverables">
+          <DeliverablesTab project={project} />
+        </TabsContent>
 
-            <TabsContent value="documents">
-              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading documents...</div>}>
-                <DocumentsTab documents={documents} projectId={project.id} />
-              </Suspense>
-            </TabsContent>
+        <TabsContent value="agreement">
+          <AgreementTab agreement={agreement} projectId={project.id} />
+        </TabsContent>
 
-            <TabsContent value="agreement">
-              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading agreement...</div>}>
-                <AgreementTab projectId={project.id} agreement={agreement} />
-              </Suspense>
-            </TabsContent>
+        <TabsContent value="payments">
+          <PaymentsTab
+            payments={payments}
+            projectId={project.id}
+            projectValue={project.project_value}
+          />
+        </TabsContent>
 
-            <TabsContent value="deliverables">
-              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading deliverables...</div>}>
-                <DeliverablesTab project={project} />
-              </Suspense>
-            </TabsContent>
+        <TabsContent value="updates">
+          <WorkUpdatesTab statusUpdates={statusUpdates as any} projectId={project.id} />
+        </TabsContent>
 
-            <TabsContent value="form-responses">
-              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading responses...</div>}>
-                <FormResponsesTab responses={formResponses} />
-              </Suspense>
-            </TabsContent>
+        <TabsContent value="documents">
+          <DocumentsTab documents={documents} projectId={project.id} />
+        </TabsContent>
 
-            <TabsContent value="client-portal">
-              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading portal controls...</div>}>
-                <ClientPortalTab
-                  project={project}
-                  paymentRequests={paymentRequests}
-                  statusUpdates={statusUpdates}
-                  documents={documents}
-                  agreement={agreement}
-                />
-              </Suspense>
-            </TabsContent>
+        <TabsContent value="timeline">
+          <ActivityTimeline activity={activity} />
+        </TabsContent>
 
-            <TabsContent value="activity">
-              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading activity...</div>}>
-                <ActivityTimeline activity={activity} />
-              </Suspense>
-            </TabsContent>
+        <TabsContent value="content_schedule">
+          <ContentScheduleTabAdmin items={contentSchedule} projectId={project.id} />
+        </TabsContent>
 
-            <TabsContent value="content-schedule">
-              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading schedule...</div>}>
-                <ContentScheduleTabAdmin projectId={project.id} items={contentSchedule} />
-              </Suspense>
-            </TabsContent>
+        <TabsContent value="forms">
+          <FormResponsesTab responses={formResponses as any} />
+        </TabsContent>
 
-            <TabsContent value="edit-details">
-              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading form...</div>}>
-                <EditDetailsTab project={project} staff={staffList} />
-              </Suspense>
-            </TabsContent>
-          </>
-        ) : (
-          <>
-            <TabsContent value="work-updates">
-              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading updates...</div>}>
-                <WorkUpdatesTab projectId={project.id} statusUpdates={statusUpdates} />
-              </Suspense>
-            </TabsContent>
+        <TabsContent value="portal">
+          <ClientPortalTab
+            project={project}
+            paymentRequests={paymentRequests as any}
+            statusUpdates={statusUpdates as any}
+            documents={documents as any}
+            agreement={agreement as any}
+          />
+        </TabsContent>
 
-            <TabsContent value="documents">
-              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading documents...</div>}>
-                <DocumentsTab documents={documents} projectId={project.id} />
-              </Suspense>
-            </TabsContent>
-
-            <TabsContent value="form-responses">
-              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading responses...</div>}>
-                <FormResponsesTab responses={formResponses} />
-              </Suspense>
-            </TabsContent>
-
-            <TabsContent value="activity">
-              <Suspense fallback={<div className="py-8 text-center text-muted-foreground">Loading activity...</div>}>
-                <ActivityTimeline activity={activity} />
-              </Suspense>
-            </TabsContent>
-          </>
+        {isAdmin && (
+          <TabsContent value="edit_details">
+            <EditDetailsTab project={project} staffList={staffList} />
+          </TabsContent>
         )}
       </Tabs>
+
+      <Dialog open={showForceDialog} onOpenChange={setShowForceDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" /> Required items incomplete
+            </DialogTitle>
+            <DialogDescription>
+              This stage has {incompleteRequired.length} incomplete required checklist item(s).
+              As an admin, you can force-move the project to the next stage.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowForceDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => performMove()}>Move anyway</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Close Project</DialogTitle>
+            <DialogDescription>Select the final status for this project.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setShowCloseDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => handleCloseProject("closed_lost")}>
+              Closed Lost
+            </Button>
+            <Button onClick={() => handleCloseProject("closed_won")}>Closed Won</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="h-5 w-5" /> Delete Project & Client
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong>{project.name}</strong>? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteProject}>
+              Yes, Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

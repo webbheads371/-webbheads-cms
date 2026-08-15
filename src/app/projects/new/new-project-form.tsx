@@ -8,9 +8,9 @@ import { Label } from "@/components/ui/label"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { useSupabase } from "@/hooks/use-supabase"
+import { createProjectAction } from "@/lib/supabase/actions"
 
 interface Props {
   clients: { id: string; company_name: string }[]
@@ -22,7 +22,6 @@ export function NewProjectForm({ clients, staff, preselectedClientId }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const supabase = useSupabase()
 
   const techLeads = staff.filter((s) => s.role === "tech_lead")
   const contentLeads = staff.filter((s) => s.role === "content_lead")
@@ -34,65 +33,15 @@ export function NewProjectForm({ clients, staff, preselectedClientId }: Props) {
     setError(null)
 
     const formData = new FormData(e.currentTarget)
-    const data = {
-      client_id: formData.get("client_id") as string,
-      name: formData.get("name") as string,
-      tech_lead_id: (formData.get("tech_lead_id") as string) || null,
-      content_lead_id: (formData.get("content_lead_id") as string) || null,
-      sales_lead_id: (formData.get("sales_lead_id") as string) || null,
-      project_value: formData.get("project_value")
-        ? Number(formData.get("project_value"))
-        : null,
-      expected_start_date: (formData.get("expected_start_date") as string) || null,
-      expected_close_date: (formData.get("expected_close_date") as string) || null,
-    }
+    const res = await createProjectAction(formData)
 
-    if (!data.client_id || !data.name) {
-      setError("Client and project name are required")
+    if (res.error) {
+      setError(res.error)
       setLoading(false)
-      return
+    } else {
+      router.push("/pipeline")
+      router.refresh()
     }
-
-    const { data: project, error: insertError } = await supabase
-      .from("projects")
-      .insert(data)
-      .select()
-      .single()
-
-    if (insertError) {
-      setError(insertError.message)
-      setLoading(false)
-      return
-    }
-
-    if (project) {
-      const { data: templates } = await supabase
-        .from("checklist_templates")
-        .select("*")
-        .eq("stage_key", "quotation")
-
-      if (templates) {
-        const items = templates.map((t) => ({
-          project_id: project.id,
-          template_id: t.id,
-          stage_key: t.stage_key,
-          label: t.label,
-          category: t.category,
-          is_required: t.is_required,
-          is_done: false,
-        }))
-        await supabase.from("project_checklist_items").insert(items)
-      }
-
-      await supabase.from("activity_log").insert({
-        project_id: project.id,
-        action: "stage_changed",
-        detail: { new_stage: "quotation" },
-      })
-    }
-
-    router.push(`/projects/${project?.id}`)
-    router.refresh()
   }
 
   return (

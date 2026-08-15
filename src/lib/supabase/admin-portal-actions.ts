@@ -1,7 +1,39 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { createClient, createAdminClient } from "./server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { db } from "@/db"
+import {
+  client_users,
+  staff,
+  agreements,
+  projects,
+  activity_log,
+  payment_requests,
+  payments,
+  project_status_updates,
+  bank_settings,
+  form_templates,
+  clients,
+  documents,
+  content_schedule,
+  checklist_templates,
+} from "@/db/schema"
+import { eq, and } from "drizzle-orm"
+import bcrypt from "bcryptjs"
+import crypto from "crypto"
+import { uploadToCloudinary } from "@/lib/cloudinary"
+
+function generateSecureTempPassword(length = 12): string {
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%"
+  const bytes = crypto.randomBytes(length)
+  let password = ""
+  for (let i = 0; i < length; i++) {
+    password += chars[bytes[i] % chars.length]
+  }
+  return "Wb!" + password + "9"
+}
 
 // ─── Generate client portal login ────────────────────────────────────────────
 
@@ -10,171 +42,122 @@ export async function generateClientPortalLogin(
   fullName: string,
   email: string
 ) {
-  const supabase = createClient()
-  const adminClient = createAdminClient()
+  const session = await getServerSession(authOptions)
+  const normalizedEmail = email.trim().toLowerCase()
+  const tempPassword = generateSecureTempPassword()
+  const passwordHash = await bcrypt.hash(tempPassword, 10)
 
-  // Generate one password upfront and use it everywhere
-  const tempPassword = Math.random().toString(36).slice(-10) + "A1!"
+  try {
+    // Check if email already registered as staff
+    const [existingStaff] = await db
+      .select({ id: staff.id })
+      .from(staff)
+      .where(eq(staff.email, normalizedEmail))
 
-  let user: any = null
-  let isExistingUser = false
-
-  const { data: createData, error: authError } = await adminClient.auth.admin.createUser({
-    email,
-    password: tempPassword,
-    email_confirm: true,
-  })
-
-  if (authError) {
-    // If user is already registered, let's find the user and link them if possible
-    if (authError.message.includes("already been registered") || authError.message.includes("already exists")) {
-      const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
-      if (listError) {
-        return { error: `Email already registered, and failed to retrieve user list: ${listError.message}`, credentials: null }
-      }
-      
-      const existingUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
-      if (!existingUser) {
-        return { error: "Email already registered, but user details could not be found in auth list.", credentials: null }
-      }
-      
-      user = existingUser
-      isExistingUser = true
-    } else {
-      return { error: authError.message, credentials: null }
-    }
-  } else {
-    user = createData.user
-  }
-
-  if (!user) {
-    return { error: "Failed to create or retrieve auth user", credentials: null }
-  }
-
-  // If the user already existed in auth, check if they are staff or already linked
-  if (isExistingUser) {
-    const { data: existingStaff } = await adminClient
-      .from("staff")
-      .select("id")
-      .eq("id", user.id)
-      .maybeSingle()
-      
     if (existingStaff) {
-      return { error: "This email is registered as a staff member and cannot be used for a client portal.", credentials: null }
+      return {
+        error: "This email is registered as a staff member and cannot be used for a client portal.",
+        credentials: null,
+      }
     }
 
-    const { data: existingClientUser } = await adminClient
-      .from("client_users")
-      .select("client_id")
-      .eq("id", user.id)
-      .maybeSingle()
+    // Check if client user exists
+    const [existingClientUser] = await db
+      .select()
+      .from(client_users)
+      .where(eq(client_users.email, normalizedEmail))
 
     if (existingClientUser) {
       if (existingClientUser.client_id === clientId) {
-        // Already linked to this client. Update password and return success.
-        const { error: updateError } = await adminClient.auth.admin.updateUserById(user.id, {
-          password: tempPassword,
-        })
-        if (updateError) {
-          return { error: `Failed to update password for existing client portal: ${updateError.message}`, credentials: null }
-        }
+        await db
+          .update(client_users)
+          .set({ password_hash: passwordHash })
+          .where(eq(client_users.id, existingClientUser.id))
+
         revalidatePath("/clients")
-        return { error: null, credentials: { email, tempPassword } }
+        return { error: null, credentials: { email: normalizedEmail, tempPassword } }
       } else {
-        return { error: "This email is already linked to another client portal login.", credentials: null }
+        return {
+          error: "This email is already linked to another client portal login.",
+          credentials: null,
+        }
       }
     }
-    
-    // Update password for existing user so tempPassword works
-    const { error: updateError } = await adminClient.auth.admin.updateUserById(user.id, {
-      password: tempPassword,
+
+    await db.insert(client_users).values({
+      client_id: clientId,
+      full_name: fullName,
+      email: normalizedEmail,
+      password_hash: passwordHash,
+      created_by: session?.user?.id || null,
     })
-    if (updateError) {
-      return { error: `Failed to set password for existing user: ${updateError.message}`, credentials: null }
-    }
+
+    revalidatePath("/clients")
+    return { error: null, credentials: { email: normalizedEmail, tempPassword } }
+  } catch (err: any) {
+    return { error: err.message || "Failed to generate client portal login", credentials: null }
   }
-
-  const { data: { user: currentUser } } = await supabase.auth.getUser()
-
-  const { error: insertError } = await adminClient.from("client_users").insert({
-    id: user.id,
-    client_id: clientId,
-    full_name: fullName,
-    email,
-    created_by: currentUser?.id,
-  })
-
-  if (insertError) {
-    // Only delete the auth user if we created them in this execution
-    if (!isExistingUser) {
-      await adminClient.auth.admin.deleteUser(user.id)
-    }
-    return { error: insertError.message, credentials: null }
-  }
-
-  revalidatePath("/clients")
-  return { error: null, credentials: { email, tempPassword } }
 }
 
 // ─── Reset client portal password ──────────────────────────────────────────────
 
 export async function resetClientPortalPassword(userId: string) {
-  const adminClient = createAdminClient()
-  const tempPassword = Math.random().toString(36).slice(-10) + "A1!"
-  
-  const { error } = await adminClient.auth.admin.updateUserById(userId, { password: tempPassword })
-  if (error) return { error: error.message, credentials: null }
-  
-  // We need to fetch their email to display it alongside the temp password
-  const { data: { user } } = await adminClient.auth.admin.getUserById(userId)
-  
-  return { error: null, credentials: { email: user?.email ?? "Unknown", tempPassword } }
+  const tempPassword = generateSecureTempPassword()
+  const passwordHash = await bcrypt.hash(tempPassword, 10)
+
+  try {
+    const [user] = await db
+      .select({ email: client_users.email })
+      .from(client_users)
+      .where(eq(client_users.id, userId))
+
+    if (!user) return { error: "Client user not found", credentials: null }
+
+    await db
+      .update(client_users)
+      .set({ password_hash: passwordHash })
+      .where(eq(client_users.id, userId))
+
+    return { error: null, credentials: { email: user.email, tempPassword } }
+  } catch (err: any) {
+    return { error: err.message || "Failed to reset client password", credentials: null }
+  }
 }
 
 // ─── Reset staff member password (admin only) ─────────────────────────────────
 
 export async function resetStaffPassword(staffId: string) {
-  const supabase = createClient()
-  const adminClient = createAdminClient()
-
-  // Verify the caller is an admin
-  const { data: { user: currentUser } } = await supabase.auth.getUser()
-  if (!currentUser) return { error: "Unauthorized", credentials: null }
-
-  const { data: callerStaff } = await supabase
-    .from("staff")
-    .select("role")
-    .eq("id", currentUser.id)
-    .single()
-
-  if (callerStaff?.role !== "admin") return { error: "Only admins can reset staff passwords", credentials: null }
-
-  // Generate a new temporary password
-  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%"
-  let tempPassword = ""
-  for (let i = 0; i < 12; i++) {
-    tempPassword += chars.charAt(Math.floor(Math.random() * chars.length))
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || session.user.role !== "admin") {
+    return { error: "Only admins can reset staff passwords", credentials: null }
   }
-  // Ensure it has at least one uppercase, one number, one special char
-  tempPassword = "Wh" + tempPassword + "1!"
 
-  const { error } = await adminClient.auth.admin.updateUserById(staffId, { password: tempPassword })
-  if (error) return { error: error.message, credentials: null }
+  const tempPassword = generateSecureTempPassword()
+  const passwordHash = await bcrypt.hash(tempPassword, 10)
 
-  // Fetch staff email
-  const { data: staffRecord } = await supabase
-    .from("staff")
-    .select("email, full_name")
-    .eq("id", staffId)
-    .single()
+  try {
+    const [staffRecord] = await db
+      .select({ email: staff.email, full_name: staff.full_name })
+      .from(staff)
+      .where(eq(staff.id, staffId))
 
-  return {
-    error: null,
-    credentials: {
-      email: staffRecord?.email ?? "Unknown",
-      fullName: staffRecord?.full_name ?? "Staff Member",
-      tempPassword,
-    },
+    if (!staffRecord) return { error: "Staff member not found", credentials: null }
+
+    await db
+      .update(staff)
+      .set({ password_hash: passwordHash })
+      .where(eq(staff.id, staffId))
+
+    return {
+      error: null,
+      credentials: {
+        email: staffRecord.email,
+        fullName: staffRecord.full_name,
+        tempPassword,
+      },
+    }
+  } catch (err: any) {
+    return { error: err.message || "Failed to reset staff password", credentials: null }
   }
 }
 
@@ -182,156 +165,175 @@ export async function resetStaffPassword(staffId: string) {
 
 export async function uploadAgreementPdf(projectId: string, formData: FormData) {
   const file = formData.get("file") as File
-  if (!file) return { error: "No file uploaded" }
+  if (!file || file.size === 0) return { error: "No file uploaded" }
 
-  const adminClient = createAdminClient()
-  const path = `agreements/${projectId}/agreement.pdf`
+  const session = await getServerSession(authOptions)
 
-  const { error: uploadError } = await adminClient.storage
-    .from("client-uploads")
-    .upload(path, file, { upsert: true, contentType: "application/pdf" })
-  if (uploadError) return { error: uploadError.message }
+  try {
+    const publicUrl = await uploadToCloudinary(file, "webbheads_cms/agreements")
 
-  const { data: { publicUrl } } = adminClient.storage
-    .from("client-uploads")
-    .getPublicUrl(path)
+    const [existing] = await db
+      .select({ id: agreements.id })
+      .from(agreements)
+      .where(eq(agreements.project_id, projectId))
 
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+    if (existing) {
+      await db
+        .update(agreements)
+        .set({
+          pdf_url: publicUrl,
+          uploaded_by: session?.user?.id || null,
+          uploaded_at: new Date(),
+        })
+        .where(eq(agreements.project_id, projectId))
+    } else {
+      await db.insert(agreements).values({
+        project_id: projectId,
+        pdf_url: publicUrl,
+        uploaded_by: session?.user?.id || null,
+        uploaded_at: new Date(),
+      })
+    }
 
-  // Upsert agreement row
-  const { error } = await adminClient.from("agreements").upsert(
-    {
-      project_id: projectId,
-      agreement_type: "pdf",
-      pdf_url: publicUrl,
-      uploaded_by: user?.id,
-      uploaded_at: new Date().toISOString(),
-    },
-    { onConflict: "project_id" }
-  )
-  if (error) return { error: error.message }
-
-  revalidatePath(`/projects/${projectId}`)
-  return { error: null, url: publicUrl }
+    revalidatePath(`/projects/${projectId}`)
+    return { error: null, url: publicUrl }
+  } catch (err: any) {
+    return { error: err.message || "Failed to save agreement PDF" }
+  }
 }
 
 // ─── Save text agreement (admin) ──────────────────────────────────────────────
 
 export async function saveAgreementText(projectId: string, contentText: string) {
-  const adminClient = createAdminClient()
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const session = await getServerSession(authOptions)
 
-  const { error } = await adminClient.from("agreements").upsert(
-    {
-      project_id: projectId,
-      agreement_type: "text",
-      content_text: contentText,
-      uploaded_by: user?.id,
-      uploaded_at: new Date().toISOString(),
-      pdf_url: "", // Needs a string, can be empty
-    },
-    { onConflict: "project_id" }
-  )
+  try {
+    const [existing] = await db
+      .select({ id: agreements.id })
+      .from(agreements)
+      .where(eq(agreements.project_id, projectId))
 
-  if (error) return { error: error.message }
+    if (existing) {
+      await db
+        .update(agreements)
+        .set({
+          pdf_url: contentText,
+          uploaded_by: session?.user?.id || null,
+          uploaded_at: new Date(),
+        })
+        .where(eq(agreements.project_id, projectId))
+    } else {
+      await db.insert(agreements).values({
+        project_id: projectId,
+        pdf_url: contentText,
+        uploaded_by: session?.user?.id || null,
+        uploaded_at: new Date(),
+      })
+    }
 
-  revalidatePath(`/projects/${projectId}`)
-  return { error: null }
+    revalidatePath(`/projects/${projectId}`)
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to save agreement text" }
+  }
 }
 
 // ─── Save Project Deliverables (admin) ────────────────────────────────────────
 
 export async function saveProjectDeliverables(projectId: string, content: string) {
-  const adminClient = createAdminClient()
+  const session = await getServerSession(authOptions)
 
-  const { error } = await adminClient
-    .from("projects")
-    .update({ deliverables_content: content })
-    .eq("id", projectId)
-    
-  if (error) return { error: error.message }
+  try {
+    await db
+      .update(projects)
+      .set({ deliverables_content: content })
+      .where(eq(projects.id, projectId))
 
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+    if (session?.user?.id) {
+      await db.insert(activity_log).values({
+        project_id: projectId,
+        actor_id: session.user.id,
+        action: "deliverables_updated",
+        detail: { message: "Updated project deliverables" },
+      })
+    }
 
-  if (user) {
-    await adminClient.from("activity_log").insert({
-      project_id: projectId,
-      actor_id: user.id,
-      action: "deliverables_updated",
-      detail: { message: "Updated project deliverables" },
-    })
+    revalidatePath(`/projects/${projectId}`)
+    revalidatePath("/portal/onboarding")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to save deliverables" }
   }
-
-  revalidatePath(`/projects/${projectId}`)
-  revalidatePath("/portal/onboarding")
-  return { error: null }
 }
 
 // ─── Approve / Reject payment request ────────────────────────────────────────
 
 export async function approvePaymentRequest(paymentRequestId: string, projectId: string) {
-  const supabase = createClient()
-  const adminClient = createAdminClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const session = await getServerSession(authOptions)
 
-  // Fetch the request to compute final invoice if advance
-  const { data: req } = await adminClient
-    .from("payment_requests")
-    .select("request_type, amount, project_id")
-    .eq("id", paymentRequestId)
-    .single()
+  try {
+    const [req] = await db
+      .select()
+      .from(payment_requests)
+      .where(eq(payment_requests.id, paymentRequestId))
 
-  const { error } = await adminClient
-    .from("payment_requests")
-    .update({
-      status: "approved",
-      verified_by: user?.id,
-      verified_at: new Date().toISOString(),
-    })
-    .eq("id", paymentRequestId)
-  if (error) return { error: error.message }
+    await db
+      .update(payment_requests)
+      .set({
+        status: "approved",
+        verified_by: session?.user?.id || null,
+        verified_at: new Date(),
+      })
+      .where(eq(payment_requests.id, paymentRequestId))
 
-  // Auto-record in payments table for accounting/staff view
-  if (req) {
-    await adminClient.from("payments").insert({
-      project_id: req.project_id,
-      amount: req.amount,
-      payment_type: req.request_type,
-      method: "Client Portal",
-      paid_on: new Date().toISOString(),
-      note: "Approved via Client Portal",
-    })
-  }
-
-  // If advance approved, auto-create final payment_request (if not yet existing)
-  if (req?.request_type === "advance") {
-    const { data: project } = await adminClient
-      .from("projects")
-      .select("project_value")
-      .eq("id", req.project_id)
-      .single()
-
-    const finalAmount = (project?.project_value ?? 0) - req.amount
-
-    await adminClient.from("payment_requests").upsert(
-      {
+    if (req) {
+      await db.insert(payments).values({
         project_id: req.project_id,
-        request_type: "final",
-        amount: finalAmount,
-        status: "pending_payment",
-        released: false,
-      },
-      { onConflict: "project_id,request_type", ignoreDuplicates: true }
-    )
-  }
+        amount: req.amount,
+        payment_type: req.request_type,
+        method: "Client Portal",
+        paid_on: new Date().toISOString().split("T")[0],
+        note: "Approved via Client Portal",
+      })
+    }
 
-  revalidatePath("/payments/queue")
-  revalidatePath(`/projects/${projectId}`)
-  revalidatePath("/portal/dashboard")
-  return { error: null }
+    if (req?.request_type === "advance") {
+      const [project] = await db
+        .select({ project_value: projects.project_value })
+        .from(projects)
+        .where(eq(projects.id, req.project_id))
+
+      const totalVal = project?.project_value ? Number(project.project_value) : 0
+      const finalAmount = totalVal - Number(req.amount)
+
+      const [existingFinal] = await db
+        .select({ id: payment_requests.id })
+        .from(payment_requests)
+        .where(
+          and(
+            eq(payment_requests.project_id, req.project_id),
+            eq(payment_requests.request_type, "final")
+          )
+        )
+
+      if (!existingFinal) {
+        await db.insert(payment_requests).values({
+          project_id: req.project_id,
+          request_type: "final",
+          amount: String(finalAmount),
+          status: "pending_payment",
+          released: false,
+        })
+      }
+    }
+
+    revalidatePath("/payments/queue")
+    revalidatePath(`/projects/${projectId}`)
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to approve payment request" }
+  }
 }
 
 export async function rejectPaymentRequest(
@@ -339,66 +341,73 @@ export async function rejectPaymentRequest(
   projectId: string,
   rejectionReason: string
 ) {
-  const supabase = createClient()
-  const adminClient = createAdminClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const session = await getServerSession(authOptions)
 
-  const { error } = await adminClient
-    .from("payment_requests")
-    .update({
-      status: "rejected",
-      rejection_reason: rejectionReason,
-      verified_by: user?.id,
-      verified_at: new Date().toISOString(),
-    })
-    .eq("id", paymentRequestId)
-  if (error) return { error: error.message }
+  try {
+    await db
+      .update(payment_requests)
+      .set({
+        status: "rejected",
+        rejection_reason: rejectionReason,
+        verified_by: session?.user?.id || null,
+        verified_at: new Date(),
+      })
+      .where(eq(payment_requests.id, paymentRequestId))
 
-  revalidatePath("/payments/queue")
-  revalidatePath(`/projects/${projectId}`)
-  revalidatePath("/portal/dashboard")
-  return { error: null }
+    revalidatePath("/payments/queue")
+    revalidatePath(`/projects/${projectId}`)
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to reject payment request" }
+  }
 }
 
 // ─── Release final invoice ────────────────────────────────────────────────────
 
 export async function releaseFinalInvoice(projectId: string) {
-  const supabase = createClient()
-  const adminClient = createAdminClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const session = await getServerSession(authOptions)
 
-  const { error } = await adminClient
-    .from("payment_requests")
-    .update({
-      released: true,
-      released_by: user?.id,
-      released_at: new Date().toISOString(),
-    })
-    .eq("project_id", projectId)
-    .eq("request_type", "final")
-  if (error) return { error: error.message }
+  try {
+    await db
+      .update(payment_requests)
+      .set({
+        released: true,
+        released_by: session?.user?.id || null,
+        released_at: new Date(),
+      })
+      .where(
+        and(
+          eq(payment_requests.project_id, projectId),
+          eq(payment_requests.request_type, "final")
+        )
+      )
 
-  revalidatePath(`/projects/${projectId}`)
-  revalidatePath("/portal/dashboard")
-  return { error: null }
+    revalidatePath(`/projects/${projectId}`)
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to release final invoice" }
+  }
 }
 
 // ─── Mark handles collected ───────────────────────────────────────────────────
 
 export async function markHandlesCollected(projectId: string) {
-  const supabase = createClient()
+  try {
+    await db
+      .update(projects)
+      .set({
+        handles_collected: true,
+        handles_collected_at: new Date(),
+      })
+      .where(eq(projects.id, projectId))
 
-  const { error } = await supabase
-    .from("projects")
-    .update({
-      handles_collected: true,
-      handles_collected_at: new Date().toISOString(),
-    })
-    .eq("id", projectId)
-  if (error) return { error: error.message }
-
-  revalidatePath(`/projects/${projectId}`)
-  return { error: null }
+    revalidatePath(`/projects/${projectId}`)
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to mark handles collected" }
+  }
 }
 
 // ─── Post status update ───────────────────────────────────────────────────────
@@ -408,120 +417,149 @@ export async function postStatusUpdate(
   message: string,
   visibleToClient: boolean
 ) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const session = await getServerSession(authOptions)
 
-  const { error } = await supabase.from("project_status_updates").insert({
-    project_id: projectId,
-    message,
-    posted_by: user?.id,
-    visible_to_client: visibleToClient,
-    posted_at: new Date().toISOString(),
-  })
-  if (error) return { error: error.message }
+  try {
+    await db.insert(project_status_updates).values({
+      project_id: projectId,
+      message,
+      posted_by: session?.user?.id || null,
+      visible_to_client: visibleToClient,
+      posted_at: new Date(),
+    })
 
-  revalidatePath(`/projects/${projectId}`)
-  revalidatePath("/portal/dashboard")
-  return { error: null }
+    revalidatePath(`/projects/${projectId}`)
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to post status update" }
+  }
 }
 
 // ─── Bank settings upsert ─────────────────────────────────────────────────────
 
 export async function saveBankSettings(formData: FormData) {
-  const supabase = createClient()
-  const adminClient = createAdminClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const session = await getServerSession(authOptions)
 
-  const data: Record<string, string | null> = {
-    upi_id: formData.get("upi_id") as string || null,
-    bank_name: formData.get("bank_name") as string || null,
-    account_holder: formData.get("account_holder") as string || null,
-    account_number: formData.get("account_number") as string || null,
-    ifsc: formData.get("ifsc") as string || null,
-    updated_by: user?.id ?? null,
-    updated_at: new Date().toISOString(),
+  const upi_id = (formData.get("upi_id") as string) || null
+  const bank_name = (formData.get("bank_name") as string) || null
+  const account_holder = (formData.get("account_holder") as string) || null
+  const account_number = (formData.get("account_number") as string) || null
+  const ifsc = (formData.get("ifsc") as string) || null
+
+  const qrFile = (formData.get("qr_image") || formData.get("file")) as File
+  let qr_image_url: string | undefined = undefined
+
+  try {
+    if (qrFile && qrFile.size > 0) {
+      qr_image_url = await uploadToCloudinary(qrFile, "webbheads_cms/bank_qr")
+    }
+
+    const [existing] = await db
+      .select({ id: bank_settings.id })
+      .from(bank_settings)
+      .where(eq(bank_settings.id, 1))
+
+    const updateFields: any = {
+      upi_id,
+      bank_name,
+      account_holder,
+      account_number,
+      ifsc,
+      updated_by: session?.user?.id || null,
+      updated_at: new Date(),
+    }
+    if (qr_image_url !== undefined) {
+      updateFields.qr_image_url = qr_image_url
+    }
+
+    if (existing) {
+      await db
+        .update(bank_settings)
+        .set(updateFields)
+        .where(eq(bank_settings.id, 1))
+    } else {
+      await db.insert(bank_settings).values({
+        id: 1,
+        ...updateFields,
+      })
+    }
+
+    revalidatePath("/settings/bank")
+    revalidatePath("/portal/onboarding")
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to save bank settings" }
   }
-
-  // Handle QR image upload
-  const qrFile = formData.get("qr_image") as File | null
-  if (qrFile && qrFile.size > 0) {
-    const { error: uploadError } = await adminClient.storage
-      .from("client-uploads")
-      .upload("bank-qr/qr.png", qrFile, { upsert: true })
-    if (uploadError) return { error: uploadError.message }
-
-    const { data: { publicUrl } } = adminClient.storage
-      .from("client-uploads")
-      .getPublicUrl("bank-qr/qr.png")
-    data.qr_image_url = publicUrl
-  }
-
-  const { error } = await supabase.from("bank_settings").upsert({ id: 1, ...data })
-  if (error) return { error: error.message }
-
-  revalidatePath("/settings/bank")
-  return { error: null }
 }
 
 // ─── Form templates CRUD ──────────────────────────────────────────────────────
 
 export async function createFormTemplate(formData: FormData) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const session = await getServerSession(authOptions)
 
-  const { error } = await supabase.from("form_templates").insert({
-    scope: formData.get("scope") as string,
-    label: formData.get("label") as string,
-    field_type: formData.get("field_type") as string,
-    is_required: formData.get("is_required") === "true",
-    sort_order: Number(formData.get("sort_order")) || 0,
-    created_by: user?.id,
-  })
-  if (error) return { error: error.message }
-
-  revalidatePath("/settings/forms")
-  return { error: null }
-}
-
-export async function updateFormTemplate(id: string, formData: FormData) {
-  const supabase = createClient()
-
-  const { error } = await supabase
-    .from("form_templates")
-    .update({
+  try {
+    await db.insert(form_templates).values({
       scope: formData.get("scope") as string,
       label: formData.get("label") as string,
       field_type: formData.get("field_type") as string,
       is_required: formData.get("is_required") === "true",
       sort_order: Number(formData.get("sort_order")) || 0,
+      created_by: session?.user?.id || null,
     })
-    .eq("id", id)
-  if (error) return { error: error.message }
 
-  revalidatePath("/settings/forms")
-  return { error: null }
+    revalidatePath("/settings/forms")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to create form template" }
+  }
+}
+
+export async function updateFormTemplate(id: string, formData: FormData) {
+  try {
+    await db
+      .update(form_templates)
+      .set({
+        scope: formData.get("scope") as string,
+        label: formData.get("label") as string,
+        field_type: formData.get("field_type") as string,
+        is_required: formData.get("is_required") === "true",
+        sort_order: Number(formData.get("sort_order")) || 0,
+      })
+      .where(eq(form_templates.id, id))
+
+    revalidatePath("/settings/forms")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to update form template" }
+  }
 }
 
 export async function deleteFormTemplate(id: string) {
-  const supabase = createClient()
-  const { error } = await supabase.from("form_templates").delete().eq("id", id)
-  if (error) return { error: error.message }
-
-  revalidatePath("/settings/forms")
-  return { error: null }
+  try {
+    await db.delete(form_templates).where(eq(form_templates.id, id))
+    revalidatePath("/settings/forms")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to delete form template" }
+  }
 }
 
 // ─── Update client type ───────────────────────────────────────────────────────
 
 export async function updateClientType(clientId: string, clientType: string) {
-  const supabase = createClient()
-  const { error } = await supabase
-    .from("clients")
-    .update({ client_type: clientType })
-    .eq("id", clientId)
-  if (error) return { error: error.message }
-  revalidatePath(`/clients/${clientId}`)
-  return { error: null }
+  try {
+    await db
+      .update(clients)
+      .set({ client_type: clientType })
+      .where(eq(clients.id, clientId))
+
+    revalidatePath(`/clients/${clientId}`)
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to update client type" }
+  }
 }
 
 // ─── Upload project document ──────────────────────────────────────────────────
@@ -533,44 +571,35 @@ export async function uploadProjectDocument(
   formData: FormData
 ) {
   const file = formData.get("file") as File
-  if (!file) return { error: "No file uploaded" }
+  if (!file || file.size === 0) return { error: "No file uploaded" }
 
-  const adminClient = createAdminClient()
-  const ext = file.name.split(".").pop()
-  const timestamp = Date.now()
-  const path = `documents/${projectId}/${timestamp}_${file.name}`
+  const session = await getServerSession(authOptions)
 
-  // Upload file to storage
-  const { error: uploadError } = await adminClient.storage
-    .from("client-uploads")
-    .upload(path, file, { upsert: true })
-  if (uploadError) return { error: uploadError.message }
+  try {
+    const publicUrl = await uploadToCloudinary(file, "webbheads_cms/documents")
 
-  // Get public URL
-  const { data: { publicUrl } } = adminClient.storage
-    .from("client-uploads")
-    .getPublicUrl(path)
+    await db.insert(documents).values({
+      project_id: projectId,
+      doc_type: docType,
+      title: title,
+      url: publicUrl,
+      uploaded_by: session?.user?.id || null,
+      is_client_visible: true,
+    })
 
-  // Insert document row
-  const { error } = await adminClient.from("documents").insert({
-    project_id: projectId,
-    doc_type: docType,
-    title: title,
-    url: publicUrl,
-    is_client_visible: true,
-  })
-  if (error) return { error: error.message }
+    await db.insert(activity_log).values({
+      project_id: projectId,
+      actor_id: session?.user?.id || null,
+      action: "document_uploaded",
+      detail: { doc_type: docType, title: title },
+    })
 
-  // Insert activity log
-  await adminClient.from("activity_log").insert({
-    project_id: projectId,
-    action: "document_uploaded",
-    detail: { doc_type: docType, title: title },
-  })
-
-  revalidatePath(`/projects/${projectId}`)
-  revalidatePath("/portal/dashboard")
-  return { error: null }
+    revalidatePath(`/projects/${projectId}`)
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to upload document" }
+  }
 }
 
 // ─── Save Project POC Settings ──────────────────────────────────────────────────
@@ -581,111 +610,98 @@ export async function saveProjectPocSettings(
   whatsapp: string,
   phone: string
 ) {
-  const adminClient = createAdminClient()
-
-  // 1. Process Email
   const emailUrl = email ? `mailto:${email}` : ""
-  const { data: existingEmail } = await adminClient
-    .from("documents")
-    .select("id")
-    .eq("project_id", projectId)
-    .eq("doc_type", "poc_email")
-    .maybeSingle()
-
-  if (existingEmail) {
-    if (email) {
-      await adminClient
-        .from("documents")
-        .update({ url: emailUrl, title: email })
-        .eq("id", existingEmail.id)
-    } else {
-      await adminClient
-        .from("documents")
-        .delete()
-        .eq("id", existingEmail.id)
-    }
-  } else if (email) {
-    await adminClient.from("documents").insert({
-      project_id: projectId,
-      doc_type: "poc_email",
-      title: email,
-      url: emailUrl,
-      is_client_visible: true
-    })
-  }
-
-  // 2. Process WhatsApp
   const whatsappUrl = whatsapp ? `https://wa.me/${whatsapp.replace(/\D/g, "")}` : ""
-  const { data: existingWhatsapp } = await adminClient
-    .from("documents")
-    .select("id")
-    .eq("project_id", projectId)
-    .eq("doc_type", "poc_whatsapp")
-    .maybeSingle()
-
-  if (existingWhatsapp) {
-    if (whatsapp) {
-      await adminClient
-        .from("documents")
-        .update({ url: whatsappUrl, title: whatsapp })
-        .eq("id", existingWhatsapp.id)
-    } else {
-      await adminClient
-        .from("documents")
-        .delete()
-        .eq("id", existingWhatsapp.id)
-    }
-  } else if (whatsapp) {
-    await adminClient.from("documents").insert({
-      project_id: projectId,
-      doc_type: "poc_whatsapp",
-      title: whatsapp,
-      url: whatsappUrl,
-      is_client_visible: true
-    })
-  }
-
-  // 3. Process Phone
   const phoneUrl = phone ? `tel:${phone.replace(/\D/g, "")}` : ""
-  const { data: existingPhone } = await adminClient
-    .from("documents")
-    .select("id")
-    .eq("project_id", projectId)
-    .eq("doc_type", "poc_phone")
-    .maybeSingle()
 
-  if (existingPhone) {
-    if (phone) {
-      await adminClient
-        .from("documents")
-        .update({ url: phoneUrl, title: phone })
-        .eq("id", existingPhone.id)
-    } else {
-      await adminClient
-        .from("documents")
-        .delete()
-        .eq("id", existingPhone.id)
+  try {
+    // 1. Process Email
+    const [existingEmail] = await db
+      .select({ id: documents.id })
+      .from(documents)
+      .where(and(eq(documents.project_id, projectId), eq(documents.doc_type, "poc_email")))
+
+    if (existingEmail) {
+      if (email) {
+        await db
+          .update(documents)
+          .set({ url: emailUrl, title: email })
+          .where(eq(documents.id, existingEmail.id))
+      } else {
+        await db.delete(documents).where(eq(documents.id, existingEmail.id))
+      }
+    } else if (email) {
+      await db.insert(documents).values({
+        project_id: projectId,
+        doc_type: "poc_email",
+        title: email,
+        url: emailUrl,
+        is_client_visible: true,
+      })
     }
-  } else if (phone) {
-    await adminClient.from("documents").insert({
+
+    // 2. Process WhatsApp
+    const [existingWhatsapp] = await db
+      .select({ id: documents.id })
+      .from(documents)
+      .where(and(eq(documents.project_id, projectId), eq(documents.doc_type, "poc_whatsapp")))
+
+    if (existingWhatsapp) {
+      if (whatsapp) {
+        await db
+          .update(documents)
+          .set({ url: whatsappUrl, title: whatsapp })
+          .where(eq(documents.id, existingWhatsapp.id))
+      } else {
+        await db.delete(documents).where(eq(documents.id, existingWhatsapp.id))
+      }
+    } else if (whatsapp) {
+      await db.insert(documents).values({
+        project_id: projectId,
+        doc_type: "poc_whatsapp",
+        title: whatsapp,
+        url: whatsappUrl,
+        is_client_visible: true,
+      })
+    }
+
+    // 3. Process Phone
+    const [existingPhone] = await db
+      .select({ id: documents.id })
+      .from(documents)
+      .where(and(eq(documents.project_id, projectId), eq(documents.doc_type, "poc_phone")))
+
+    if (existingPhone) {
+      if (phone) {
+        await db
+          .update(documents)
+          .set({ url: phoneUrl, title: phone })
+          .where(eq(documents.id, existingPhone.id))
+      } else {
+        await db.delete(documents).where(eq(documents.id, existingPhone.id))
+      }
+    } else if (phone) {
+      await db.insert(documents).values({
+        project_id: projectId,
+        doc_type: "poc_phone",
+        title: phone,
+        url: phoneUrl,
+        is_client_visible: true,
+      })
+    }
+
+    await db.insert(activity_log).values({
       project_id: projectId,
-      doc_type: "poc_phone",
-      title: phone,
-      url: phoneUrl,
-      is_client_visible: true
+      action: "poc_updated",
+      detail: { email, whatsapp, phone },
     })
+
+    revalidatePath(`/projects/${projectId}`)
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to save POC settings" }
   }
-
-  // Insert activity log
-  await adminClient.from("activity_log").insert({
-    project_id: projectId,
-    action: "poc_updated",
-    detail: { email, whatsapp, phone },
-  })
-
-  revalidatePath(`/projects/${projectId}`)
-  revalidatePath("/portal/dashboard")
-  return { error: null }
 }
 
 // ─── Save Project Timeline Stages ──────────────────────────────────────────────
@@ -699,32 +715,31 @@ export async function saveProjectTimelineStages(
   devName: string,
   reviewName: string
 ) {
-  const adminClient = createAdminClient()
+  try {
+    await db
+      .update(projects)
+      .set({
+        timeline_design_status: designStatus || null,
+        timeline_dev_status: devStatus || null,
+        timeline_review_status: reviewStatus || null,
+        timeline_design_name: designName || "Design Phase",
+        timeline_dev_name: devName || "Development",
+        timeline_review_name: reviewName || "Review",
+      })
+      .where(eq(projects.id, projectId))
 
-  const { error } = await adminClient
-    .from("projects")
-    .update({
-      timeline_design_status: designStatus || null,
-      timeline_dev_status: devStatus || null,
-      timeline_review_status: reviewStatus || null,
-      timeline_design_name: designName || "Design Phase",
-      timeline_dev_name: devName || "Development",
-      timeline_review_name: reviewName || "Review",
+    await db.insert(activity_log).values({
+      project_id: projectId,
+      action: "timeline_stages_updated",
+      detail: { designStatus, devStatus, reviewStatus, designName, devName, reviewName },
     })
-    .eq("id", projectId)
 
-  if (error) return { error: error.message }
-
-  // Insert activity log
-  await adminClient.from("activity_log").insert({
-    project_id: projectId,
-    action: "timeline_stages_updated",
-    detail: { designStatus, devStatus, reviewStatus, designName, devName, reviewName },
-  })
-
-  revalidatePath(`/projects/${projectId}`)
-  revalidatePath("/portal/dashboard")
-  return { error: null }
+    revalidatePath(`/projects/${projectId}`)
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to save timeline stages" }
+  }
 }
 
 // ─── Content Schedule ─────────────────────────────────────────────────────────
@@ -735,24 +750,25 @@ export async function createContentScheduleItem(
   caption: string,
   scheduledAt: string
 ) {
-  const supabase = createClient()
-  const adminClient = createAdminClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const session = await getServerSession(authOptions)
 
-  const { error } = await adminClient.from("content_schedule").insert({
-    project_id: projectId,
-    content_name: contentName,
-    caption: caption || null,
-    scheduled_at: scheduledAt,
-    is_posted: false,
-    created_by: user?.id,
-    updated_by: user?.id,
-  })
-  if (error) return { error: error.message }
+  try {
+    await db.insert(content_schedule).values({
+      project_id: projectId,
+      content_name: contentName,
+      caption: caption || null,
+      scheduled_at: new Date(scheduledAt),
+      is_posted: false,
+      created_by: session?.user?.id || null,
+      updated_by: session?.user?.id || null,
+    })
 
-  revalidatePath(`/projects/${projectId}`)
-  revalidatePath("/portal/dashboard")
-  return { error: null }
+    revalidatePath(`/projects/${projectId}`)
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to create content schedule item" }
+  }
 }
 
 export async function updateContentScheduleItem(
@@ -762,50 +778,123 @@ export async function updateContentScheduleItem(
   caption: string,
   scheduledAt: string
 ) {
-  const supabase = createClient()
-  const adminClient = createAdminClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const session = await getServerSession(authOptions)
 
-  const { error } = await adminClient
-    .from("content_schedule")
-    .update({
-      content_name: contentName,
-      caption: caption || null,
-      scheduled_at: scheduledAt,
-      updated_by: user?.id,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", itemId)
-  if (error) return { error: error.message }
+  try {
+    await db
+      .update(content_schedule)
+      .set({
+        content_name: contentName,
+        caption: caption || null,
+        scheduled_at: new Date(scheduledAt),
+        updated_by: session?.user?.id || null,
+        updated_at: new Date(),
+      })
+      .where(eq(content_schedule.id, itemId))
 
-  revalidatePath(`/projects/${projectId}`)
-  revalidatePath("/portal/dashboard")
-  return { error: null }
+    revalidatePath(`/projects/${projectId}`)
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to update content schedule item" }
+  }
 }
 
 export async function deleteContentScheduleItem(itemId: string, projectId: string) {
-  const adminClient = createAdminClient()
-  const { error } = await adminClient.from("content_schedule").delete().eq("id", itemId)
-  if (error) return { error: error.message }
+  try {
+    await db.delete(content_schedule).where(eq(content_schedule.id, itemId))
 
-  revalidatePath(`/projects/${projectId}`)
-  revalidatePath("/portal/dashboard")
-  return { error: null }
+    revalidatePath(`/projects/${projectId}`)
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to delete content schedule item" }
+  }
 }
 
-export async function toggleContentSchedulePosted(itemId: string, projectId: string, isPosted: boolean) {
-  const adminClient = createAdminClient()
-  const { error } = await adminClient
-    .from("content_schedule")
-    .update({
-      is_posted: isPosted,
-      posted_at: isPosted ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", itemId)
-  if (error) return { error: error.message }
+export async function toggleContentSchedulePosted(
+  itemId: string,
+  projectId: string,
+  isPosted: boolean
+) {
+  try {
+    await db
+      .update(content_schedule)
+      .set({
+        is_posted: isPosted,
+        posted_at: isPosted ? new Date() : null,
+        updated_at: new Date(),
+      })
+      .where(eq(content_schedule.id, itemId))
 
-  revalidatePath(`/projects/${projectId}`)
-  revalidatePath("/portal/dashboard")
-  return { error: null }
+    revalidatePath(`/projects/${projectId}`)
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to toggle content schedule posted state" }
+  }
+}
+
+export async function changeStaffSelfPassword(currentPassword: string, newPassword: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return { error: "Unauthorized" }
+
+  try {
+    const [staffMember] = await db
+      .select()
+      .from(staff)
+      .where(eq(staff.id, session.user.id))
+
+    if (!staffMember) return { error: "Staff member not found" }
+
+    const isValid = await bcrypt.compare(currentPassword, staffMember.password_hash)
+    if (!isValid) return { error: "Current password is incorrect." }
+
+    const newHash = await bcrypt.hash(newPassword, 10)
+    await db
+      .update(staff)
+      .set({ password_hash: newHash })
+      .where(eq(staff.id, session.user.id))
+
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to change password" }
+  }
+}
+
+export async function createChecklistTemplate(formData: FormData) {
+  try {
+    const stageKey = formData.get("stage_key") as string
+    const label = formData.get("label") as string
+    const category = formData.get("category") as string
+    const isRequired = formData.get("is_required") === "on"
+
+    const existing = await db
+      .select({ id: checklist_templates.id })
+      .from(checklist_templates)
+      .where(eq(checklist_templates.stage_key, stageKey))
+
+    await db.insert(checklist_templates).values({
+      stage_key: stageKey,
+      label,
+      category,
+      is_required: isRequired,
+      sort_order: existing.length,
+    })
+
+    revalidatePath("/settings")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to create checklist template" }
+  }
+}
+
+export async function deleteChecklistTemplate(id: string) {
+  try {
+    await db.delete(checklist_templates).where(eq(checklist_templates.id, id))
+    revalidatePath("/settings")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to delete checklist template" }
+  }
 }

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Eye, EyeOff, Lock, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { changeStaffSelfPassword } from "@/lib/supabase/admin-portal-actions"
 
 export function StaffChangePasswordDialog() {
   const [open, setOpen] = useState(false)
@@ -39,34 +39,11 @@ export function StaffChangePasswordDialog() {
     setLoading(true)
     setError(null)
 
-    // Re-authenticate first with current password to confirm identity
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user?.email) {
-      setError("Unable to verify your identity. Please refresh and try again.")
-      setLoading(false)
-      return
-    }
-
-    // Sign in with current password to verify it
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: user.email,
-      password: currentPassword,
-    })
-
-    if (signInError) {
-      setError("Current password is incorrect.")
-      setLoading(false)
-      return
-    }
-
-    // Update to new password
-    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
+    const res = await changeStaffSelfPassword(currentPassword, newPassword)
     setLoading(false)
 
-    if (updateError) {
-      setError(updateError.message)
+    if (res.error) {
+      setError(res.error)
     } else {
       setSuccess(true)
       setTimeout(() => {

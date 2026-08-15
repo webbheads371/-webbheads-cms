@@ -1,72 +1,53 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr"
-import { cookies } from "next/headers"
-
-export function createClient() {
-  const cookieStore = cookies()
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value, ...options })
-          } catch {}
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: "", ...options })
-          } catch {}
-        },
-      },
-    }
-  )
-}
-
-import { createClient as createSupabaseClient } from "@supabase/supabase-js"
-
-export function createAdminClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { db } from "@/db"
+import { staff, client_users, clients } from "@/db/schema"
+import { eq } from "drizzle-orm"
 
 export async function getCurrentUser() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
+  const session = await getServerSession(authOptions)
+  return session?.user ?? null
 }
 
 export async function getCurrentStaff() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return null
 
-  const { data: staff } = await supabase
-    .from("staff")
-    .select("*")
-    .eq("id", user.id)
-    .single()
+  const [staffMember] = await db
+    .select()
+    .from(staff)
+    .where(eq(staff.id, session.user.id))
 
-  return staff
+  return staffMember ?? null
 }
 
 export async function getCurrentClientUser() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return null
 
-  const { data: clientUser } = await supabase
-    .from("client_users")
-    .select("*, client:clients(*)")
-    .eq("id", user.id)
-    .single()
+  const [clientUser] = await db
+    .select()
+    .from(client_users)
+    .where(eq(client_users.id, session.user.id))
 
-  return clientUser
+  if (!clientUser) return null
+
+  const [client] = await db
+    .select()
+    .from(clients)
+    .where(eq(clients.id, clientUser.client_id))
+
+  return {
+    ...clientUser,
+    client: client ?? null,
+  }
 }
 
+// Stubs for legacy Supabase compatibility if needed during migration
+export function createClient() {
+  return null as any
+}
+
+export function createAdminClient() {
+  return null as any
+}

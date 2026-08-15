@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { createClient } from "@/lib/supabase/client"
+import { signIn } from "next-auth/react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -16,37 +16,36 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError(error.message)
+    const res = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    })
+
+    if (res?.error) {
+      setError("Invalid email or password")
       setLoading(false)
       return
     }
 
-    // Check if this user is a client portal user
-    if (data.user) {
-      const { data: clientUser } = await supabase
-        .from("client_users")
-        .select("id")
-        .eq("id", data.user.id)
-        .single()
+    if (res?.ok) {
+      // Fetch session to redirect based on userType (staff vs client)
+      const sessionRes = await fetch("/api/auth/session")
+      const session = await sessionRes.json()
 
-      if (clientUser) {
+      if (session?.user?.userType === "client") {
         router.push("/portal")
-        router.refresh()
-        return
+      } else {
+        router.push("/dashboard")
       }
+      router.refresh()
     }
-
-    router.push("/dashboard")
-    router.refresh()
   }
 
   return (
@@ -73,7 +72,12 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <a href="/forgot-password" className="text-xs text-primary hover:underline">
+                  Forgot password?
+                </a>
+              </div>
               <div className="relative">
                 <Input
                   id="password"

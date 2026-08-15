@@ -1,4 +1,6 @@
-import { createClient } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { staff, projects, clients } from "@/db/schema"
+import { desc, asc } from "drizzle-orm"
 import { getCurrentStaff } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { StaffClient } from "./staff-client"
@@ -6,29 +8,23 @@ import { StaffClient } from "./staff-client"
 export const dynamic = "force-dynamic"
 
 export default async function StaffPage() {
-  const supabase = createClient()
-
   const currentStaff = await getCurrentStaff()
 
   if (currentStaff?.role !== "admin") {
     redirect("/dashboard")
   }
 
-  const [
-    { data: staff },
-    { data: projects },
-    { data: clients },
-  ] = await Promise.all([
-    supabase.from("staff").select("*").order("created_at", { ascending: false }),
-    supabase.from("projects").select("id, name, client_id").order("name"),
-    supabase.from("clients").select("id, company_name").order("company_name"),
+  const [staffData, projectsData, clientsData] = await Promise.all([
+    db.select().from(staff).orderBy(desc(staff.created_at)),
+    db.select({ id: projects.id, name: projects.name, client_id: projects.client_id }).from(projects).orderBy(asc(projects.name)),
+    db.select({ id: clients.id, company_name: clients.company_name }).from(clients).orderBy(asc(clients.company_name)),
   ])
 
   return (
     <StaffClient
-      staff={staff || []}
-      projects={projects || []}
-      clients={clients || []}
+      staff={staffData as any}
+      projects={projectsData as any}
+      clients={clientsData as any}
     />
   )
 }

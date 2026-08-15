@@ -1,24 +1,14 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { getCurrentStaff } from "@/lib/supabase/server"
 import { MessagesClient } from "./messages-client"
 import { PageHeader } from "@/components/page-header"
 
 export const dynamic = "force-dynamic"
 
 export default async function MessagesPage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
-
-  // Fetch current staff role and profile
-  const { data: staff } = await supabase
-    .from("staff")
-    .select("*")
-    .eq("id", user.id)
-    .single()
+  const staff = await getCurrentStaff()
 
   if (!staff) {
-    // If not staff, redirect to login or client portal
     redirect("/login")
   }
 
@@ -28,7 +18,7 @@ export default async function MessagesPage() {
         title="Messages"
         description="Manage client support inquiries and communication threads"
       />
-      <MessagesClient currentStaff={staff} />
+      <MessagesClient currentStaff={staff as any} />
     </div>
   )
 }

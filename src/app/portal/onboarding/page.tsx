@@ -1,20 +1,43 @@
 import { redirect } from "next/navigation"
 import { getCurrentClientUser } from "@/lib/supabase/server"
-import { createClient, createAdminClient } from "@/lib/supabase/server"
+import { db } from "@/db"
+import {
+  projects,
+  clients,
+  agreements,
+  payment_requests,
+  bank_settings,
+  form_templates,
+  form_responses,
+} from "@/db/schema"
+import { eq, and, asc } from "drizzle-orm"
 import { WizardStepper } from "./_components/wizard-stepper"
 import { StepWelcome } from "./_components/step-welcome"
 import { StepDeliverables } from "./_components/step-deliverables"
 import { StepAgreement } from "./_components/step-agreement"
 import { StepPayment } from "./_components/step-payment"
 import { StepProfile } from "./_components/step-profile"
-import type { Agreement, BankSettings, PaymentRequest, FormTemplate, FormResponse, ClientType } from "@/types"
+import type {
+  Agreement,
+  BankSettings,
+  PaymentRequest,
+  FormTemplate,
+  FormResponse,
+  ClientType,
+} from "@/types"
 import { LogOut } from "lucide-react"
+import { signOut } from "next-auth/react"
 import { ReactNode } from "react"
 
-function OnboardingWrapper({ currentStep, children }: { currentStep: number; children: ReactNode }) {
+function OnboardingWrapper({
+  currentStep,
+  children,
+}: {
+  currentStep: number
+  children: ReactNode
+}) {
   return (
     <div className="flex flex-col gap-4 w-full">
-      {/* Mobile Logo & Logout Header */}
       <div className="flex md:hidden items-center justify-between gap-2 px-2">
         <div className="flex items-center shrink-0">
           <img
@@ -23,23 +46,20 @@ function OnboardingWrapper({ currentStep, children }: { currentStep: number; chi
             className="h-9 w-9 object-contain shadow-sm"
           />
         </div>
-        <form action="/api/auth/signout" method="POST">
-          <button
-            type="submit"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-slate-800/40 bg-white dark:bg-slate-900 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all duration-300"
-            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03)' }}
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Logout</span>
-          </button>
-        </form>
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-slate-800/40 bg-white dark:bg-slate-900 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all duration-300"
+          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03)" }}
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          <span className="text-xs font-medium">Logout</span>
+        </button>
       </div>
 
       <div className="wizard-layout">
         <WizardStepper currentStep={currentStep} />
-        <div className="wizard-card">
-          {children}
-        </div>
+        <div className="wizard-card">{children}</div>
       </div>
     </div>
   )
@@ -49,16 +69,12 @@ export default async function OnboardingPage() {
   const clientUser = await getCurrentClientUser()
   if (!clientUser) redirect("/login")
 
-  const supabase = createClient()
+  const [projectRecord] = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.client_id, clientUser.client_id))
 
-  // Fetch project
-  const { data: project } = await supabase
-    .from("projects")
-    .select("*, client:clients(*)")
-    .eq("client_id", clientUser.client_id)
-    .single()
-
-  if (!project) {
+  if (!projectRecord) {
     return (
       <div className="portal-holding">
         <h1>No project found</h1>
@@ -67,35 +83,38 @@ export default async function OnboardingPage() {
     )
   }
 
-  // Already finished onboarding → send to dashboard
-  if (project.profile_submitted_at) {
+  if (projectRecord.profile_submitted_at) {
     redirect("/portal/dashboard")
   }
 
-  // ── Determine current step ──────────────────────────────────────────────────
+  const [clientRecord] = projectRecord.client_id
+    ? await db.select().from(clients).where(eq(clients.id, projectRecord.client_id))
+    : [null]
+
+  const project = {
+    ...projectRecord,
+    client: clientRecord ?? null,
+  }
+
   let currentStep = 1
 
-  // Step 1: Welcome seen?
   if (!project.welcome_seen_at) {
     currentStep = 1
   } else {
-    // Step 2: Deliverables Approved?
     if (!project.deliverables_approved) {
       currentStep = 2
 
       return (
         <OnboardingWrapper currentStep={currentStep}>
-          <StepDeliverables project={project} />
+          <StepDeliverables project={project as any} />
         </OnboardingWrapper>
       )
     }
 
-    // Step 3: Agreement agreed AND signature uploaded?
-    const { data: agreement } = await supabase
-      .from("agreements")
-      .select("*")
-      .eq("project_id", project.id)
-      .single()
+    const [agreement] = await db
+      .select()
+      .from(agreements)
+      .where(eq(agreements.project_id, project.id))
 
     const agreementComplete =
       agreement?.client_agreed === true && !!agreement?.signature_url
@@ -106,7 +125,7 @@ export default async function OnboardingPage() {
       return (
         <OnboardingWrapper currentStep={currentStep}>
           {agreement ? (
-            <StepAgreement projectId={project.id} agreement={agreement as Agreement} />
+            <StepAgreement projectId={project.id} agreement={agreement as any} />
           ) : (
             <div className="info-banner">
               Your agreement is being prepared. Please check back shortly.
@@ -116,36 +135,33 @@ export default async function OnboardingPage() {
       )
     }
 
-    // Step 3: Advance payment approved?
-    let { data: advancePayment } = await supabase
-      .from("payment_requests")
-      .select("*")
-      .eq("project_id", project.id)
-      .eq("request_type", "advance")
-      .single()
+    let [advancePayment] = await db
+      .select()
+      .from(payment_requests)
+      .where(
+        and(
+          eq(payment_requests.project_id, project.id),
+          eq(payment_requests.request_type, "advance")
+        )
+      )
 
     if (!advancePayment) {
-      const amount =
-        project.project_value && project.advance_percent
-          ? (project.project_value * project.advance_percent) / 100
-          : project.project_value
-            ? project.project_value * 0.5
-            : 0
+      const val = project.project_value ? Number(project.project_value) : 0
+      const pct = project.advance_percent ? Number(project.advance_percent) : 50
+      const amount = val > 0 ? (val * pct) / 100 : 0
 
       if (amount > 0) {
-        const adminClient = createAdminClient()
-        const { data: newPayment, error: createError } = await adminClient
-          .from("payment_requests")
-          .insert({
+        const [newPayment] = await db
+          .insert(payment_requests)
+          .values({
             project_id: project.id,
             request_type: "advance",
-            amount: amount,
+            amount: String(amount),
             status: "pending_payment",
           })
-          .select()
-          .single()
+          .returning()
 
-        if (!createError && newPayment) {
+        if (newPayment) {
           advancePayment = newPayment
         }
       }
@@ -156,69 +172,60 @@ export default async function OnboardingPage() {
     if (!advanceApproved) {
       currentStep = 4
 
-      // Fetch bank settings
-      const { data: bankSettings } = await supabase
-        .from("bank_settings")
-        .select("*")
-        .eq("id", 1)
-        .single()
+      const [bankSettings] = await db
+        .select()
+        .from(bank_settings)
+        .where(eq(bank_settings.id, 1))
 
       return (
         <OnboardingWrapper currentStep={currentStep}>
           <StepPayment
             projectId={project.id}
             project={{
-              project_value: project.project_value,
-              advance_percent: project.advance_percent ?? 50,
+              project_value: project.project_value ? Number(project.project_value) : null,
+              advance_percent: project.advance_percent ? Number(project.advance_percent) : 50,
             }}
-            bankSettings={bankSettings as BankSettings | null}
-            paymentRequest={advancePayment as PaymentRequest | null}
+            bankSettings={(bankSettings as any) || null}
+            paymentRequest={(advancePayment as any) || null}
           />
         </OnboardingWrapper>
       )
     }
 
-    // Step 5: Profile submitted?
     currentStep = 5
 
     const clientType = (project.client as { client_type?: ClientType })?.client_type ?? "both"
 
-    // Fetch applicable form templates
-    const { data: allTemplates } = await supabase
-      .from("form_templates")
-      .select("*")
-      .order("sort_order", { ascending: true })
+    const allTemplates = await db
+      .select()
+      .from(form_templates)
+      .orderBy(asc(form_templates.sort_order))
 
-    const templates: FormTemplate[] = (allTemplates ?? []).filter((t) => {
+    const templates = (allTemplates ?? []).filter((t) => {
       if (t.scope === "general") return true
       if (clientType === "both") return true
       return t.scope === clientType
     })
 
-    // Fetch existing responses
-    const { data: existingResponses } = await supabase
-      .from("form_responses")
-      .select("*")
-      .eq("project_id", project.id)
+    const existingResponses = await db
+      .select()
+      .from(form_responses)
+      .where(eq(form_responses.project_id, project.id))
 
     return (
       <OnboardingWrapper currentStep={currentStep}>
         <StepProfile
           projectId={project.id}
-          templates={templates}
-          existingResponses={(existingResponses ?? []) as FormResponse[]}
+          templates={templates as any}
+          existingResponses={(existingResponses ?? []) as any}
         />
       </OnboardingWrapper>
     )
   }
 
-  // Default render for Step 1 (Welcome)
   return (
     <OnboardingWrapper currentStep={1}>
-      <StepWelcome
-        clientName={clientUser.full_name}
-        projectId={project.id}
-      />
+      <StepWelcome clientName={clientUser.full_name} projectId={project.id} />
     </OnboardingWrapper>
   )
 }

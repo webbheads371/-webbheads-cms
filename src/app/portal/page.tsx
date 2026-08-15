@@ -1,22 +1,19 @@
 import { redirect } from "next/navigation"
 import { getCurrentClientUser } from "@/lib/supabase/server"
-import { createClient } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { projects } from "@/db/schema"
+import { eq } from "drizzle-orm"
 
 export default async function PortalPage() {
   const clientUser = await getCurrentClientUser()
   if (!clientUser) redirect("/login")
 
-  const supabase = createClient()
-
-  // Find client's project
-  const { data: project } = await supabase
-    .from("projects")
-    .select("id, profile_submitted_at")
-    .eq("client_id", clientUser.client_id)
-    .single()
+  const [project] = await db
+    .select({ id: projects.id, profile_submitted_at: projects.profile_submitted_at })
+    .from(projects)
+    .where(eq(projects.client_id, clientUser.client_id))
 
   if (!project) {
-    // No project yet — show holding screen
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4 animate-fade-in">
         <div className="p-5 bg-gradient-to-tr from-cyan-500/10 to-violet-500/10 dark:from-cyan-500/20 dark:to-violet-500/20 rounded-3xl border border-cyan-500/20 dark:border-cyan-500/30 mb-6 shadow-inner animate-pulse">
@@ -34,7 +31,6 @@ export default async function PortalPage() {
     )
   }
 
-  // If Step 4 complete → go to dashboard; otherwise onboarding wizard
   if (project.profile_submitted_at) {
     redirect("/portal/dashboard")
   } else {

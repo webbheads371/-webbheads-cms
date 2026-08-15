@@ -2,31 +2,27 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { useSupabase } from "@/hooks/use-supabase"
+import { Button } from "@/components/ui/button"
+import { updateProjectDetailsAction } from "@/lib/supabase/actions"
 import type { Project, Staff } from "@/types"
 
-interface Props {
-  project: Project & { client: any }
-  staff: Staff[]
+interface EditDetailsTabProps {
+  project: Project
+  staffList: Staff[]
 }
 
-export function EditDetailsTab({ project, staff }: Props) {
+export function EditDetailsTab({ project, staffList }: EditDetailsTabProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const router = useRouter()
-  const supabase = useSupabase()
 
-  const techLeads = staff.filter((s) => s.role === "tech_lead")
-  const contentLeads = staff.filter((s) => s.role === "content_lead")
-  const salesLeads = staff.filter((s) => s.role === "sales")
+  const techLeads = staffList.filter((s) => s.role === "tech_lead" || s.role === "admin")
+  const contentLeads = staffList.filter((s) => s.role === "content_lead" || s.role === "admin")
+  const salesLeads = staffList.filter((s) => s.role === "sales" || s.role === "admin")
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -35,176 +31,154 @@ export function EditDetailsTab({ project, staff }: Props) {
     setSuccess(false)
 
     const formData = new FormData(e.currentTarget)
-    
-    // Project updates
-    const projectData = {
-      name: formData.get("name") as string,
-      tech_lead_id: formData.get("tech_lead_id") === "none" ? null : (formData.get("tech_lead_id") as string) || null,
-      content_lead_id: formData.get("content_lead_id") === "none" ? null : (formData.get("content_lead_id") as string) || null,
-      sales_lead_id: formData.get("sales_lead_id") === "none" ? null : (formData.get("sales_lead_id") as string) || null,
-      project_value: formData.get("project_value")
-        ? Number(formData.get("project_value"))
-        : null,
-      expected_start_date: (formData.get("expected_start_date") as string) || null,
-      expected_close_date: (formData.get("expected_close_date") as string) || null,
-    }
+    const res = await updateProjectDetailsAction(project.id, project.client_id, formData)
 
-    // Client updates
-    const clientData = {
-      company_name: formData.get("company_name") as string,
-      contact_name: formData.get("contact_name") as string,
-      email: formData.get("email") as string,
-      phone: formData.get("phone") as string,
-    }
-
-    if (!projectData.name || !clientData.company_name) {
-      setError("Project name and Client company name are required")
-      setLoading(false)
-      return
-    }
-
-    // Update Project
-    const { error: projectError } = await supabase
-      .from("projects")
-      .update(projectData)
-      .eq("id", project.id)
-
-    if (projectError) {
-      setError(projectError.message)
-      setLoading(false)
-      return
-    }
-
-    // Update Client
-    if (project.client_id) {
-      const { error: clientError } = await supabase
-        .from("clients")
-        .update(clientData)
-        .eq("id", project.client_id)
-
-      if (clientError) {
-        setError(clientError.message)
-        setLoading(false)
-        return
-      }
-    }
-
-    setSuccess(true)
     setLoading(false)
-    router.refresh()
+    if (res.error) {
+      setError(res.error)
+    } else {
+      setSuccess(true)
+      router.refresh()
+    }
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Edit Project & Client Details</CardTitle>
-        <CardDescription>Update the information for this project and its associated client.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && <p className="text-sm text-destructive font-medium">{error}</p>}
+          {success && <p className="text-sm text-green-600 font-medium">Details updated successfully!</p>}
+
           <div className="space-y-4">
-            <h3 className="text-lg font-medium leading-none">Project Details</h3>
-            <div className="grid gap-4 md:grid-cols-2">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Project Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Project Name *</Label>
                 <Input id="name" name="name" defaultValue={project.name} required />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="project_value">Project Value (INR)</Label>
-                <Input id="project_value" name="project_value" type="number" defaultValue={project.project_value || ""} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="expected_start_date">Expected Start Date</Label>
-                <Input id="expected_start_date" name="expected_start_date" type="date" defaultValue={project.expected_start_date || ""} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="expected_close_date">Expected Close Date</Label>
-                <Input id="expected_close_date" name="expected_close_date" type="date" defaultValue={project.expected_close_date || ""} />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="project_value">Project Value (₹)</Label>
+                <Input
+                  id="project_value"
+                  name="project_value"
+                  type="number"
+                  defaultValue={project.project_value ?? ""}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="advance_percent">Advance Payment (%)</Label>
+                <Input
+                  id="advance_percent"
+                  name="advance_percent"
+                  type="number"
+                  defaultValue={project.advance_percent ?? 50}
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="tech_lead_id">Tech Lead</Label>
-                <Select name="tech_lead_id" defaultValue={project.tech_lead_id || undefined}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Assign tech lead" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {techLeads.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  id="tech_lead_id"
+                  name="tech_lead_id"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  defaultValue={project.tech_lead_id ?? ""}
+                >
+                  <option value="">None Assigned</option>
+                  {techLeads.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.full_name} ({s.email})
+                    </option>
+                  ))}
+                </select>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="content_lead_id">Content Lead</Label>
-                <Select name="content_lead_id" defaultValue={project.content_lead_id || undefined}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Assign content lead" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {contentLeads.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  id="content_lead_id"
+                  name="content_lead_id"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  defaultValue={project.content_lead_id ?? ""}
+                >
+                  <option value="">None Assigned</option>
+                  {contentLeads.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.full_name} ({s.email})
+                    </option>
+                  ))}
+                </select>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="sales_lead_id">Sales Lead</Label>
-                <Select name="sales_lead_id" defaultValue={project.sales_lead_id || undefined}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Assign sales lead" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {salesLeads.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  id="sales_lead_id"
+                  name="sales_lead_id"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  defaultValue={project.sales_lead_id ?? ""}
+                >
+                  <option value="">None Assigned</option>
+                  {salesLeads.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.full_name} ({s.email})
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
 
           <div className="space-y-4 pt-4 border-t">
-            <h3 className="text-lg font-medium leading-none">Client Details</h3>
-            <div className="grid gap-4 md:grid-cols-2">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Client Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="company_name">Company Name *</Label>
-                <Input id="company_name" name="company_name" defaultValue={project.client?.company_name || ""} required />
+                <Input
+                  id="company_name"
+                  name="company_name"
+                  defaultValue={project.client?.company_name ?? ""}
+                  required
+                />
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="contact_name">Contact Name</Label>
-                <Input id="contact_name" name="contact_name" defaultValue={project.client?.contact_name || ""} />
+                <Label htmlFor="contact_name">Contact Person</Label>
+                <Input
+                  id="contact_name"
+                  name="contact_name"
+                  defaultValue={project.client?.contact_name ?? ""}
+                />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" defaultValue={project.client?.email || ""} />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  defaultValue={project.client?.email ?? ""}
+                />
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone / Mobile</Label>
-                <Input id="phone" name="phone" defaultValue={project.client?.phone || ""} />
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  defaultValue={project.client?.phone ?? ""}
+                />
               </div>
             </div>
           </div>
 
-          {error && <p className="text-sm text-destructive font-medium">{error}</p>}
-          {success && <p className="text-sm text-emerald-600 font-medium">Details updated successfully!</p>}
-
-          <div className="pt-2">
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
+          <Button type="submit" disabled={loading} className="w-full md:w-auto">
+            {loading ? "Saving Changes..." : "Save Changes"}
+          </Button>
         </form>
       </CardContent>
     </Card>

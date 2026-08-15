@@ -184,11 +184,13 @@ export function StaffClient({ staff, projects, clients }: Props) {
 
   function handleGeneratePassword() {
     const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+    const array = new Uint8Array(12)
+    window.crypto.getRandomValues(array)
     let pass = ""
     for (let i = 0; i < 12; i++) {
-      pass += chars.charAt(Math.floor(Math.random() * chars.length))
+      pass += chars[array[i] % chars.length]
     }
-    setPassword(pass)
+    setPassword("Wb!" + pass + "9")
   }
 
   const toggleClient = (clientId: string) => {

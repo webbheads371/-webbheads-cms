@@ -7,10 +7,15 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import { useSupabase } from "@/hooks/use-supabase"
+import { toggleChecklistItem } from "@/lib/supabase/actions"
 import type { ProjectChecklistItem, Staff, PipelineStage } from "@/types"
 import { ChevronDown, ChevronRight, CheckCircle2, AlertTriangle, Sparkles, XCircle } from "lucide-react"
 
@@ -23,60 +28,56 @@ interface Props {
   onAutoAdvance?: () => void
 }
 
-const categoryColors: Record<string, string> = {
-  tech: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-900/50",
-  content: "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/30 dark:text-green-300 dark:border-green-900/50",
-  sales: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900/50",
-  general: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-900/50",
-}
-
-export const ChecklistPanel = memo(function ChecklistPanel({ items, currentStage, currentStaff, projectId, stages, onAutoAdvance }: Props) {
-  const router = useRouter()
-  const supabase = useSupabase()
+export function ChecklistPanel({
+  items,
+  currentStage,
+  currentStaff,
+  projectId,
+  stages,
+  onAutoAdvance,
+}: Props) {
   const [optimisticItems, setOptimisticItems] = useState<ProjectChecklistItem[] | null>(null)
-  const [showCloseDialog, setShowCloseDialog] = useState(false)
+  const [collapsedStages, setCollapsedStages] = useState<Set<string>>(new Set())
+  const router = useRouter()
 
-  const displayItems = optimisticItems ?? items
+  const currentItems = optimisticItems ?? items
 
-  const activeStages = useMemo(() => {
-    if (currentStage === "closed_lost") {
-      return stages.filter((s) => s.key === "closed_lost")
-    }
-    return stages.filter((s) => !["closed_won", "closed_lost"].includes(s.key))
-  }, [stages, currentStage])
-
-  // Group items by stage
   const groupedItems = useMemo(() => {
-    const groups: Record<string, ProjectChecklistItem[]> = {}
-    activeStages.forEach((stage) => {
-      groups[stage.key] = []
-    })
-    displayItems.forEach((item) => {
-      if (groups[item.stage_key]) {
-        groups[item.stage_key].push(item)
+    const map: Record<string, ProjectChecklistItem[]> = {}
+    for (const stage of stages) {
+      map[stage.key] = []
+    }
+
+    for (const item of currentItems) {
+      if (!map[item.stage_key]) {
+        map[item.stage_key] = []
       }
-    })
-    return groups
-  }, [displayItems, activeStages])
+      map[item.stage_key].push(item)
+    }
 
-  // Track expanded stages
-  const [expandedStages, setExpandedStages] = useState<Record<string, boolean>>(() => {
-    return { [currentStage]: true }
-  })
+    for (const key in map) {
+      map[key].sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    }
 
-  const toggleStage = (stageKey: string) => {
-    setExpandedStages((prev) => ({
-      ...prev,
-      [stageKey]: !prev[stageKey],
-    }))
-  }
+    return map
+  }, [currentItems, stages])
 
-  const canEdit = useCallback((item: ProjectChecklistItem) => {
-    if (!currentStaff) return false
-    if (["admin", "tech_lead", "content_lead"].includes(currentStaff.role)) return true
-    if (currentStaff.role === "sales" && item.category === "sales") return true
-    return false
-  }, [currentStaff])
+  const currentStageIndex = stages.findIndex((s) => s.key === currentStage)
+
+  const canEdit = useCallback(
+    (item: ProjectChecklistItem) => {
+      if (!currentStaff) return false
+      if (currentStaff.role === "admin") return true
+
+      const stageIndex = stages.findIndex((s) => s.key === item.stage_key)
+      if (stageIndex > currentStageIndex && currentStageIndex !== -1) return false
+
+      if (currentStaff.role === "sales" && item.stage_key === "deposit_verification") return true
+
+      return false
+    },
+    [currentStaff, stages, currentStageIndex]
+  )
 
   async function handleToggle(item: ProjectChecklistItem) {
     if (!canEdit(item)) return
@@ -96,35 +97,19 @@ export const ChecklistPanel = memo(function ChecklistPanel({ items, currentStage
       )
     })
 
-    const { error } = await supabase
-      .from("project_checklist_items")
-      .update({
-        is_done: newDone,
-        done_by: newDone ? currentStaff?.id : null,
-        done_at: newDone ? new Date().toISOString() : null,
-      })
-      .eq("id", item.id)
-
-    if (error) {
+    const res = await toggleChecklistItem(item.id, newDone)
+    if (res.error) {
       setOptimisticItems(null)
       return
     }
 
-    await supabase.from("activity_log").insert({
-      project_id: projectId,
-      actor_id: currentStaff?.id,
-      action: "checklist_ticked",
-      detail: { item_id: item.id, label: item.label, is_done: newDone },
-    })
-
     router.refresh()
 
-    // Check if we should auto advance
     if (newDone && item.is_required && item.stage_key === currentStage) {
       const currentStageItems = groupedItems[currentStage] || []
       const requiredItems = currentStageItems.filter((i) => i.is_required)
-      const doneRequiredItems = requiredItems.filter((i) => i.id === item.id ? newDone : i.is_done)
-      
+      const doneRequiredItems = requiredItems.filter((i) => (i.id === item.id ? newDone : i.is_done))
+
       if (doneRequiredItems.length === requiredItems.length && requiredItems.length > 0) {
         if (onAutoAdvance) {
           onAutoAdvance()
@@ -133,205 +118,122 @@ export const ChecklistPanel = memo(function ChecklistPanel({ items, currentStage
     }
   }
 
-  const isAdmin = currentStaff?.role === "admin"
-  const isTerminal = ["closed_won", "closed_lost"].includes(currentStage)
-  
-  // Calculate remaining incomplete required items for current stage
-  const currentStageItems = groupedItems[currentStage] || []
-  const incompleteRequired = currentStageItems.filter((i) => i.is_required && !i.is_done)
-
-  async function handleCloseProject(outcome: "closed_won" | "closed_lost") {
-    const { error } = await supabase
-      .from("projects")
-      .update({ current_stage: outcome, status: outcome })
-      .eq("id", projectId)
-    if (error) return
-
-    await supabase.from("activity_log").insert({
-      project_id: projectId,
-      actor_id: currentStaff?.id,
-      action: "stage_changed",
-      detail: { from: currentStage, to: outcome, forced: incompleteRequired.length > 0, closed: true },
+  function toggleCollapse(stageKey: string) {
+    setCollapsedStages((prev) => {
+      const next = new Set(prev)
+      if (next.has(stageKey)) next.delete(stageKey)
+      else next.add(stageKey)
+      return next
     })
-
-    setShowCloseDialog(false)
-    router.refresh()
   }
 
   return (
-    <div className="space-y-6">
-      {activeStages.map((stage, index) => {
+    <div className="space-y-4">
+      {stages.map((stage) => {
         const stageItems = groupedItems[stage.key] || []
-        const completedCount = stageItems.filter((i) => i.is_done).length
-        const totalCount = stageItems.length
+        if (stageItems.length === 0) return null
+
         const isCurrent = stage.key === currentStage
-        const isExpanded = expandedStages[stage.key]
+        const isCollapsed = collapsedStages.has(stage.key)
+        const doneCount = stageItems.filter((i) => i.is_done).length
+        const totalCount = stageItems.length
+        const isFullyDone = doneCount === totalCount
 
         return (
           <Card
             key={stage.key}
             className={cn(
-              "transition-all duration-200 border",
-              isCurrent && "ring-1 ring-primary border-primary bg-primary/[0.01]",
-              !isCurrent && "bg-card hover:bg-muted/10"
+              "transition-all",
+              isCurrent && "border-primary/50 ring-1 ring-primary/20"
             )}
           >
-            <div
-              onClick={() => toggleStage(stage.key)}
-              className="flex items-center justify-between p-4 cursor-pointer select-none"
+            <CardHeader
+              className="p-4 cursor-pointer select-none"
+              onClick={() => toggleCollapse(stage.key)}
             >
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold border",
-                    isCurrent && "bg-primary border-primary text-primary-foreground",
-                    !isCurrent && completedCount === totalCount && totalCount > 0
-                      ? "bg-green-500 border-green-500 text-white"
-                      : "bg-muted text-muted-foreground border-muted-foreground/20"
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {isCollapsed ? (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   )}
-                >
-                  {index + 1}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm sm:text-base flex items-center gap-2">
+                  <CardTitle className="text-sm font-medium capitalize">
                     {stage.label}
-                    {isCurrent && (
-                      <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] py-0.5 px-2">
-                        Active Stage
-                      </Badge>
-                    )}
-                  </h3>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className="text-xs">
-                  {completedCount}/{totalCount} Done
-                </Badge>
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                )}
-              </div>
-            </div>
-
-            {isExpanded && (
-              <CardContent className="pt-0 border-t bg-muted/[0.02] dark:bg-transparent">
-                <div className="space-y-2 mt-4">
-                  {stageItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className={cn(
-                        "flex items-start gap-3 p-3 rounded-lg border transition-colors",
-                        item.is_done && "bg-muted/30 dark:bg-muted/10",
-                        !canEdit(item) && "opacity-60"
-                      )}
-                    >
-                      <Checkbox
-                        checked={item.is_done}
-                        disabled={!canEdit(item)}
-                        onCheckedChange={() => handleToggle(item)}
-                        className="mt-0.5"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span
-                            className={cn(
-                              "text-sm font-medium",
-                              item.is_done && "line-through text-muted-foreground"
-                            )}
-                          >
-                            {item.label}
-                          </span>
-                          <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", categoryColors[item.category])}>
-                            {item.category}
-                          </Badge>
-                          {item.is_required && (
-                            <span className="text-[10px] text-destructive font-medium">*required</span>
-                          )}
-                        </div>
-                        {item.done_at && (
-                          <p className="text-xs text-muted-foreground">
-                            Completed {new Date(item.done_at).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {stageItems.length === 0 && (
-                    <p className="text-sm text-muted-foreground py-4 text-center">
-                      No checklist items for this stage.
-                    </p>
+                  </CardTitle>
+                  {isCurrent && (
+                    <Badge variant="default" className="text-[10px]">
+                      Active Stage
+                    </Badge>
                   )}
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {doneCount}/{totalCount}
+                  </span>
+                  {isFullyDone && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                </div>
+              </div>
+            </CardHeader>
+
+            {!isCollapsed && (
+              <CardContent className="px-4 pb-4 pt-0 space-y-2">
+                {stageItems.map((item) => (
+                  <ChecklistItemRow
+                    key={item.id}
+                    item={item}
+                    canEdit={canEdit(item)}
+                    onToggle={() => handleToggle(item)}
+                  />
+                ))}
               </CardContent>
             )}
           </Card>
         )
       })}
+    </div>
+  )
+}
 
-      {/* Close Client Section */}
-      {!isTerminal && isAdmin && (
-        <Card className="border-amber-200 dark:border-amber-900 bg-amber-50/10 dark:bg-amber-950/10 mt-6">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2 text-amber-800 dark:text-amber-300">
-              <Sparkles className="h-5 w-5" />
-              Close Client & Project
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Once you have finished the delivery stages or if you want to cancel the contract, you can close this client's project.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
-              <DialogTrigger asChild>
-                <Button className="bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Close Client
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Close Client & Project</DialogTitle>
-                  <DialogDescription>
-                    Choose how you would like to close this client's project. This will transition the project to a terminal status (`Closed - Won` or `Closed - Lost`).
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 space-y-3">
-                  {incompleteRequired.length > 0 && (
-                    <div className="p-3 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-xs rounded border border-amber-200 flex items-start gap-2">
-                      <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <strong>Incomplete Items:</strong> There are {incompleteRequired.length} required checklist items not yet completed in the current stage ({currentStage.replace(/_/g, " ")}).
-                        {!isAdmin && <p className="mt-1 font-semibold">Only admins can force-close with incomplete items.</p>}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
-                  <Button variant="outline" onClick={() => setShowCloseDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleCloseProject("closed_lost")}
-                    disabled={incompleteRequired.length > 0 && !isAdmin}
-                  >
-                    Close as Lost
-                  </Button>
-                  <Button
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                    onClick={() => handleCloseProject("closed_won")}
-                    disabled={incompleteRequired.length > 0 && !isAdmin}
-                  >
-                    Close as Won
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </CardContent>
-        </Card>
+const ChecklistItemRow = memo(function ChecklistItemRow({
+  item,
+  canEdit,
+  onToggle,
+}: {
+  item: ProjectChecklistItem
+  canEdit: boolean
+  onToggle: () => void
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-start gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors",
+        !canEdit && "opacity-60 cursor-not-allowed"
       )}
+    >
+      <Checkbox
+        id={item.id}
+        checked={item.is_done}
+        onCheckedChange={onToggle}
+        disabled={!canEdit}
+        className="mt-0.5"
+      />
+      <div className="flex-1 space-y-1">
+        <label
+          htmlFor={item.id}
+          className={cn(
+            "text-sm font-medium leading-none cursor-pointer",
+            item.is_done && "line-through text-muted-foreground"
+          )}
+        >
+          {item.label}
+        </label>
+        {item.is_required && (
+          <Badge variant="outline" className="ml-2 text-[10px] text-amber-600 border-amber-300">
+            Required
+          </Badge>
+        )}
+      </div>
     </div>
   )
 })

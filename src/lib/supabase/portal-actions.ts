@@ -2,17 +2,33 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { createClient, createAdminClient } from "./server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { db } from "@/db"
+import {
+  projects,
+  client_users,
+  agreements,
+  payment_requests,
+  form_responses,
+  activity_log,
+} from "@/db/schema"
+import { eq, and } from "drizzle-orm"
+import bcrypt from "bcryptjs"
+import { uploadToCloudinary } from "@/lib/cloudinary"
 
 // ─── Step 1: Mark welcome seen ───────────────────────────────────────────────
 
 export async function markWelcomeSeen(projectId: string) {
-  const adminClient = createAdminClient()
-  const { error } = await adminClient
-    .from("projects")
-    .update({ welcome_seen_at: new Date().toISOString() })
-    .eq("id", projectId)
-  if (error) return { error: error.message }
+  try {
+    await db
+      .update(projects)
+      .set({ welcome_seen_at: new Date() })
+      .where(eq(projects.id, projectId))
+  } catch (err) {
+    console.error("Error marking welcome seen:", err)
+  }
+
   revalidatePath("/portal/onboarding")
   redirect("/portal/onboarding")
 }
@@ -20,12 +36,15 @@ export async function markWelcomeSeen(projectId: string) {
 // ─── Step 1.5: Approve Deliverables ──────────────────────────────────────────
 
 export async function approveDeliverables(projectId: string) {
-  const adminClient = createAdminClient()
-  const { error } = await adminClient
-    .from("projects")
-    .update({ deliverables_approved: true, deliverables_approved_at: new Date().toISOString() })
-    .eq("id", projectId)
-  if (error) return { error: error.message }
+  try {
+    await db
+      .update(projects)
+      .set({ deliverables_approved: true, deliverables_approved_at: new Date() })
+      .where(eq(projects.id, projectId))
+  } catch (err) {
+    console.error("Error approving deliverables:", err)
+  }
+
   revalidatePath("/portal/onboarding")
   redirect("/portal/onboarding")
 }
@@ -33,54 +52,58 @@ export async function approveDeliverables(projectId: string) {
 // ─── Update password (client) ────────────────────────────────────────────────
 
 export async function updateClientPassword(newPassword: string) {
-  const supabase = createClient()
-  const { error } = await supabase.auth.updateUser({ password: newPassword })
-  if (error) return { error: error.message }
-  return { error: null }
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return { error: "Unauthorized" }
+
+  try {
+    const passwordHash = await bcrypt.hash(newPassword, 10)
+    await db
+      .update(client_users)
+      .set({ password_hash: passwordHash })
+      .where(eq(client_users.id, session.user.id))
+
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to update password" }
+  }
 }
 
 // ─── Step 2: Agreement actions ────────────────────────────────────────────────
 
 export async function agreeToAgreement(projectId: string) {
-  const supabase = createClient()
-  const { error } = await supabase
-    .from("agreements")
-    .update({ client_agreed: true, agreed_at: new Date().toISOString() })
-    .eq("project_id", projectId)
-  if (error) return { error: error.message }
+  try {
+    await db
+      .update(agreements)
+      .set({ client_agreed: true, agreed_at: new Date() })
+      .where(eq(agreements.project_id, projectId))
+  } catch (err) {
+    console.error("Error agreeing to agreement:", err)
+  }
+
   revalidatePath("/portal/onboarding")
   redirect("/portal/onboarding")
 }
 
 export async function uploadSignature(projectId: string, formData: FormData) {
   const file = formData.get("file") as File
-  if (!file) return { error: "No signature file uploaded", url: null }
+  if (!file || file.size === 0) return { error: "No signature file uploaded", url: null }
 
-  const supabase = createClient()
-  const adminClient = createAdminClient()
-  const ext = file.name.split(".").pop()
-  const path = `signatures/${projectId}/signature.${ext}`
+  try {
+    const publicUrl = await uploadToCloudinary(file, "webbheads_cms/signatures")
 
-  const { error: uploadError } = await adminClient.storage
-    .from("client-uploads")
-    .upload(path, file, { upsert: true })
-  if (uploadError) return { error: uploadError.message, url: null }
+    await db
+      .update(agreements)
+      .set({
+        signature_url: publicUrl,
+        signature_uploaded_at: new Date(),
+      })
+      .where(eq(agreements.project_id, projectId))
 
-  const { data: { publicUrl } } = adminClient.storage
-    .from("client-uploads")
-    .getPublicUrl(path)
-
-  const { error } = await supabase
-    .from("agreements")
-    .update({
-      signature_url: publicUrl,
-      signature_uploaded_at: new Date().toISOString(),
-    })
-    .eq("project_id", projectId)
-  if (error) return { error: error.message, url: null }
-
-  revalidatePath("/portal/onboarding")
-  return { error: null, url: publicUrl }
+    revalidatePath("/portal/onboarding")
+    return { error: null, url: publicUrl }
+  } catch (err: any) {
+    return { error: err.message || "Failed to upload signature", url: null }
+  }
 }
 
 // ─── Step 3: Payment screenshot upload ───────────────────────────────────────
@@ -92,55 +115,45 @@ export async function uploadPaymentScreenshot(
   formData: FormData
 ) {
   const file = formData.get("file") as File
-  if (!file) return { error: "No screenshot file uploaded" }
+  if (!file || file.size === 0) return { error: "No screenshot file uploaded" }
 
-  const supabase = createClient()
-  const adminClient = createAdminClient()
-  const ext = file.name.split(".").pop()
-  const timestamp = Date.now()
-  const path = `payment-screenshots/${projectId}/${requestType}/${timestamp}.${ext}`
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return { error: "Unauthorized" }
 
-  const { error: uploadError } = await adminClient.storage
-    .from("client-uploads")
-    .upload(path, file, { upsert: false })
-  if (uploadError) return { error: uploadError.message }
+  try {
+    const publicUrl = await uploadToCloudinary(file, "webbheads_cms/payment_screenshots")
 
-  const { data: { publicUrl } } = adminClient.storage
-    .from("client-uploads")
-    .getPublicUrl(path)
+    const [clientUser] = await db
+      .select({ client_id: client_users.client_id })
+      .from(client_users)
+      .where(eq(client_users.id, session.user.id))
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: "Unauthorized" }
+    if (!clientUser) return { error: "Unauthorized" }
 
-  const { data: clientUser } = await adminClient
-    .from("client_users")
-    .select("client_id")
-    .eq("id", user.id)
-    .single()
-  if (!clientUser) return { error: "Unauthorized" }
+    const [project] = await db
+      .select({ client_id: projects.client_id })
+      .from(projects)
+      .where(eq(projects.id, projectId))
 
-  const { data: project } = await adminClient
-    .from("projects")
-    .select("client_id")
-    .eq("id", projectId)
-    .single()
-  if (!project || project.client_id !== clientUser.client_id) {
-    return { error: "Unauthorized" }
+    if (!project || project.client_id !== clientUser.client_id) {
+      return { error: "Unauthorized" }
+    }
+
+    await db
+      .update(payment_requests)
+      .set({
+        screenshot_url: publicUrl,
+        status: "submitted",
+        submitted_at: new Date(),
+      })
+      .where(eq(payment_requests.id, paymentRequestId))
+
+    revalidatePath("/portal/onboarding")
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to upload payment screenshot" }
   }
-
-  const { error } = await adminClient
-    .from("payment_requests")
-    .update({
-      screenshot_url: publicUrl,
-      status: "submitted",
-      submitted_at: new Date().toISOString(),
-    })
-    .eq("id", paymentRequestId)
-  if (error) return { error: error.message }
-
-  revalidatePath("/portal/onboarding")
-  revalidatePath("/portal/dashboard")
-  return { error: null }
 }
 
 // ─── Step 4: Profile handover form submission ─────────────────────────────────
@@ -149,60 +162,70 @@ export async function submitProfileForm(
   projectId: string,
   responses: { template_id: string; value: string }[]
 ) {
-  const supabase = createClient()
-  const adminClient = createAdminClient()
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return { error: "Unauthorized" }
 
-  // Authenticate user & check project authorization
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: "Unauthorized" }
+  try {
+    const [clientUser] = await db
+      .select({ client_id: client_users.client_id })
+      .from(client_users)
+      .where(eq(client_users.id, session.user.id))
 
-  const { data: clientUser } = await adminClient
-    .from("client_users")
-    .select("client_id")
-    .eq("id", user.id)
-    .single()
-  if (!clientUser) return { error: "Unauthorized" }
+    if (!clientUser) return { error: "Unauthorized" }
 
-  const { data: project } = await adminClient
-    .from("projects")
-    .select("client_id")
-    .eq("id", projectId)
-    .single()
-  if (!project || project.client_id !== clientUser.client_id) {
-    return { error: "Unauthorized" }
+    const [project] = await db
+      .select({ client_id: projects.client_id })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+
+    if (!project || project.client_id !== clientUser.client_id) {
+      return { error: "Unauthorized" }
+    }
+
+    for (const r of responses) {
+      const [existing] = await db
+        .select({ id: form_responses.id })
+        .from(form_responses)
+        .where(
+          and(
+            eq(form_responses.project_id, projectId),
+            eq(form_responses.template_id, r.template_id)
+          )
+        )
+
+      if (existing) {
+        await db
+          .update(form_responses)
+          .set({ value: r.value, submitted_at: new Date() })
+          .where(eq(form_responses.id, existing.id))
+      } else {
+        await db.insert(form_responses).values({
+          project_id: projectId,
+          template_id: r.template_id,
+          value: r.value,
+          submitted_at: new Date(),
+        })
+      }
+    }
+
+    await db
+      .update(projects)
+      .set({ profile_submitted_at: new Date() })
+      .where(eq(projects.id, projectId))
+
+    await db.insert(activity_log).values({
+      project_id: projectId,
+      action: "profile_updated",
+      detail: { message: "Client updated credentials/onboarding details" },
+    })
+
+    revalidatePath("/portal")
+    revalidatePath("/portal/onboarding")
+    revalidatePath("/portal/dashboard")
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message || "Failed to submit profile form" }
   }
-
-  // Upsert all form responses using adminClient to bypass RLS write restriction
-  const upsertData = responses.map((r) => ({
-    project_id: projectId,
-    template_id: r.template_id,
-    value: r.value,
-    submitted_at: new Date().toISOString(),
-  }))
-
-  const { error: upsertError } = await adminClient
-    .from("form_responses")
-    .upsert(upsertData, { onConflict: "project_id,template_id" })
-  if (upsertError) return { error: upsertError.message }
-
-  // Mark profile as submitted
-  const { error } = await adminClient
-    .from("projects")
-    .update({ profile_submitted_at: new Date().toISOString() })
-    .eq("id", projectId)
-  if (error) return { error: error.message }
-
-  // Insert activity log to notify admins
-  await adminClient.from("activity_log").insert({
-    project_id: projectId,
-    action: "profile_updated",
-    detail: { message: "Client updated credentials/onboarding details" },
-  })
-
-  revalidatePath("/portal")
-  revalidatePath("/portal/onboarding")
-  revalidatePath("/portal/dashboard")
-  return { error: null }
 }
 
 // ─── File upload for form responses ──────────────────────────────────────────
@@ -213,19 +236,12 @@ export async function uploadFormFile(
   formData: FormData
 ) {
   const file = formData.get("file") as File
-  if (!file) return { error: "No file uploaded", url: null }
+  if (!file || file.size === 0) return { error: "No file uploaded", url: null }
 
-  const adminClient = createAdminClient()
-  const path = `form-uploads/${projectId}/${templateId}/${file.name}`
-
-  const { error: uploadError } = await adminClient.storage
-    .from("client-uploads")
-    .upload(path, file, { upsert: true })
-  if (uploadError) return { error: uploadError.message, url: null }
-
-  const { data: { publicUrl } } = adminClient.storage
-    .from("client-uploads")
-    .getPublicUrl(path)
-
-  return { error: null, url: publicUrl }
+  try {
+    const publicUrl = await uploadToCloudinary(file, "webbheads_cms/form_uploads")
+    return { error: null, url: publicUrl }
+  } catch (err: any) {
+    return { error: err.message || "Failed to upload file", url: null }
+  }
 }

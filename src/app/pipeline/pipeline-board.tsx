@@ -12,13 +12,20 @@ import {
   useDroppable,
 } from "@dnd-kit/core"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { PageHeader } from "@/components/page-header"
-import { useSupabase } from "@/hooks/use-supabase"
 import { formatCurrency } from "@/lib/utils"
+import { moveProjectStage } from "@/lib/supabase/actions"
 import type { Project, PipelineStage, Staff } from "@/types"
 
 interface PipelineBoardProps {
@@ -33,7 +40,6 @@ export function PipelineBoard({ projects, stages, currentStaff }: PipelineBoardP
   const [showForceDialog, setShowForceDialog] = useState(false)
   const [pendingStage, setPendingStage] = useState<string | null>(null)
   const router = useRouter()
-  const supabase = useSupabase()
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -72,27 +78,19 @@ export function PipelineBoard({ projects, stages, currentStaff }: PipelineBoardP
     }
   }
 
-  async function moveProject(projectId: string, newStage: string, force = false) {
-    const { error } = await supabase
-      .from("projects")
-      .update({ current_stage: newStage })
-      .eq("id", projectId)
-    if (error) return
-
-    await supabase.from("activity_log").insert({
-      project_id: projectId,
-      action: "stage_changed",
-      detail: { new_stage: newStage, forced: force },
-    })
-
+  async function moveProject(projectId: string, newStage: string) {
+    await moveProjectStage(projectId, newStage)
     setShowForceDialog(false)
     router.refresh()
   }
 
-  const { kanbanStages, terminalStages } = useMemo(() => ({
-    kanbanStages: stages.filter((s) => !["closed_won", "closed_lost"].includes(s.key)),
-    terminalStages: stages.filter((s) => ["closed_won", "closed_lost"].includes(s.key)),
-  }), [stages])
+  const { kanbanStages, terminalStages } = useMemo(
+    () => ({
+      kanbanStages: stages.filter((s) => !["closed_won", "closed_lost"].includes(s.key)),
+      terminalStages: stages.filter((s) => ["closed_won", "closed_lost"].includes(s.key)),
+    }),
+    [stages]
+  )
 
   const projectsByStage = useMemo(() => {
     const map = new Map<string, Project[]>()
@@ -170,7 +168,7 @@ export function PipelineBoard({ projects, stages, currentStaff }: PipelineBoardP
             <Button
               onClick={() => {
                 if (selectedProject && pendingStage) {
-                  moveProject(selectedProject.id, pendingStage, true)
+                  moveProject(selectedProject.id, pendingStage)
                 }
               }}
             >

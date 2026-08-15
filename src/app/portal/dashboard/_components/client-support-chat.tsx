@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react"
 import { getProjectMessages, sendMessage } from "@/lib/supabase/message-actions"
-import { createClient } from "@/lib/supabase/client"
 import { ArrowLeft, Send, User, ShieldAlert, Laptop, FileSignature, Landmark, Loader2 } from "lucide-react"
 import { usePortalTab } from "../../portal-tab-context"
 
@@ -12,12 +11,12 @@ interface ClientSupportChatProps {
   onBack: () => void
 }
 
-type ChatChannel = 'admin' | 'tech_lead' | 'content_lead' | 'sales'
+type ChatChannel = "admin" | "tech_lead" | "content_lead" | "sales"
 
 export function ClientSupportChat({ projectId, project, onBack }: ClientSupportChatProps) {
   const { setHideMobileNav } = usePortalTab()
-  const [activeChannel, setActiveChannel] = useState<ChatChannel>('admin')
-  const [viewMode, setViewMode] = useState<'list' | 'chat'>('list')
+  const [activeChannel, setActiveChannel] = useState<ChatChannel>("admin")
+  const [viewMode, setViewMode] = useState<"list" | "chat">("list")
   const [messages, setMessages] = useState<any[]>([])
   const [inputText, setInputText] = useState("")
   const [loading, setLoading] = useState(true)
@@ -25,27 +24,26 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const supabase = createClient()
 
   useEffect(() => {
     const isMobile = window.innerWidth < 768
-    if (viewMode === 'chat') {
+    if (viewMode === "chat") {
       setHideMobileNav(true)
       if (isMobile) {
         const scrollY = window.scrollY
-        document.body.style.overflow = 'hidden'
-        document.body.style.position = 'fixed'
+        document.body.style.overflow = "hidden"
+        document.body.style.position = "fixed"
         document.body.style.top = `-${scrollY}px`
-        document.body.style.width = '100%'
-        document.body.style.height = '100%'
+        document.body.style.width = "100%"
+        document.body.style.height = "100%"
 
         return () => {
           setHideMobileNav(false)
-          document.body.style.overflow = ''
-          document.body.style.position = ''
-          document.body.style.top = ''
-          document.body.style.width = ''
-          document.body.style.height = ''
+          document.body.style.overflow = ""
+          document.body.style.position = ""
+          document.body.style.top = ""
+          document.body.style.width = ""
+          document.body.style.height = ""
           window.scrollTo(0, scrollY)
         }
       }
@@ -66,41 +64,18 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
     setLoading(false)
   }
 
-  // Load and subscribe to messages (with real-time updates)
+  // Load and poll messages
   useEffect(() => {
     fetchMessages()
-
-    const channel = supabase
-      .channel(`client-project-messages-${projectId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `project_id=eq.${projectId}`
-        },
-        (payload) => {
-          const newMsg = payload.new as any
-          setMessages(prev => {
-            if (prev.find(m => m.id === newMsg.id)) return prev
-            return [...prev, newMsg]
-          })
-        }
-      )
-      .subscribe()
-
-    const interval = setInterval(fetchMessages, 15000)
+    const interval = setInterval(fetchMessages, 5000)
 
     return () => {
-      supabase.removeChannel(channel)
       clearInterval(interval)
     }
   }, [projectId])
 
   // Scroll to bottom when channel changes or messages load
   useEffect(() => {
-    // Only scroll the specific container to avoid full-page jumps on mobile Safari
     setTimeout(() => {
       if (scrollContainerRef.current) {
         scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
@@ -117,87 +92,82 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
     setSending(true)
     inputRef.current?.focus({ preventScroll: true })
 
-    // Optimistic UI update
     const optimisticMsg = {
       id: Math.random().toString(),
       project_id: projectId,
-      sender_role: 'client',
+      sender_role: "client",
       recipient_role: activeChannel,
       message: messageText,
       created_at: new Date().toISOString(),
-      sender_name: "You (Client)"
+      sender_name: "You (Client)",
     }
-    setMessages(prev => [...prev, optimisticMsg])
+    setMessages((prev) => [...prev, optimisticMsg])
 
-    // Get assigned staff id if channel is lead
     let recipientId = null
-    if (activeChannel === 'tech_lead') recipientId = project.tech_lead_id
-    else if (activeChannel === 'content_lead') recipientId = project.content_lead_id
-    else if (activeChannel === 'sales') recipientId = project.sales_lead_id
+    if (activeChannel === "tech_lead") recipientId = project.tech_lead_id
+    else if (activeChannel === "content_lead") recipientId = project.content_lead_id
+    else if (activeChannel === "sales") recipientId = project.sales_lead_id
 
     const res = await sendMessage({
       projectId,
       messageText,
       recipientRole: activeChannel,
-      recipientId
+      recipientId,
     })
 
     setSending(false)
     if (res.error) {
       alert("Failed to send message: " + res.error)
-      // Rollback optimistic update
-      setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id))
     } else if (res.data) {
-      // Replace optimistic with real
-      setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? { ...res.data, sender_name: "You (Client)" } : m))
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === optimisticMsg.id ? { ...res.data, sender_name: "You (Client)" } : m
+        )
+      )
     }
   }
 
-  // Filter messages for current selected channel thread
-  const filteredMessages = messages.filter(msg => {
-    // Thread logic:
-    // Client sent to ActiveChannel: (sender = client, recipient = activeChannel)
-    // ActiveChannel sent to Client: (sender = activeChannel, recipient = client)
+  const filteredMessages = messages.filter((msg) => {
     return (
-      (msg.sender_role === 'client' && msg.recipient_role === activeChannel) ||
-      (msg.sender_role === activeChannel && msg.recipient_role === 'client')
+      (msg.sender_role === "client" && msg.recipient_role === activeChannel) ||
+      (msg.sender_role === activeChannel && msg.recipient_role === "client")
     )
   })
 
-  // Channel details helper
   const channels = [
     {
-      id: 'admin' as ChatChannel,
-      label: 'Admin',
-      sub: 'Company Support',
+      id: "admin" as ChatChannel,
+      label: "Admin",
+      sub: "Company Support",
       icon: ShieldAlert,
       available: true,
-      roleName: 'Admin'
+      roleName: "Admin",
     },
     {
-      id: 'tech_lead' as ChatChannel,
-      label: 'Tech Lead',
-      sub: project.tech_lead?.full_name || 'Not Assigned',
+      id: "tech_lead" as ChatChannel,
+      label: "Tech Lead",
+      sub: project.tech_lead?.full_name || "Not Assigned",
       icon: Laptop,
       available: !!project.tech_lead_id,
-      roleName: 'Tech Lead'
+      roleName: "Tech Lead",
     },
     {
-      id: 'content_lead' as ChatChannel,
-      label: 'Content Lead',
-      sub: project.content_lead?.full_name || 'Not Assigned',
+      id: "content_lead" as ChatChannel,
+      label: "Content Lead",
+      sub: project.content_lead?.full_name || "Not Assigned",
       icon: FileSignature,
       available: !!project.content_lead_id,
-      roleName: 'Content Lead'
+      roleName: "Content Lead",
     },
     {
-      id: 'sales' as ChatChannel,
-      label: 'Sales Lead',
-      sub: project.sales_lead?.full_name || 'Not Assigned',
+      id: "sales" as ChatChannel,
+      label: "Sales Lead",
+      sub: project.sales_lead?.full_name || "Not Assigned",
       icon: Landmark,
       available: !!project.sales_lead_id,
-      roleName: 'Sales Lead'
-    }
+      roleName: "Sales Lead",
+    },
   ]
 
   return (
@@ -216,9 +186,11 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
       </div>
 
       <div className="grid md:grid-cols-[240px_1fr] border border-slate-200/60 dark:border-slate-800/60 rounded-2xl overflow-hidden flex-1 min-h-0 md:h-[450px] md:max-h-[70vh] bg-white dark:bg-slate-900 md:bg-white/40 md:dark:bg-slate-900/40 backdrop-blur-md">
-        
-        {/* Left Side: Channel Selector */}
-        <div className={`border-r border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-950/20 md:bg-slate-50/50 md:dark:bg-slate-950/20 p-4 flex flex-col gap-2 h-full overflow-y-auto ${viewMode === 'chat' ? 'hidden md:flex' : 'flex'}`}>
+        <div
+          className={`border-r border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-950/20 md:bg-slate-50/50 md:dark:bg-slate-950/20 p-4 flex flex-col gap-2 h-full overflow-y-auto ${
+            viewMode === "chat" ? "hidden md:flex" : "flex"
+          }`}
+        >
           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 mb-2 block">
             Select Chat Channel
           </span>
@@ -232,22 +204,32 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
                   disabled={!chan.available}
                   onClick={() => {
                     setActiveChannel(chan.id)
-                    setViewMode('chat')
+                    setViewMode("chat")
                   }}
                   className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-300 text-left ${
-                    !chan.available 
-                      ? 'opacity-40 cursor-not-allowed' 
+                    !chan.available
+                      ? "opacity-40 cursor-not-allowed"
                       : active
-                      ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md shadow-amber-500/10'
-                      : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md shadow-amber-500/10"
+                      : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                   }`}
                 >
-                  <div className={`p-2 rounded-lg ${active ? 'bg-white/20 text-white' : 'bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+                  <div
+                    className={`p-2 rounded-lg ${
+                      active
+                        ? "bg-white/20 text-white"
+                        : "bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                    }`}
+                  >
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-bold truncate leading-tight">{chan.label}</div>
-                    <div className={`text-[10px] truncate leading-none mt-1 ${active ? 'text-white/80' : 'text-slate-400 dark:text-slate-500'}`}>
+                    <div
+                      className={`text-[10px] truncate leading-none mt-1 ${
+                        active ? "text-white/80" : "text-slate-400 dark:text-slate-500"
+                      }`}
+                    >
                       {chan.sub}
                     </div>
                   </div>
@@ -257,22 +239,36 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
           </div>
         </div>
 
-        {/* Right Side: Message Thread */}
-        <div className={`flex flex-col h-full overflow-hidden ${viewMode === 'list' ? 'hidden md:flex' : 'flex'}`}>
-          {/* Active Chat Header */}
+        <div
+          className={`flex flex-col h-full overflow-hidden ${
+            viewMode === "list" ? "hidden md:flex" : "flex"
+          }`}
+        >
           <div className="p-4 border-b border-slate-200/60 dark:border-slate-800/60 flex items-center gap-3 bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm">
             <button
-              onClick={() => setViewMode('list')}
+              onClick={() => setViewMode("list")}
               className="md:hidden p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white mr-1"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div className="h-10 w-10 rounded-full bg-amber-500/10 text-[#D6A33C] flex items-center justify-center font-bold text-sm shrink-0">
-              {activeChannel === 'admin' ? 'A' : activeChannel === 'tech_lead' ? 'TL' : activeChannel === 'content_lead' ? 'CL' : 'SL'}
+              {activeChannel === "admin"
+                ? "A"
+                : activeChannel === "tech_lead"
+                ? "TL"
+                : activeChannel === "content_lead"
+                ? "CL"
+                : "SL"}
             </div>
             <div>
               <h4 className="text-sm font-bold text-slate-800 dark:text-white leading-tight">
-                {activeChannel === 'admin' ? 'General Admin / Support' : activeChannel === 'tech_lead' ? `Tech Lead: ${project.tech_lead?.full_name}` : activeChannel === 'content_lead' ? `Content Lead: ${project.content_lead?.full_name}` : `Sales Lead: ${project.sales_lead?.full_name}`}
+                {activeChannel === "admin"
+                  ? "General Admin / Support"
+                  : activeChannel === "tech_lead"
+                  ? `Tech Lead: ${project.tech_lead?.full_name}`
+                  : activeChannel === "content_lead"
+                  ? `Content Lead: ${project.content_lead?.full_name}`
+                  : `Sales Lead: ${project.sales_lead?.full_name}`}
               </h4>
               <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -281,8 +277,12 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
             </div>
           </div>
 
-          {/* Messages Area */}
-          <div ref={scrollContainerRef} className={`flex-1 p-4 overflow-y-auto flex flex-col gap-3 transition-all duration-300 ${isKeyboardOpen ? 'max-h-[160px] md:max-h-none' : ''}`}>
+          <div
+            ref={scrollContainerRef}
+            className={`flex-1 p-4 overflow-y-auto flex flex-col gap-3 transition-all duration-300 ${
+              isKeyboardOpen ? "max-h-[160px] md:max-h-none" : ""
+            }`}
+          >
             {loading ? (
               <div className="flex-1 flex flex-col items-center justify-center text-slate-400 text-xs gap-2">
                 <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
@@ -293,41 +293,50 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
                 <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
                   <User className="w-6 h-6 text-slate-400" />
                 </div>
-                <h5 className="text-xs font-bold text-slate-700 dark:text-slate-300">Start the conversation</h5>
+                <h5 className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Start the conversation
+                </h5>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-[200px]">
                   Send a message below. Our team members will reply directly in this portal chat.
                 </p>
               </div>
             ) : (
               filteredMessages.map((msg) => {
-                const isMe = msg.sender_role === 'client'
+                const isMe = msg.sender_role === "client"
                 return (
                   <div
                     key={msg.id}
-                    className={`flex flex-col max-w-[75%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}
+                    className={`flex flex-col max-w-[75%] ${
+                      isMe ? "self-end items-end" : "self-start items-start"
+                    }`}
                   >
                     <div className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold mb-0.5 px-1">
-                      {isMe ? 'You' : msg.sender_name || 'Team member'}
+                      {isMe ? "You" : msg.sender_name || "Team member"}
                     </div>
                     <div
                       className={`px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-xs ${
                         isMe
-                          ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-tr-none'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200/30 dark:border-slate-800'
+                          ? "bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-tr-none"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200/30 dark:border-slate-800"
                       }`}
                     >
                       {msg.message}
                     </div>
                     <div className="text-[8px] text-slate-400 dark:text-slate-500 mt-1 px-1">
-                      {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(msg.created_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </div>
                   </div>
                 )
               })
             )}
           </div>
-          {/* Input Form */}
-          <form onSubmit={handleSend} className="p-3 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-2 bg-slate-50/50 dark:bg-slate-950/20">
+          <form
+            onSubmit={handleSend}
+            className="p-3 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-2 bg-slate-50/50 dark:bg-slate-950/20"
+          >
             <input
               type="text"
               ref={inputRef}

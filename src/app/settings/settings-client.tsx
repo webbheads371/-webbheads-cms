@@ -15,7 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/page-header"
-import { useSupabase } from "@/hooks/use-supabase"
+import { createChecklistTemplate, deleteChecklistTemplate } from "@/lib/supabase/admin-portal-actions"
 import { Plus, Trash2 } from "lucide-react"
 import type { PipelineStage, ChecklistTemplate } from "@/types"
 
@@ -28,30 +28,24 @@ export function SettingsClient({ stages, templates }: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = useSupabase()
 
   async function handleAddTemplate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
     const formData = new FormData(e.currentTarget)
-    const stageKey = formData.get("stage_key") as string
-    const data = {
-      stage_key: stageKey,
-      label: formData.get("label") as string,
-      category: formData.get("category") as string,
-      is_required: formData.get("is_required") === "on",
-      sort_order: templates.filter((t) => t.stage_key === stageKey).length,
+    const res = await createChecklistTemplate(formData)
+    if (!res.error) {
+      setOpen(false)
+      router.refresh()
     }
-
-    await supabase.from("checklist_templates").insert(data)
-    setOpen(false)
-    router.refresh()
     setLoading(false)
   }
 
   async function handleDelete(id: string) {
-    await supabase.from("checklist_templates").delete().eq("id", id)
-    router.refresh()
+    const res = await deleteChecklistTemplate(id)
+    if (!res.error) {
+      router.refresh()
+    }
   }
 
   const grouped = stages.reduce((acc, stage) => {

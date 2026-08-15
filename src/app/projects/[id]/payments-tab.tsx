@@ -17,7 +17,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { useSupabase } from "@/hooks/use-supabase"
+import { addPaymentAction } from "@/lib/supabase/actions"
 import { Plus } from "lucide-react"
 import type { Payment } from "@/types"
 
@@ -31,7 +31,6 @@ export function PaymentsTab({ payments, projectId, projectValue }: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = useSupabase()
 
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0)
   const balance = projectValue ? projectValue - totalPaid : null
@@ -40,22 +39,10 @@ export function PaymentsTab({ payments, projectId, projectValue }: Props) {
     e.preventDefault()
     setLoading(true)
     const formData = new FormData(e.currentTarget)
-    const data = {
-      project_id: projectId,
-      amount: Number(formData.get("amount")),
-      payment_type: formData.get("payment_type") as string,
-      method: (formData.get("method") as string) || null,
-      paid_on: formData.get("paid_on") as string,
-      note: (formData.get("note") as string) || null,
-    }
+    formData.append("project_id", projectId)
 
-    const { error } = await supabase.from("payments").insert(data)
-    if (!error) {
-      await supabase.from("activity_log").insert({
-        project_id: projectId,
-        action: "payment_added",
-        detail: { amount: data.amount, payment_type: data.payment_type },
-      })
+    const res = await addPaymentAction(formData)
+    if (!res.error) {
       setOpen(false)
       router.refresh()
     }
@@ -70,7 +57,9 @@ export function PaymentsTab({ payments, projectId, projectValue }: Props) {
             <CardTitle className="text-sm font-medium">Project Value</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{formatCurrency(projectValue)}</p>
+            <div className="text-2xl font-bold">
+              {projectValue ? formatCurrency(projectValue) : "Not Set"}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -78,15 +67,19 @@ export function PaymentsTab({ payments, projectId, projectValue }: Props) {
             <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalPaid)}</p>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(totalPaid)}
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Balance</CardTitle>
+            <CardTitle className="text-sm font-medium">Balance Due</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-amber-600">{formatCurrency(balance)}</p>
+            <div className="text-2xl font-bold text-amber-600">
+              {balance !== null ? formatCurrency(balance) : "—"}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -96,28 +89,29 @@ export function PaymentsTab({ payments, projectId, projectValue }: Props) {
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Add Payment
+              Record Payment
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Record Payment</DialogTitle>
+              <DialogTitle>Record New Payment</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleAddPayment} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="amount">Amount (INR) *</Label>
-                <Input id="amount" name="amount" type="number" step="any" required />
+                <Label htmlFor="amount">Amount *</Label>
+                <Input id="amount" name="amount" type="number" step="0.01" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="payment_type">Type *</Label>
-                <Select name="payment_type" required>
+                <Label htmlFor="payment_type">Payment Type *</Label>
+                <Select name="payment_type" required defaultValue="advance">
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="advance">Advance</SelectItem>
-                    <SelectItem value="partial">Partial</SelectItem>
+                    <SelectItem value="milestone">Milestone</SelectItem>
                     <SelectItem value="final">Final</SelectItem>
+                    <SelectItem value="additional">Additional</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -128,21 +122,26 @@ export function PaymentsTab({ payments, projectId, projectValue }: Props) {
                     <SelectValue placeholder="Select method" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="UPI">UPI</SelectItem>
-                    <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                    <SelectItem value="Cheque">Cheque</SelectItem>
-                    <SelectItem value="Cash">Cash</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="upi">UPI</SelectItem>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="paid_on">Paid On *</Label>
-                <Input id="paid_on" name="paid_on" type="date" required />
+                <Label htmlFor="paid_on">Paid On Date *</Label>
+                <Input
+                  id="paid_on"
+                  name="paid_on"
+                  type="date"
+                  defaultValue={new Date().toISOString().split("T")[0]}
+                  required
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="note">Note</Label>
-                <Input id="note" name="note" />
+                <Label htmlFor="note">Notes</Label>
+                <Input id="note" name="note" placeholder="Transaction ref, invoice #, etc." />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Recording..." : "Record Payment"}
@@ -156,27 +155,25 @@ export function PaymentsTab({ payments, projectId, projectValue }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Amount</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>Amount</TableHead>
               <TableHead>Method</TableHead>
-              <TableHead>Note</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Notes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {payments.map((payment) => (
-              <TableRow key={payment.id}>
-                <TableCell>{formatDate(payment.paid_on)}</TableCell>
-                <TableCell className="font-medium">{formatCurrency(payment.amount)}</TableCell>
+            {payments.map((p) => (
+              <TableRow key={p.id}>
                 <TableCell>
                   <Badge variant="outline" className="capitalize">
-                    {payment.payment_type}
+                    {p.payment_type}
                   </Badge>
                 </TableCell>
-                <TableCell>{payment.method || "—"}</TableCell>
-                <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                  {payment.note || "—"}
-                </TableCell>
+                <TableCell className="font-medium">{formatCurrency(p.amount)}</TableCell>
+                <TableCell className="capitalize">{p.method?.replace("_", " ") || "—"}</TableCell>
+                <TableCell>{formatDate(p.paid_on)}</TableCell>
+                <TableCell className="text-muted-foreground">{p.note || "—"}</TableCell>
               </TableRow>
             ))}
             {payments.length === 0 && (

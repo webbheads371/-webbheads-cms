@@ -6,16 +6,27 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/page-header"
-import { useSupabase } from "@/hooks/use-supabase"
 import { formatDate } from "@/lib/utils"
 import { Plus, Trash2 } from "lucide-react"
+import { createClientAction } from "@/lib/supabase/actions"
 
 interface ClientWithProjects {
   id: string
@@ -28,26 +39,23 @@ interface ClientWithProjects {
   projects: { count: number }[]
 }
 
-export function ClientsClient({ clients, role }: { clients: ClientWithProjects[], role: string }) {
+export function ClientsClient({
+  clients,
+  role,
+}: {
+  clients: ClientWithProjects[]
+  role: string
+}) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = useSupabase()
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
     const formData = new FormData(e.currentTarget)
-    const data = {
-      company_name: formData.get("company_name") as string,
-      contact_name: (formData.get("contact_name") as string) || null,
-      phone: (formData.get("phone") as string) || null,
-      email: (formData.get("email") as string) || null,
-      source: (formData.get("source") as string) || null,
-      client_type: formData.get("client_type") as string,
-    }
-    const { error } = await supabase.from("clients").insert(data)
-    if (!error) {
+    const res = await createClientAction(formData)
+    if (!res.error) {
       setOpen(false)
       router.refresh()
     }
@@ -126,7 +134,12 @@ export function ClientsClient({ clients, role }: { clients: ClientWithProjects[]
           </TableHeader>
           <TableBody>
             {clients.map((client) => (
-              <ClientRow key={client.id} client={client} role={role} onDeleted={() => router.refresh()} />
+              <ClientRow
+                key={client.id}
+                client={client}
+                role={role}
+                onDeleted={() => router.refresh()}
+              />
             ))}
             {clients.length === 0 && (
               <TableRow>
@@ -142,7 +155,6 @@ export function ClientsClient({ clients, role }: { clients: ClientWithProjects[]
   )
 }
 
-// ─── Single client row with inline delete ──────────────────────────────────────
 function ClientRow({
   client,
   role,
@@ -158,7 +170,7 @@ function ClientRow({
   const router = useRouter()
 
   async function handleDelete(e: React.MouseEvent) {
-    e.stopPropagation() // Prevent row click navigation
+    e.stopPropagation()
     setDeleting(true)
     setDeleteError(null)
     const res = await fetch(`/api/clients/${client.id}`, { method: "DELETE" })
@@ -205,18 +217,16 @@ function ClientRow({
                     <Trash2 className="h-4 w-4" /> Delete Client
                   </DialogTitle>
                   <DialogDescription>
-                    Are you sure you want to permanently delete <strong>{client.company_name}</strong>? 
+                    Are you sure you want to permanently delete <strong>{client.company_name}</strong>?
                     This will remove their login access and all their projects.
                   </DialogDescription>
                 </DialogHeader>
                 {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowConfirm(false)}>Cancel</Button>
-                  <Button
-                    variant="destructive"
-                    onClick={handleDelete}
-                    disabled={deleting}
-                  >
+                  <Button variant="outline" onClick={() => setShowConfirm(false)}>
+                    Cancel
+                  </Button>
+                  <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
                     {deleting ? "Deleting..." : "Yes, Delete"}
                   </Button>
                 </DialogFooter>

@@ -26,7 +26,7 @@ export function StepAgreement({ projectId, agreement }: StepAgreementProps) {
       setAgreed(true)
       startTransition(async () => {
         const result = await agreeToAgreement(projectId)
-        if (result?.error) setError(result.error)
+        if ((result as any)?.error) setError((result as any).error)
       })
     }
   }

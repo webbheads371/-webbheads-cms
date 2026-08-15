@@ -1,4 +1,7 @@
-import { createClient, getCurrentStaff } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { clients, client_users, projects } from "@/db/schema"
+import { eq, desc } from "drizzle-orm"
+import { getCurrentStaff } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
 import { ClientDetailClient } from "./client-detail-client"
 
@@ -7,23 +10,31 @@ export default async function ClientDetailPage({
 }: {
   params: { id: string }
 }) {
-  const supabase = createClient()
   const staff = await getCurrentStaff()
   const role = staff?.role || "sales"
 
-  const { data: client } = await supabase
-    .from("clients")
-    .select("*, client_users(*)")
-    .eq("id", params.id)
-    .single()
+  const [clientRecord] = await db
+    .select()
+    .from(clients)
+    .where(eq(clients.id, params.id))
 
-  if (!client) notFound()
+  if (!clientRecord) notFound()
 
-  const { data: projects } = await supabase
-    .from("projects")
-    .select("*, tech_lead:staff!projects_tech_lead_id_fkey(id, full_name), content_lead:staff!projects_content_lead_id_fkey(id, full_name), sales_lead:staff!projects_sales_lead_id_fkey(id, full_name)")
-    .eq("client_id", params.id)
-    .order("created_at", { ascending: false })
+  const clientUsersData = await db
+    .select()
+    .from(client_users)
+    .where(eq(client_users.client_id, params.id))
 
-  return <ClientDetailClient client={client} projects={projects || []} role={role} />
+  const client = {
+    ...clientRecord,
+    client_users: clientUsersData,
+  }
+
+  const projectsData = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.client_id, params.id))
+    .orderBy(desc(projects.created_at))
+
+  return <ClientDetailClient client={client as any} projects={projectsData as any} role={role} />
 }

@@ -1,13 +1,13 @@
-import { createClient } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { form_templates } from "@/db/schema"
+import { asc } from "drizzle-orm"
 import { FormBuilderClient } from "./form-builder-client"
-import type { FormTemplate } from "@/types"
 
 export default async function FormBuilderPage() {
-  const supabase = createClient()
-  const { data: templates } = await supabase
-    .from("form_templates")
-    .select("*")
-    .order("sort_order", { ascending: true })
+  const templates = await db
+    .select()
+    .from(form_templates)
+    .orderBy(asc(form_templates.sort_order))
 
   return (
     <div className="settings-page">
@@ -18,7 +18,7 @@ export default async function FormBuilderPage() {
           client type (Tech / Content / General).
         </p>
       </div>
-      <FormBuilderClient initialTemplates={(templates ?? []) as FormTemplate[]} />
+      <FormBuilderClient initialTemplates={(templates ?? []) as any} />
     </div>
   )
 }

@@ -4,6 +4,8 @@ import { usePortalTab } from "./portal-tab-context"
 import { Home, KeyRound, FileText, CreditCard, LifeBuoy, LogOut, CalendarDays } from "lucide-react"
 import { ChangePasswordForm } from "./dashboard/_components/change-password-form"
 
+import { signOut } from "next-auth/react"
+
 interface PortalSidebarProps {
   showSchedule?: boolean
 }
@@ -65,16 +67,15 @@ export function PortalSidebar({ showSchedule = false }: PortalSidebarProps) {
         {/* Actions */}
         <div className="flex items-center gap-2">
           <ChangePasswordForm />
-          <form action="/api/auth/signout" method="POST" className="flex justify-center">
-            <button
-              type="submit"
-              className="flex items-center justify-center h-11 px-4 gap-2 rounded-[14px] text-black dark:text-slate-300 hover:text-red-600 hover:bg-red-50/60 dark:hover:bg-red-950/40 transition-all duration-300 group"
-              title="Sign out"
-            >
-              <LogOut className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
-              <span className="text-sm font-bold tracking-wide">Sign out</span>
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="flex items-center justify-center h-11 px-4 gap-2 rounded-[14px] text-black dark:text-slate-300 hover:text-red-600 hover:bg-red-50/60 dark:hover:bg-red-950/40 transition-all duration-300 group"
+            title="Sign out"
+          >
+            <LogOut className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
+            <span className="text-sm font-bold tracking-wide">Sign out</span>
+          </button>
         </div>
       </div>
 

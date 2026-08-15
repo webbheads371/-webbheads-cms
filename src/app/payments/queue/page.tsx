@@ -1,4 +1,7 @@
-import { createClient, getCurrentStaff } from "@/lib/supabase/server"
+import { db } from "@/db"
+import { payment_requests, projects, clients } from "@/db/schema"
+import { eq, asc } from "drizzle-orm"
+import { getCurrentStaff } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { PaymentQueueClient } from "./payment-queue-client"
 
@@ -8,21 +11,29 @@ export default async function PaymentQueuePage() {
     redirect("/dashboard")
   }
 
-  const supabase = createClient()
+  const rawRequests = await db
+    .select({
+      request: payment_requests,
+      project: projects,
+      client: clients,
+    })
+    .from(payment_requests)
+    .innerJoin(projects, eq(payment_requests.project_id, projects.id))
+    .leftJoin(clients, eq(projects.client_id, clients.id))
+    .where(eq(payment_requests.status, "submitted"))
+    .orderBy(asc(payment_requests.submitted_at))
 
-  const { data: submittedPayments } = await supabase
-    .from("payment_requests")
-    .select(`
-      *,
-      project:projects(
-        id,
-        name,
-        project_value,
-        client:clients(company_name, contact_name)
-      )
-    `)
-    .eq("status", "submitted")
-    .order("submitted_at", { ascending: true })
+  const submittedPayments = rawRequests.map((row) => ({
+    ...row.request,
+    submitted_at: row.request.submitted_at ? row.request.submitted_at.toISOString() : null,
+    created_at: row.request.created_at ? row.request.created_at.toISOString() : null,
+    project: {
+      id: row.project.id,
+      name: row.project.name,
+      project_value: row.project.project_value,
+      client: row.client ?? null,
+    },
+  }))
 
   return (
     <div className="page-container">
@@ -32,7 +43,7 @@ export default async function PaymentQueuePage() {
           Review and approve or reject client payment screenshots.
         </p>
       </div>
-      <PaymentQueueClient payments={submittedPayments ?? []} />
+      <PaymentQueueClient payments={submittedPayments as any} />
     </div>
   )
 }
