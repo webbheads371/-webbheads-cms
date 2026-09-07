@@ -1,7 +1,7 @@
 import { db } from "@/db"
 import { pipeline_stages, checklist_templates } from "@/db/schema"
 import { asc } from "drizzle-orm"
-import { getCurrentStaff } from "@/lib/supabase/server"
+import { getCurrentStaff } from "@/lib/actions/server"
 import { redirect } from "next/navigation"
 import { SettingsClient } from "./settings-client"
 

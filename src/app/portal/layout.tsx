@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { getCurrentClientUser } from "@/lib/supabase/server"
+import { getCurrentClientUser } from "@/lib/actions/server"
 import { db } from "@/db"
 import { projects, clients } from "@/db/schema"
 import { eq } from "drizzle-orm"

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { getProjectMessages, sendMessage } from "@/lib/supabase/message-actions"
+import { getProjectMessages, sendMessage } from "@/lib/actions/message-actions"
 import { ArrowLeft, Send, User, ShieldAlert, Laptop, FileSignature, Landmark, Loader2 } from "lucide-react"
 import { usePortalTab } from "../../portal-tab-context"
 

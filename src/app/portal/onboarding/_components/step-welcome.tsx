@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { markWelcomeSeen } from "@/lib/supabase/portal-actions"
+import { markWelcomeSeen } from "@/lib/actions/portal-actions"
 import { FileSignature, CreditCard, ArrowRight, Folder, ClipboardList } from "lucide-react"
 
 interface StepWelcomeProps {

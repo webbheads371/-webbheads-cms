@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { getCurrentStaff } from "@/lib/supabase/server"
+import { getCurrentStaff } from "@/lib/actions/server"
 import { MessagesClient } from "./messages-client"
 import { PageHeader } from "@/components/page-header"
 

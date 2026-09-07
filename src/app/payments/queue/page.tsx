@@ -1,7 +1,7 @@
 import { db } from "@/db"
 import { payment_requests, projects, clients } from "@/db/schema"
 import { eq, asc } from "drizzle-orm"
-import { getCurrentStaff } from "@/lib/supabase/server"
+import { getCurrentStaff } from "@/lib/actions/server"
 import { redirect } from "next/navigation"
 import { PaymentQueueClient } from "./payment-queue-client"
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { updateClientPassword } from "@/lib/supabase/portal-actions"
+import { updateClientPassword } from "@/lib/actions/portal-actions"
 import { Lock, Eye, EyeOff } from "lucide-react"
 
 export function ChangePasswordForm({ variant = "default" }: { variant?: "default" | "dropdown" }) {

@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import { db } from "@/db"
 import { projects, pipeline_stages, clients } from "@/db/schema"
 import { asc, desc, eq } from "drizzle-orm"
-import { getCurrentStaff } from "@/lib/supabase/server"
+import { getCurrentStaff } from "@/lib/actions/server"
 import { PipelineBoardLoader } from "./pipeline-board-loader"
 
 export default async function PipelinePage() {

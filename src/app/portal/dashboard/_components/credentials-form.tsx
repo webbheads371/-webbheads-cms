@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition, useEffect } from "react"
-import { submitProfileForm, uploadFormFile } from "@/lib/supabase/portal-actions"
+import { submitProfileForm, uploadFormFile } from "@/lib/actions/portal-actions"
 import type { FormTemplate, FormResponse } from "@/types"
 import { CheckCircle2, Paperclip } from "lucide-react"
 

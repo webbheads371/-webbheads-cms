@@ -1,7 +1,7 @@
 import { db } from "@/db"
 import { clients, staff } from "@/db/schema"
 import { asc, inArray } from "drizzle-orm"
-import { getCurrentStaff } from "@/lib/supabase/server"
+import { getCurrentStaff } from "@/lib/actions/server"
 import { redirect } from "next/navigation"
 import { NewProjectForm } from "./new-project-form"
 

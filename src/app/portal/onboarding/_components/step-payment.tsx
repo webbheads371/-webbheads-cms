@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { uploadPaymentScreenshot } from "@/lib/supabase/portal-actions"
+import { uploadPaymentScreenshot } from "@/lib/actions/portal-actions"
 import type { BankSettings, PaymentRequest } from "@/types"
 import { Upload, Clock, AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react"
 

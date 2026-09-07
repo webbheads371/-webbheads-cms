@@ -7,7 +7,7 @@ import {
   postStatusUpdate,
   saveProjectPocSettings,
   saveProjectTimelineStages,
-} from "@/lib/supabase/admin-portal-actions"
+} from "@/lib/actions/admin-portal-actions"
 import type { Project, PaymentRequest, ProjectStatusUpdate, Agreement } from "@/types"
 
 interface ClientPortalTabProps {

@@ -1,7 +1,7 @@
 import { db } from "@/db"
 import { clients, client_users, projects } from "@/db/schema"
 import { eq, desc } from "drizzle-orm"
-import { getCurrentStaff } from "@/lib/supabase/server"
+import { getCurrentStaff } from "@/lib/actions/server"
 import { notFound } from "next/navigation"
 import { ClientDetailClient } from "./client-detail-client"
 

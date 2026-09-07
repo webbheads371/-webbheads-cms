@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { postStatusUpdate } from "@/lib/supabase/admin-portal-actions"
+import { postStatusUpdate } from "@/lib/actions/admin-portal-actions"
 import type { ProjectStatusUpdate } from "@/types"
 
 interface WorkUpdatesTabProps {

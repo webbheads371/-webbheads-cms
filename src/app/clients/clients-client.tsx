@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/page-header"
 import { formatDate } from "@/lib/utils"
 import { Plus, Trash2 } from "lucide-react"
-import { createClientAction } from "@/lib/supabase/actions"
+import { createClientAction } from "@/lib/actions/actions"
 
 interface ClientWithProjects {
   id: string

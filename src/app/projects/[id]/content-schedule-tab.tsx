@@ -6,7 +6,7 @@ import {
   updateContentScheduleItem,
   deleteContentScheduleItem,
   toggleContentSchedulePosted,
-} from "@/lib/supabase/admin-portal-actions"
+} from "@/lib/actions/admin-portal-actions"
 import type { ContentSchedule } from "@/types"
 import { CalendarDays, Plus, Pencil, Trash2, CheckCircle2, Clock, X, Save } from "lucide-react"
 

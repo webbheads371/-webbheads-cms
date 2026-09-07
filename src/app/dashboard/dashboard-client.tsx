@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/page-header"
 import { formatCurrency } from "@/lib/utils"
 import type { Project, PipelineStage } from "@/types"
+import Link from "next/link"
 
 interface DashboardProps {
   projects: Project[]
@@ -106,9 +107,10 @@ export function DashboardClient({ projects, stages, totalPendingPayments }: Dash
           <CardContent>
             <div className="space-y-3">
               {activeProjects.slice(0, 5).map((project) => (
-                <div
+                <Link
                   key={project.id}
-                  className="flex items-center justify-between py-2 border-b last:border-0"
+                  href={`/projects/${project.id}`}
+                  className="flex items-center justify-between py-2 border-b last:border-0 hover:bg-accent/50 px-2 rounded-md transition-colors -mx-2 cursor-pointer"
                 >
                   <div>
                     <p className="font-medium text-sm">{project.name}</p>
@@ -119,7 +121,7 @@ export function DashboardClient({ projects, stages, totalPendingPayments }: Dash
                   <Badge variant="outline" className="capitalize">
                     {project.current_stage.replace("_", " ")}
                   </Badge>
-                </div>
+                </Link>
               ))}
               {activeProjects.length === 0 && (
                 <p className="text-sm text-muted-foreground">No active projects yet.</p>

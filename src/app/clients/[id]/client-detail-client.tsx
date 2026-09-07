@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog"
 import { formatDate } from "@/lib/utils"
 import { Plus, ExternalLink, Key, RefreshCw, Trash2, ArrowLeft } from "lucide-react"
-import { generateClientPortalLogin, updateClientType, resetClientPortalPassword } from "@/lib/supabase/admin-portal-actions"
+import { generateClientPortalLogin, updateClientType, resetClientPortalPassword } from "@/lib/actions/admin-portal-actions"
 import type { Client, Project, Staff, ClientUser } from "@/types"
 
 interface Props {

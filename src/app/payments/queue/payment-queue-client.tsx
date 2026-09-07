@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { approvePaymentRequest, rejectPaymentRequest } from "@/lib/supabase/admin-portal-actions"
+import { approvePaymentRequest, rejectPaymentRequest } from "@/lib/actions/admin-portal-actions"
 import { CheckCircle2, ExternalLink, Check, X } from "lucide-react"
 
 interface PaymentWithProject {

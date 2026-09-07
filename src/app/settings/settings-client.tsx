@@ -15,7 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/page-header"
-import { createChecklistTemplate, deleteChecklistTemplate } from "@/lib/supabase/admin-portal-actions"
+import { createChecklistTemplate, deleteChecklistTemplate } from "@/lib/actions/admin-portal-actions"
 import { Plus, Trash2 } from "lucide-react"
 import type { PipelineStage, ChecklistTemplate } from "@/types"
 

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { createProjectAction } from "@/lib/supabase/actions"
+import { createProjectAction } from "@/lib/actions/actions"
 
 interface Props {
   clients: { id: string; company_name: string }[]

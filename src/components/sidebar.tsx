@@ -6,7 +6,7 @@ import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useSession, signOut } from "next-auth/react"
-import { getUnreadMessagesCount } from "@/lib/supabase/message-actions"
+import { getUnreadMessagesCount } from "@/lib/actions/message-actions"
 import {
   LayoutDashboard,
   Kanban,
@@ -136,6 +136,7 @@ export function Sidebar() {
                   <div className="flex items-center">
                     <Link
                       href={item.href}
+                      prefetch={true}
                       onClick={() => setMobileOpen(false)}
                       className={cn(
                         "flex-1 flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
@@ -174,6 +175,7 @@ export function Sidebar() {
                           <Link
                             key={child.href}
                             href={child.href}
+                            prefetch={true}
                             onClick={() => setMobileOpen(false)}
                             className={cn(
                               "flex items-center gap-3 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
@@ -197,6 +199,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors relative",

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { agreeToAgreement, uploadSignature } from "@/lib/supabase/portal-actions"
+import { agreeToAgreement, uploadSignature } from "@/lib/actions/portal-actions"
 import type { Agreement } from "@/types"
 import { CheckCircle2, Paperclip, ArrowRight } from "lucide-react"
 

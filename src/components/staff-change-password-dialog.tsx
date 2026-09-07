@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { changeStaffSelfPassword } from "@/lib/supabase/admin-portal-actions"
+import { changeStaffSelfPassword } from "@/lib/actions/admin-portal-actions"
 
 export function StaffChangePasswordDialog() {
   const [open, setOpen] = useState(false)

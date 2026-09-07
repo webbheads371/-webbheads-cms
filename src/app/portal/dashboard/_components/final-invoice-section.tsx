@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { uploadPaymentScreenshot } from "@/lib/supabase/portal-actions"
+import { uploadPaymentScreenshot } from "@/lib/actions/portal-actions"
 import type { BankSettings, PaymentRequest } from "@/types"
 import { Receipt, Upload, Clock, AlertTriangle, CheckCircle2 } from "lucide-react"
 

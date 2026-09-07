@@ -139,7 +139,7 @@ export interface Agreement {
   project_id: string
   agreement_type: "pdf" | "text"
   content_text: string | null
-  pdf_url: string
+  pdf_url: string | null
   uploaded_by: string | null
   uploaded_at: string
   client_agreed: boolean

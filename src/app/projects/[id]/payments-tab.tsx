@@ -17,7 +17,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { addPaymentAction } from "@/lib/supabase/actions"
+import { addPaymentAction } from "@/lib/actions/actions"
 import { Plus } from "lucide-react"
 import type { Payment } from "@/types"
 

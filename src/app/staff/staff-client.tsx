@@ -19,7 +19,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { formatDate } from "@/lib/utils"
 import { Plus, Key, RefreshCw, Eye, EyeOff, Copy, Check, ShieldAlert, Trash2 } from "lucide-react"
-import { resetStaffPassword } from "@/lib/supabase/admin-portal-actions"
+import { resetStaffPassword } from "@/lib/actions/admin-portal-actions"
 import type { Staff } from "@/types"
 
 interface Props {

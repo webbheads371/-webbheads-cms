@@ -17,7 +17,7 @@ import {
   content_schedule,
 } from "@/db/schema"
 import { eq, desc, asc, inArray } from "drizzle-orm"
-import { getCurrentStaff } from "@/lib/supabase/server"
+import { getCurrentStaff } from "@/lib/actions/server"
 import { notFound } from "next/navigation"
 import { ProjectDetailClient } from "./project-detail-client"
 

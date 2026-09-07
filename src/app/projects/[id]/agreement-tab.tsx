@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { uploadAgreementPdf, saveAgreementText } from "@/lib/supabase/admin-portal-actions"
+import { uploadAgreementPdf, saveAgreementText } from "@/lib/actions/admin-portal-actions"
 import type { Agreement } from "@/types"
 
 interface AgreementTabProps {

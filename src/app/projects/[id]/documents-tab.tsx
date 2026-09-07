@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
-import { uploadProjectDocument } from "@/lib/supabase/admin-portal-actions"
+import { uploadProjectDocument } from "@/lib/actions/admin-portal-actions"
 import { Plus, ExternalLink } from "lucide-react"
 import type { Document } from "@/types"
 

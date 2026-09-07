@@ -1,7 +1,7 @@
 import { db } from "@/db"
 import { clients, projects } from "@/db/schema"
 import { desc, eq, count } from "drizzle-orm"
-import { getCurrentStaff } from "@/lib/supabase/server"
+import { getCurrentStaff } from "@/lib/actions/server"
 import { ClientsClient } from "./clients-client"
 
 export const dynamic = "force-dynamic"

@@ -12,6 +12,7 @@ import {
   useDroppable,
 } from "@dnd-kit/core"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,7 +26,7 @@ import {
 } from "@/components/ui/dialog"
 import { PageHeader } from "@/components/page-header"
 import { formatCurrency } from "@/lib/utils"
-import { moveProjectStage } from "@/lib/supabase/actions"
+import { moveProjectStage } from "@/lib/actions/actions"
 import type { Project, PipelineStage, Staff } from "@/types"
 
 interface PipelineBoardProps {
@@ -223,48 +224,49 @@ const ProjectCard = memo(function ProjectCard({ project, canDrag }: { project: P
   const isTerminal = project.status === "closed_won" || project.status === "closed_lost"
 
   return (
-    <Card
-      className={`cursor-pointer hover:shadow-md transition-shadow ${!canDrag ? "opacity-75" : ""}`}
-      onClick={() => router.push(`/projects/${project.id}`)}
-    >
-      <CardContent className="p-4">
-        <p className="font-medium text-sm truncate">{project.name}</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {project.client?.company_name}
-        </p>
-        <div className="flex items-center justify-between mt-2">
-          {project.project_value && (
-            <span className="text-xs font-medium">
-              {formatCurrency(project.project_value)}
-            </span>
-          )}
-          {isTerminal && (
-            <Badge
-              variant={project.status === "closed_won" ? "default" : "destructive"}
-              className="text-xs"
-            >
-              {project.status.replace("_", " ")}
-            </Badge>
-          )}
-        </div>
-        <div className="flex gap-1 mt-2 flex-wrap">
-          {project.tech_lead && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-              Tech: {project.tech_lead.full_name?.split(" ")[0]}
-            </Badge>
-          )}
-          {project.content_lead && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-              Content: {project.content_lead.full_name?.split(" ")[0]}
-            </Badge>
-          )}
-          {project.sales_lead && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-              Sales: {project.sales_lead.full_name?.split(" ")[0]}
-            </Badge>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+    <Link href={`/projects/${project.id}`} className="block">
+      <Card
+        className={`cursor-pointer hover:shadow-md transition-shadow ${!canDrag ? "opacity-75" : ""}`}
+      >
+        <CardContent className="p-4">
+          <p className="font-medium text-sm truncate">{project.name}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {project.client?.company_name}
+          </p>
+          <div className="flex items-center justify-between mt-2">
+            {project.project_value && (
+              <span className="text-xs font-medium">
+                {formatCurrency(project.project_value)}
+              </span>
+            )}
+            {isTerminal && (
+              <Badge
+                variant={project.status === "closed_won" ? "default" : "destructive"}
+                className="text-xs"
+              >
+                {project.status.replace("_", " ")}
+              </Badge>
+            )}
+          </div>
+          <div className="flex gap-1 mt-2 flex-wrap">
+            {project.tech_lead && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                Tech: {project.tech_lead.full_name?.split(" ")[0]}
+              </Badge>
+            )}
+            {project.content_lead && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                Content: {project.content_lead.full_name?.split(" ")[0]}
+              </Badge>
+            )}
+            {project.sales_lead && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                Sales: {project.sales_lead.full_name?.split(" ")[0]}
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   )
 })

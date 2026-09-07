@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { requestPasswordReset } from "@/lib/supabase/password-reset-actions"
+import { requestPasswordReset } from "@/lib/actions/password-reset-actions"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")

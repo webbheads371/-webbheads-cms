@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import { toggleChecklistItem } from "@/lib/supabase/actions"
+import { toggleChecklistItem } from "@/lib/actions/actions"
 import type { ProjectChecklistItem, Staff, PipelineStage } from "@/types"
 import { ChevronDown, ChevronRight, CheckCircle2, AlertTriangle, Sparkles, XCircle } from "lucide-react"
 

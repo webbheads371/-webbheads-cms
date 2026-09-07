@@ -181,6 +181,7 @@ export async function uploadAgreementPdf(projectId: string, formData: FormData) 
       await db
         .update(agreements)
         .set({
+          agreement_type: "pdf",
           pdf_url: publicUrl,
           uploaded_by: session?.user?.id || null,
           uploaded_at: new Date(),
@@ -189,6 +190,7 @@ export async function uploadAgreementPdf(projectId: string, formData: FormData) 
     } else {
       await db.insert(agreements).values({
         project_id: projectId,
+        agreement_type: "pdf",
         pdf_url: publicUrl,
         uploaded_by: session?.user?.id || null,
         uploaded_at: new Date(),
@@ -217,7 +219,8 @@ export async function saveAgreementText(projectId: string, contentText: string) 
       await db
         .update(agreements)
         .set({
-          pdf_url: contentText,
+          agreement_type: "text",
+          content_text: contentText,
           uploaded_by: session?.user?.id || null,
           uploaded_at: new Date(),
         })
@@ -225,7 +228,8 @@ export async function saveAgreementText(projectId: string, contentText: string) 
     } else {
       await db.insert(agreements).values({
         project_id: projectId,
-        pdf_url: contentText,
+        agreement_type: "text",
+        content_text: contentText,
         uploaded_by: session?.user?.id || null,
         uploaded_at: new Date(),
       })

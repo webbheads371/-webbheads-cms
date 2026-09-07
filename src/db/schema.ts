@@ -196,7 +196,9 @@ export const agreements = pgTable("agreements", {
     .references(() => projects.id, { onDelete: "cascade" })
     .notNull()
     .unique(),
-  pdf_url: text("pdf_url").notNull(),
+  agreement_type: text("agreement_type").default("pdf").notNull(),
+  content_text: text("content_text"),
+  pdf_url: text("pdf_url"),
   uploaded_by: uuid("uploaded_by").references(() => staff.id),
   uploaded_at: timestamp("uploaded_at", { withTimezone: true }).defaultNow(),
   client_agreed: boolean("client_agreed").default(false),

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { PageHeader } from "@/components/page-header"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { moveProjectStage } from "@/lib/supabase/actions"
+import { moveProjectStage } from "@/lib/actions/actions"
 import { StageStepper } from "./stage-stepper"
 import type {
   Project,

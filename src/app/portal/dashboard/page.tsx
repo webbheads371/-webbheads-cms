@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { getCurrentClientUser } from "@/lib/supabase/server"
+import { getCurrentClientUser } from "@/lib/actions/server"
 import { db } from "@/db"
 import {
   projects,

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition, useRef } from "react"
-import { saveBankSettings } from "@/lib/supabase/admin-portal-actions"
+import { saveBankSettings } from "@/lib/actions/admin-portal-actions"
 import type { BankSettings } from "@/types"
 import { Image as ImageIcon, CheckCircle2 } from "lucide-react"
 

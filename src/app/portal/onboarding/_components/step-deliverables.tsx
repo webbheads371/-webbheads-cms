@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { approveDeliverables } from "@/lib/supabase/portal-actions"
+import { approveDeliverables } from "@/lib/actions/portal-actions"
 import type { Project } from "@/types"
 import { CheckCircle2, ArrowRight } from "lucide-react"
 

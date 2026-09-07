@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { saveProjectDeliverables } from "@/lib/supabase/admin-portal-actions"
+import { saveProjectDeliverables } from "@/lib/actions/admin-portal-actions"
 import type { Project } from "@/types"
 
 interface DeliverablesTabProps {

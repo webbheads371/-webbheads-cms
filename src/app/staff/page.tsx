@@ -1,7 +1,7 @@
 import { db } from "@/db"
 import { staff, projects, clients } from "@/db/schema"
 import { desc, asc } from "drizzle-orm"
-import { getCurrentStaff } from "@/lib/supabase/server"
+import { getCurrentStaff } from "@/lib/actions/server"
 import { redirect } from "next/navigation"
 import { StaffClient } from "./staff-client"
 

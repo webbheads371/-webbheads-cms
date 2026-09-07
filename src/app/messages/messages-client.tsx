@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { getStaffConversations, getProjectMessages, sendMessage, markMessagesAsRead } from "@/lib/supabase/message-actions"
-import { createClient } from "@/lib/supabase/client"
+import { getStaffConversations, getProjectMessages, sendMessage, markMessagesAsRead } from "@/lib/actions/message-actions"
+
 import { 
   MessageSquare, Send, User, Laptop, FileSignature, 
   Landmark, ShieldAlert, Loader2, ArrowLeft 
@@ -31,7 +31,7 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const isAdmin = currentStaff.role === 'admin'
-  const supabase = createClient()
+
 
   // Load conversations list
   const loadConversations = async () => {
@@ -56,40 +56,18 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
     return () => clearInterval(interval)
   }, [])
 
-  // Load and subscribe to messages (with real-time updates)
+  // Load messages with fast polling (simulates real-time)
   useEffect(() => {
     if (!selectedConv) return
     loadMessages(selectedConv.projectId)
 
-    // 1. Setup real-time channel
-    const channel = supabase
-      .channel(`staff-project-messages-${selectedConv.projectId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `project_id=eq.${selectedConv.projectId}`
-        },
-        (payload) => {
-          const newMsg = payload.new as any
-          setMessages(prev => {
-            if (prev.find(m => m.id === newMsg.id)) return prev
-            return [...prev, newMsg]
-          })
-          loadConversations()
-        }
-      )
-      .subscribe()
-
-    // 2. Setup backup polling (every 15 seconds)
+    // Setup fast polling for messages (every 3 seconds)
     const interval = setInterval(() => {
       loadMessages(selectedConv.projectId)
-    }, 15000)
+      loadConversations() // Also refresh conversations list to get latest unread counts/previews
+    }, 3000)
 
     return () => {
-      supabase.removeChannel(channel)
       clearInterval(interval)
     }
   }, [selectedConv])
