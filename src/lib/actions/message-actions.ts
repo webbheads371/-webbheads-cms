@@ -73,6 +73,8 @@ export async function getProjectMessages(projectId: string) {
 }
 
 // ─── Send Message ──────────────────────────────────────────────────────────
+import { GoogleGenerativeAI } from "@google/generative-ai"
+
 export async function sendMessage({
   projectId,
   messageText,
@@ -81,7 +83,7 @@ export async function sendMessage({
 }: {
   projectId: string
   messageText: string
-  recipientRole: "client" | "admin" | "tech_lead" | "content_lead" | "sales"
+  recipientRole: "client" | "admin" | "tech_lead" | "content_lead" | "sales" | "ai"
   recipientId: string | null
 }) {
   noStore()
@@ -117,6 +119,61 @@ export async function sendMessage({
       })
       .returning()
 
+    // --- AI Chat Support Logic ---
+    if (senderRole === "client") {
+      const [project] = await db.select({ ai_escalated: projects.ai_escalated }).from(projects).where(eq(projects.id, projectId))
+      
+      if (project && !project.ai_escalated && process.env.GEMINI_API_KEY) {
+        // Fetch recent messages for context
+        const recentMessages = await db.select().from(messages).where(eq(messages.project_id, projectId)).orderBy(asc(messages.created_at))
+        const historyText = recentMessages.slice(-10).map(m => `${m.sender_role.toUpperCase()}: ${m.message}`).join("\n")
+
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+
+        const prompt = `You are a helpful customer support AI for WebbHeads CMS.
+You are chatting with a client.
+If you can answer their question, provide a helpful response.
+If the client asks to speak to a human, or if you don't know the answer, set escalate to true.
+
+Recent Chat History:
+${historyText}
+
+Output your response EXACTLY as a JSON object with this structure:
+{
+  "response": "Your message to the client",
+  "escalate": boolean
+}`
+
+        try {
+          const result = await model.generateContent(prompt)
+          const text = result.response.text()
+          // Extract JSON from response (handling potential markdown formatting)
+          const jsonMatch = text.match(/\{[\s\S]*\}/)
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0])
+            
+            if (parsed.escalate) {
+              await db.update(projects).set({ ai_escalated: true }).where(eq(projects.id, projectId))
+              parsed.response = parsed.response || "I am escalating this to our human staff. Someone will be with you shortly."
+            }
+
+            // Insert AI response
+            await db.insert(messages).values({
+              project_id: projectId,
+              sender_id: "ai-system",
+              sender_role: "ai" as any,
+              recipient_role: "client",
+              message: parsed.response,
+              created_at: new Date()
+            })
+          }
+        } catch (aiErr) {
+          console.error("AI Error:", aiErr)
+        }
+      }
+    }
+
     return {
       error: null,
       data: {
@@ -127,6 +184,17 @@ export async function sendMessage({
   } catch (err: any) {
     console.error("Error sending message:", err)
     return { error: err.message || "Failed to send message" }
+  }
+}
+
+// ─── Set AI Escalation Status ──────────────────────────────────────────────
+export async function setAiEscalation(projectId: string, escalated: boolean) {
+  noStore()
+  try {
+    await db.update(projects).set({ ai_escalated: escalated }).where(eq(projects.id, projectId))
+    return { success: true }
+  } catch (e: any) {
+    return { error: e.message }
   }
 }
 
@@ -210,6 +278,7 @@ export async function getStaffConversations() {
         techLeadId: project.tech_lead_id,
         contentLeadId: project.content_lead_id,
         salesLeadId: project.sales_lead_id,
+        aiEscalated: project.ai_escalated,
       }
     })
 

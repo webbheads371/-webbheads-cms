@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { getStaffConversations, getProjectMessages, sendMessage, markMessagesAsRead } from "@/lib/actions/message-actions"
+import { getStaffConversations, getProjectMessages, sendMessage, markMessagesAsRead, setAiEscalation } from "@/lib/actions/message-actions"
 
 import { 
   MessageSquare, Send, User, Laptop, FileSignature, 
-  Landmark, ShieldAlert, Loader2, ArrowLeft 
+  Landmark, ShieldAlert, Loader2, ArrowLeft, Bot, BotOff 
 } from "lucide-react"
 
 interface MessagesClientProps {
@@ -136,7 +136,8 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
     // ActiveChannel sent to Client: (sender = activeChannel, recipient = client)
     return (
       (msg.sender_role === 'client' && msg.recipient_role === activeChannel) ||
-      (msg.sender_role === activeChannel && msg.recipient_role === 'client')
+      (msg.sender_role === activeChannel && msg.recipient_role === 'client') ||
+      (msg.sender_role === 'ai') // AI replies to client are visible to staff
     )
   })
 
@@ -240,6 +241,33 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
                 </div>
               </div>
 
+              {/* AI Controls */}
+              <div className="flex items-center gap-2">
+                {!selectedConv.aiEscalated ? (
+                  <button
+                    onClick={async () => {
+                      await setAiEscalation(selectedConv.projectId, true)
+                      loadConversations()
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-all duration-300"
+                  >
+                    <BotOff className="w-3.5 h-3.5" />
+                    Take Over Chat (Disable AI)
+                  </button>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      await setAiEscalation(selectedConv.projectId, false)
+                      loadConversations()
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-800/50 transition-all duration-300"
+                  >
+                    <Bot className="w-3.5 h-3.5" />
+                    Re-enable AI
+                  </button>
+                )}
+              </div>
+
               {/* Channel Selector + Back Button */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 {channelsList.map((c) => {
@@ -297,18 +325,22 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
               ) : (
                 filteredMessages.map((msg) => {
                   const isMe = msg.sender_id === currentStaff.id
+                  const isAI = msg.sender_role === "ai"
                   return (
                     <div
                       key={msg.id}
                       className={`flex flex-col max-w-[75%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}
                     >
-                      <div className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold mb-0.5 px-1">
-                        {isMe ? 'You' : msg.sender_name || 'Client'}
+                      <div className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold mb-0.5 px-1 flex items-center gap-1">
+                        {isAI && <Bot className="w-3 h-3 text-purple-500" />}
+                        {isMe ? 'You' : isAI ? 'AI Assistant' : (msg.sender_name || 'Client')}
                       </div>
                       <div
                         className={`px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-xs ${
                           isMe
                             ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-tr-none'
+                            : isAI
+                            ? 'bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/30 text-slate-800 dark:text-slate-200 rounded-tl-none'
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200/30 dark:border-slate-800'
                         }`}
                       >

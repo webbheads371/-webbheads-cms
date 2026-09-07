@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { getProjectMessages, sendMessage } from "@/lib/actions/message-actions"
-import { ArrowLeft, Send, User, ShieldAlert, Laptop, FileSignature, Landmark, Loader2 } from "lucide-react"
+import { ArrowLeft, Send, User, ShieldAlert, Laptop, FileSignature, Landmark, Loader2, Bot } from "lucide-react"
 import { usePortalTab } from "../../portal-tab-context"
 
 interface ClientSupportChatProps {
@@ -131,7 +131,8 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
   const filteredMessages = messages.filter((msg) => {
     return (
       (msg.sender_role === "client" && msg.recipient_role === activeChannel) ||
-      (msg.sender_role === activeChannel && msg.recipient_role === "client")
+      (msg.sender_role === activeChannel && msg.recipient_role === "client") ||
+      (msg.sender_role === "ai")
     )
   })
 
@@ -303,6 +304,7 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
             ) : (
               filteredMessages.map((msg) => {
                 const isMe = msg.sender_role === "client"
+                const isAI = msg.sender_role === "ai"
                 return (
                   <div
                     key={msg.id}
@@ -310,13 +312,16 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
                       isMe ? "self-end items-end" : "self-start items-start"
                     }`}
                   >
-                    <div className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold mb-0.5 px-1">
-                      {isMe ? "You" : msg.sender_name || "Team member"}
+                    <div className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold mb-0.5 px-1 flex items-center gap-1">
+                      {isAI && <Bot className="w-3 h-3 text-purple-500" />}
+                      {isMe ? "You" : isAI ? "AI Assistant" : (msg.sender_name || "Team member")}
                     </div>
                     <div
                       className={`px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-xs ${
                         isMe
                           ? "bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-tr-none"
+                          : isAI
+                          ? "bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/30 text-slate-800 dark:text-slate-200 rounded-tl-none"
                           : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200/30 dark:border-slate-800"
                       }`}
                     >
