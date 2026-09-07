@@ -5,7 +5,7 @@ import { getStaffConversations, getProjectMessages, sendMessage, markMessagesAsR
 
 import { 
   MessageSquare, Send, User, Laptop, FileSignature, 
-  Landmark, ShieldAlert, Loader2, ArrowLeft, Bot, BotOff 
+  Landmark, ShieldAlert, Loader2, ArrowLeft, Bot, PowerOff 
 } from "lucide-react"
 
 interface MessagesClientProps {
@@ -251,7 +251,7 @@ export function MessagesClient({ currentStaff }: MessagesClientProps) {
                     }}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-all duration-300"
                   >
-                    <BotOff className="w-3.5 h-3.5" />
+                    <PowerOff className="w-3.5 h-3.5" />
                     Take Over Chat (Disable AI)
                   </button>
                 ) : (
