@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import {
   markHandlesCollected,
   releaseFinalInvoice,
@@ -9,6 +10,14 @@ import {
   saveProjectTimelineStages,
 } from "@/lib/actions/admin-portal-actions"
 import type { Project, PaymentRequest, ProjectStatusUpdate, Agreement } from "@/types"
+
+const PRESET_STAGE_OPTIONS = [
+  "Design Phase",
+  "Concept Design",
+  "Development",
+  "Post Scheduling",
+  "Review",
+]
 
 interface ClientPortalTabProps {
   project: Project
@@ -33,6 +42,7 @@ function OnboardingStepStatus({ label, done }: { label: string; done: boolean })
 }
 
 export function ClientPortalTab({ project, paymentRequests, statusUpdates, documents, agreement }: ClientPortalTabProps) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -82,6 +92,7 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
       } else {
         setTimelineSuccess(true)
         setTimeout(() => setTimelineSuccess(false), 3000)
+        router.refresh()
       }
     })
   }
@@ -94,7 +105,7 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
     startTransition(async () => {
       const result = await markHandlesCollected(project.id)
       if (result.error) setError(result.error)
-      else window.location.reload()
+      else router.refresh()
     })
   }
 
@@ -103,7 +114,7 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
     startTransition(async () => {
       const result = await releaseFinalInvoice(project.id)
       if (result.error) setError(result.error)
-      else window.location.reload()
+      else router.refresh()
     })
   }
 
@@ -178,17 +189,41 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
           <p className="text-xs text-slate-500 mb-3" style={{ fontSize: "0.75rem", lineHeight: "1.25rem", color: "#6b7280" }}>
             Manually override the status for the project timeline stages displayed on the client dashboard. Set to <strong>Auto (Derived)</strong> to let the system automatically compute the status based on the current pipeline stage.
           </p>
-          <div className="form-grid-3col shadow-xs" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+
+          <div className="form-grid-3col shadow-xs" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
             <div className="form-field">
               <label className="form-label" htmlFor="timeline-design-name" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Phase 1 Name</label>
-              <input
-                id="timeline-design-name"
-                type="text"
-                value={timelineDesignName}
-                onChange={(e) => setTimelineDesignName(e.target.value)}
-                className="form-input mb-2"
-                placeholder="e.g. Design Phase"
-              />
+              <div className="flex gap-1.5 mb-2">
+                <input
+                  id="timeline-design-name"
+                  type="text"
+                  list="phase1-presets"
+                  value={timelineDesignName}
+                  onChange={(e) => setTimelineDesignName(e.target.value)}
+                  className="form-input flex-1"
+                  placeholder="Select or type name..."
+                />
+                <select
+                  aria-label="Select Phase 1 Preset"
+                  value={PRESET_STAGE_OPTIONS.includes(timelineDesignName) ? timelineDesignName : ""}
+                  onChange={(e) => {
+                    if (e.target.value) setTimelineDesignName(e.target.value)
+                  }}
+                  className="form-select w-32 text-xs"
+                >
+                  <option value="">Presets ▾</option>
+                  {PRESET_STAGE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+                <datalist id="phase1-presets">
+                  {PRESET_STAGE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt} />
+                  ))}
+                </datalist>
+              </div>
               <label className="form-label" htmlFor="timeline-design" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Phase 1 Status</label>
               <select
                 id="timeline-design"
@@ -204,14 +239,37 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
             </div>
             <div className="form-field">
               <label className="form-label" htmlFor="timeline-dev-name" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Phase 2 Name</label>
-              <input
-                id="timeline-dev-name"
-                type="text"
-                value={timelineDevName}
-                onChange={(e) => setTimelineDevName(e.target.value)}
-                className="form-input mb-2"
-                placeholder="e.g. Development Phase"
-              />
+              <div className="flex gap-1.5 mb-2">
+                <input
+                  id="timeline-dev-name"
+                  type="text"
+                  list="phase2-presets"
+                  value={timelineDevName}
+                  onChange={(e) => setTimelineDevName(e.target.value)}
+                  className="form-input flex-1"
+                  placeholder="Select or type name..."
+                />
+                <select
+                  aria-label="Select Phase 2 Preset"
+                  value={PRESET_STAGE_OPTIONS.includes(timelineDevName) ? timelineDevName : ""}
+                  onChange={(e) => {
+                    if (e.target.value) setTimelineDevName(e.target.value)
+                  }}
+                  className="form-select w-32 text-xs"
+                >
+                  <option value="">Presets ▾</option>
+                  {PRESET_STAGE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+                <datalist id="phase2-presets">
+                  {PRESET_STAGE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt} />
+                  ))}
+                </datalist>
+              </div>
               <label className="form-label" htmlFor="timeline-dev" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Phase 2 Status</label>
               <select
                 id="timeline-dev"
@@ -227,14 +285,37 @@ export function ClientPortalTab({ project, paymentRequests, statusUpdates, docum
             </div>
             <div className="form-field">
               <label className="form-label" htmlFor="timeline-review-name" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Phase 3 Name</label>
-              <input
-                id="timeline-review-name"
-                type="text"
-                value={timelineReviewName}
-                onChange={(e) => setTimelineReviewName(e.target.value)}
-                className="form-input mb-2"
-                placeholder="e.g. Review Phase"
-              />
+              <div className="flex gap-1.5 mb-2">
+                <input
+                  id="timeline-review-name"
+                  type="text"
+                  list="phase3-presets"
+                  value={timelineReviewName}
+                  onChange={(e) => setTimelineReviewName(e.target.value)}
+                  className="form-input flex-1"
+                  placeholder="Select or type name..."
+                />
+                <select
+                  aria-label="Select Phase 3 Preset"
+                  value={PRESET_STAGE_OPTIONS.includes(timelineReviewName) ? timelineReviewName : ""}
+                  onChange={(e) => {
+                    if (e.target.value) setTimelineReviewName(e.target.value)
+                  }}
+                  className="form-select w-32 text-xs"
+                >
+                  <option value="">Presets ▾</option>
+                  {PRESET_STAGE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+                <datalist id="phase3-presets">
+                  {PRESET_STAGE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt} />
+                  ))}
+                </datalist>
+              </div>
               <label className="form-label" htmlFor="timeline-review" style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.25rem" }}>Phase 3 Status</label>
               <select
                 id="timeline-review"

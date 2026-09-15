@@ -42,7 +42,7 @@ function ResetPasswordModal({ member }: { member: Staff }) {
   const [error, setError] = useState<string | null>(null)
   const [credentials, setCredentials] = useState<{ email: string; fullName: string; tempPassword: string } | null>(null)
   const [showPassword, setShowPassword] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const [copiedTarget, setCopiedTarget] = useState<string | null>(null)
 
   async function handleReset() {
     setLoading(true)
@@ -56,21 +56,22 @@ function ResetPasswordModal({ member }: { member: Staff }) {
     }
   }
 
-  function handleCopy(text: string) {
+  function handleCopy(text: string, targetKey: string) {
     navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setCopiedTarget(targetKey)
+    setTimeout(() => setCopiedTarget(null), 2500)
   }
 
   function handleClose() {
     setOpen(false)
     setCredentials(null)
-    setError(null)
     setShowPassword(false)
+    setCopiedTarget(null)
+    setError(null)
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true) }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true); }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5 text-xs">
           <RefreshCw className="h-3.5 w-3.5" />
@@ -90,8 +91,25 @@ function ResetPasswordModal({ member }: { member: Staff }) {
 
         {credentials ? (
           <div className="space-y-4 py-2">
-            <div className="p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md text-sm text-green-800 dark:text-green-300 font-medium">
-              Password reset successfully! Share these credentials securely.
+            <div className="flex items-center justify-between gap-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md text-sm text-green-800 dark:text-green-300 font-medium">
+              <span>Password reset successfully!</span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => handleCopy(`Email: ${credentials.email}\nPassword: ${credentials.tempPassword}`, "both")}
+                className="h-7 text-xs font-semibold gap-1 border-green-500/30 text-green-700 dark:text-green-300"
+              >
+                {copiedTarget === "both" ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-green-500" /> Copied Both!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5" /> Copy Both
+                  </>
+                )}
+              </Button>
             </div>
             <div className="bg-muted/40 border rounded-md p-3 space-y-3 font-mono text-sm">
               <div className="flex items-center justify-between gap-2">
@@ -103,20 +121,21 @@ function ResetPasswordModal({ member }: { member: Staff }) {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleCopy(credentials.email)}
-                  className="h-7 w-7 p-0 flex-shrink-0"
+                  onClick={() => handleCopy(credentials.email, "email")}
+                  className="h-7 px-2 text-xs font-sans gap-1"
                 >
-                  {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copiedTarget === "email" ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                  <span>{copiedTarget === "email" ? "Copied" : "Copy"}</span>
                 </Button>
               </div>
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center justify-between gap-2 border-t pt-2">
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-sans mb-0.5">New Password</p>
                   <p className="font-medium tracking-wider">
                     {showPassword ? credentials.tempPassword : "•".repeat(credentials.tempPassword.length)}
                   </p>
                 </div>
-                <div className="flex gap-1 flex-shrink-0">
+                <div className="flex gap-1 flex-shrink-0 items-center">
                   <Button
                     type="button"
                     variant="ghost"
@@ -130,10 +149,11 @@ function ResetPasswordModal({ member }: { member: Staff }) {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleCopy(credentials.tempPassword)}
-                    className="h-7 w-7 p-0"
+                    onClick={() => handleCopy(credentials.tempPassword, "password")}
+                    className="h-7 px-2 text-xs font-sans gap-1"
                   >
-                    {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copiedTarget === "password" ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                    <span>{copiedTarget === "password" ? "Copied" : "Copy"}</span>
                   </Button>
                 </div>
               </div>

@@ -50,6 +50,9 @@ const parseLeadId = (val: FormDataEntryValue | null) => {
 }
 
 export async function createProjectAction(formData: FormData) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return { error: "Unauthorized" }
+
   const data = {
     client_id: (formData.get("client_id") as string) || null,
     name: formData.get("name") as string,
@@ -63,15 +66,23 @@ export async function createProjectAction(formData: FormData) {
   }
 
   try {
-    await db.insert(projects).values(data)
+    const [inserted] = await db.insert(projects).values(data).returning({ id: projects.id })
+    if (inserted?.id) {
+      await initializeChecklistItems(inserted.id)
+    }
+
     revalidatePath("/projects")
-    return { error: null }
+    revalidatePath("/pipeline")
+    return { error: null, projectId: inserted?.id }
   } catch (err: any) {
     return { error: err.message || "Failed to create project" }
   }
 }
 
 export async function moveProjectStage(projectId: string, newStage: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return { error: "Unauthorized" }
+
   try {
     const status = newStage === "closed_won"
       ? "closed_won" : newStage === "closed_lost"
@@ -84,6 +95,7 @@ export async function moveProjectStage(projectId: string, newStage: string) {
 
     await db.insert(activity_log).values({
       project_id: projectId,
+      actor_id: session.user.id,
       action: "stage_changed",
       detail: { new_stage: newStage },
     })
@@ -100,13 +112,14 @@ export async function moveProjectStage(projectId: string, newStage: string) {
 
 export async function toggleChecklistItem(itemId: string, isDone: boolean) {
   const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return { error: "Unauthorized" }
 
   try {
     await db
       .update(project_checklist_items)
       .set({
         is_done: isDone,
-        done_by: isDone ? session?.user?.id : null,
+        done_by: isDone ? session.user.id : null,
         done_at: isDone ? new Date() : null,
       })
       .where(eq(project_checklist_items.id, itemId))
@@ -116,12 +129,13 @@ export async function toggleChecklistItem(itemId: string, isDone: boolean) {
     if (projectId) {
       await db.insert(activity_log).values({
         project_id: projectId,
+        actor_id: session.user.id,
         action: "checklist_ticked",
         detail: { item_id: itemId, is_done: isDone },
       })
+      revalidatePath(`/projects/${projectId}`)
     }
 
-    revalidatePath("/projects/[id]")
     return { error: null }
   } catch (err: any) {
     return { error: err.message || "Failed to toggle checklist item" }
@@ -139,6 +153,8 @@ async function projectIdFromItem(itemId: string): Promise<string | null> {
 
 export async function addPaymentAction(formData: FormData) {
   const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return { error: "Unauthorized" }
+
   const projectId = formData.get("project_id") as string
   const amount = Number(formData.get("amount"))
   const paymentType = formData.get("payment_type") as string
@@ -150,7 +166,7 @@ export async function addPaymentAction(formData: FormData) {
     method: (formData.get("method") as string) || null,
     paid_on: formData.get("paid_on") as string,
     note: (formData.get("note") as string) || null,
-    recorded_by: session?.user?.id || null,
+    recorded_by: session.user.id,
   }
 
   try {
@@ -158,11 +174,12 @@ export async function addPaymentAction(formData: FormData) {
 
     await db.insert(activity_log).values({
       project_id: projectId,
+      actor_id: session.user.id,
       action: "payment_added",
       detail: { amount, payment_type: paymentType },
     })
 
-    revalidatePath("/projects/[id]")
+    revalidatePath(`/projects/${projectId}`)
     return { error: null }
   } catch (err: any) {
     return { error: err.message || "Failed to add payment" }
@@ -171,6 +188,8 @@ export async function addPaymentAction(formData: FormData) {
 
 export async function addDocumentAction(formData: FormData) {
   const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return { error: "Unauthorized" }
+
   const projectId = formData.get("project_id") as string
   const docType = formData.get("doc_type") as string
   const title = formData.get("title") as string
@@ -180,7 +199,7 @@ export async function addDocumentAction(formData: FormData) {
     doc_type: docType,
     title: title,
     url: (formData.get("url") as string) || null,
-    uploaded_by: session?.user?.id || null,
+    uploaded_by: session.user.id,
   }
 
   try {
@@ -188,27 +207,42 @@ export async function addDocumentAction(formData: FormData) {
 
     await db.insert(activity_log).values({
       project_id: projectId,
+      actor_id: session.user.id,
       action: "document_uploaded",
       detail: { doc_type: docType, title: title },
     })
 
-    revalidatePath("/projects/[id]")
+    revalidatePath(`/projects/${projectId}`)
     return { error: null }
   } catch (err: any) {
     return { error: err.message || "Failed to add document" }
   }
 }
 
+import bcrypt from "bcryptjs"
+import crypto from "crypto"
+
 export async function inviteStaffAction(formData: FormData) {
-  const email = formData.get("email") as string
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || session.user.role !== "admin") {
+    return { error: "Only admins can invite staff members" }
+  }
+
+  const email = (formData.get("email") as string)?.trim()?.toLowerCase()
   const fullName = formData.get("full_name") as string
   const role = formData.get("role") as string
+  const rawPassword = (formData.get("password") as string) || crypto.randomBytes(8).toString("hex")
+
+  if (!email || !fullName || !role) {
+    return { error: "Missing required fields" }
+  }
 
   try {
+    const passwordHash = await bcrypt.hash(rawPassword, 10)
     await db.insert(staff).values({
       full_name: fullName,
       email,
-      password_hash: "", // To be hashed in Phase 5
+      password_hash: passwordHash,
       role,
     })
 
@@ -220,6 +254,11 @@ export async function inviteStaffAction(formData: FormData) {
 }
 
 export async function updateStaffRole(staffId: string, role: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || session.user.role !== "admin") {
+    return { error: "Only admins can update staff roles" }
+  }
+
   try {
     await db.update(staff).set({ role }).where(eq(staff.id, staffId))
     revalidatePath("/staff")
@@ -245,7 +284,17 @@ export async function initializeChecklistItems(projectId: string) {
 
     if (!templates || templates.length === 0) return
 
-    const items = templates.map((t) => ({
+    const existingItems = await db
+      .select({ template_id: project_checklist_items.template_id })
+      .from(project_checklist_items)
+      .where(eq(project_checklist_items.project_id, projectId))
+
+    const existingTemplateIds = new Set(existingItems.map((i) => i.template_id))
+    const missingTemplates = templates.filter((t) => !existingTemplateIds.has(t.id))
+
+    if (missingTemplates.length === 0) return
+
+    const items = missingTemplates.map((t) => ({
       project_id: projectId,
       template_id: t.id,
       stage_key: t.stage_key,
@@ -262,6 +311,9 @@ export async function initializeChecklistItems(projectId: string) {
 }
 
 export async function updateProjectDetailsAction(projectId: string, clientId: string | null, formData: FormData) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return { error: "Unauthorized" }
+
   try {
     const projectData = {
       name: formData.get("name") as string,

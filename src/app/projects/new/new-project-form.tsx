@@ -39,7 +39,11 @@ export function NewProjectForm({ clients, staff, preselectedClientId }: Props) {
       setError(res.error)
       setLoading(false)
     } else {
-      router.push("/pipeline")
+      if (res.projectId) {
+        router.push(`/projects/${res.projectId}`)
+      } else {
+        router.push("/projects")
+      }
       router.refresh()
     }
   }

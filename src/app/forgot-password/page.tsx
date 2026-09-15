@@ -15,7 +15,6 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<{
     message: string
-    resetLink?: string
   } | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -31,8 +30,7 @@ export default function ForgotPasswordPage() {
       setError(res.error)
     } else {
       setResult({
-        message: res.message || "Password reset link generated successfully.",
-        resetLink: res.resetLink,
+        message: res.message || "If an account with that email exists, password reset instructions have been processed.",
       })
     }
   }
@@ -46,7 +44,7 @@ export default function ForgotPasswordPage() {
           </div>
           <CardTitle className="text-xl">Reset Your Password</CardTitle>
           <CardDescription>
-            Enter your registered email address and we'll generate a password reset link for you.
+            Enter your registered email address to request a password reset link.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -54,16 +52,6 @@ export default function ForgotPasswordPage() {
             <div className="space-y-4 text-center py-2">
               <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
               <p className="text-sm font-medium text-foreground">{result.message}</p>
-              {result.resetLink && (
-                <div className="p-3 bg-muted/50 border rounded-md text-xs font-mono break-all text-left">
-                  <p className="text-[10px] text-amber-600 dark:text-amber-400 font-sans uppercase mb-1 font-semibold">
-                    Direct Reset Link (Dev/Testing Mode — TODO: Email Provider)
-                  </p>
-                  <Link href={result.resetLink} className="text-primary hover:underline font-bold">
-                    {result.resetLink}
-                  </Link>
-                </div>
-              )}
               <div className="pt-2">
                 <Button asChild variant="outline" className="w-full">
                   <Link href="/login">Back to Login</Link>

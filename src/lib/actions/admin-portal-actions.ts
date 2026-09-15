@@ -274,6 +274,9 @@ export async function saveProjectDeliverables(projectId: string, content: string
 
 export async function approvePaymentRequest(paymentRequestId: string, projectId: string) {
   const session = await getServerSession(authOptions)
+  if (!session?.user?.id || session.user.role !== "admin") {
+    return { error: "Only admins can approve payment requests" }
+  }
 
   try {
     const [req] = await db
@@ -285,7 +288,7 @@ export async function approvePaymentRequest(paymentRequestId: string, projectId:
       .update(payment_requests)
       .set({
         status: "approved",
-        verified_by: session?.user?.id || null,
+        verified_by: session.user.id,
         verified_at: new Date(),
       })
       .where(eq(payment_requests.id, paymentRequestId))
@@ -346,6 +349,9 @@ export async function rejectPaymentRequest(
   rejectionReason: string
 ) {
   const session = await getServerSession(authOptions)
+  if (!session?.user?.id || session.user.role !== "admin") {
+    return { error: "Only admins can reject payment requests" }
+  }
 
   try {
     await db
@@ -353,7 +359,7 @@ export async function rejectPaymentRequest(
       .set({
         status: "rejected",
         rejection_reason: rejectionReason,
-        verified_by: session?.user?.id || null,
+        verified_by: session.user.id,
         verified_at: new Date(),
       })
       .where(eq(payment_requests.id, paymentRequestId))
@@ -371,13 +377,16 @@ export async function rejectPaymentRequest(
 
 export async function releaseFinalInvoice(projectId: string) {
   const session = await getServerSession(authOptions)
+  if (!session?.user?.id || session.user.role !== "admin") {
+    return { error: "Only admins can release final invoice" }
+  }
 
   try {
     await db
       .update(payment_requests)
       .set({
         released: true,
-        released_by: session?.user?.id || null,
+        released_by: session.user.id,
         released_at: new Date(),
       })
       .where(

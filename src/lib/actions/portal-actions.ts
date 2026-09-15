@@ -20,6 +20,9 @@ import { uploadToCloudinary } from "@/lib/cloudinary"
 // ─── Step 1: Mark welcome seen ───────────────────────────────────────────────
 
 export async function markWelcomeSeen(projectId: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) redirect("/login")
+
   try {
     await db
       .update(projects)
@@ -36,6 +39,9 @@ export async function markWelcomeSeen(projectId: string) {
 // ─── Step 1.5: Approve Deliverables ──────────────────────────────────────────
 
 export async function approveDeliverables(projectId: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) redirect("/login")
+
   try {
     await db
       .update(projects)
@@ -71,6 +77,9 @@ export async function updateClientPassword(newPassword: string) {
 // ─── Step 2: Agreement actions ────────────────────────────────────────────────
 
 export async function agreeToAgreement(projectId: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) redirect("/login")
+
   try {
     await db
       .update(agreements)
@@ -85,6 +94,9 @@ export async function agreeToAgreement(projectId: string) {
 }
 
 export async function uploadSignature(projectId: string, formData: FormData) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return { error: "Unauthorized", url: null }
+
   const file = formData.get("file") as File
   if (!file || file.size === 0) return { error: "No signature file uploaded", url: null }
 

@@ -1,12 +1,9 @@
 import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { Pool } from "pg"
 import bcrypt from "bcryptjs"
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-})
+import { db } from "@/db"
+import { staff, client_users } from "@/db/schema"
+import { eq } from "drizzle-orm"
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -25,13 +22,18 @@ export const authOptions: NextAuthOptions = {
         const password = credentials.password
 
         // 1. Check staff table first
-        const staffRes = await pool.query(
-          "SELECT id, full_name, email, password_hash, role FROM staff WHERE LOWER(email) = $1",
-          [email]
-        )
+        const [staffUser] = await db
+          .select({
+            id: staff.id,
+            full_name: staff.full_name,
+            email: staff.email,
+            password_hash: staff.password_hash,
+            role: staff.role,
+          })
+          .from(staff)
+          .where(eq(staff.email, email))
 
-        if (staffRes.rows.length > 0) {
-          const staffUser = staffRes.rows[0]
+        if (staffUser && staffUser.password_hash) {
           const isValid = await bcrypt.compare(password, staffUser.password_hash)
           if (isValid) {
             return {
@@ -46,13 +48,18 @@ export const authOptions: NextAuthOptions = {
         }
 
         // 2. Check client_users table
-        const clientRes = await pool.query(
-          "SELECT id, client_id, full_name, email, password_hash FROM client_users WHERE LOWER(email) = $1",
-          [email]
-        )
+        const [clientUser] = await db
+          .select({
+            id: client_users.id,
+            client_id: client_users.client_id,
+            full_name: client_users.full_name,
+            email: client_users.email,
+            password_hash: client_users.password_hash,
+          })
+          .from(client_users)
+          .where(eq(client_users.email, email))
 
-        if (clientRes.rows.length > 0) {
-          const clientUser = clientRes.rows[0]
+        if (clientUser && clientUser.password_hash) {
           const isValid = await bcrypt.compare(password, clientUser.password_hash)
           if (isValid) {
             return {

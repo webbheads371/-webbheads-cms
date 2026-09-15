@@ -10,7 +10,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog"
 import { formatDate } from "@/lib/utils"
-import { Plus, ExternalLink, Key, RefreshCw, Trash2, ArrowLeft } from "lucide-react"
+import { Plus, ExternalLink, Key, RefreshCw, Trash2, ArrowLeft, Copy, Check, Eye, EyeOff } from "lucide-react"
 import { generateClientPortalLogin, updateClientType, resetClientPortalPassword } from "@/lib/actions/admin-portal-actions"
 import type { Client, Project, Staff, ClientUser } from "@/types"
 
@@ -28,6 +28,14 @@ export function ClientDetailClient({ client, projects, role }: Props) {
   const [typeUpdating, setTypeUpdating] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+  const [copiedTarget, setCopiedTarget] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(true)
+
+  const copyToClipboard = (text: string, targetKey: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedTarget(targetKey)
+    setTimeout(() => setCopiedTarget(null), 2500)
+  }
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const hasPortalLogin = (client.client_users?.length ?? 0) > 0
@@ -184,14 +192,80 @@ export function ClientDetailClient({ client, projects, role }: Props) {
             </CardHeader>
             <CardContent>
               {credentials ? (
-                <div className="text-sm space-y-2 bg-accent/30 p-3 rounded-md border">
-                  <p className="font-semibold text-green-600">Login Generated Successfully!</p>
-                  <p>Share these credentials with the client securely:</p>
-                  <div className="font-mono text-xs bg-background p-2 rounded border">
-                    <div>Email: {credentials.email}</div>
-                    <div>Temp Password: {credentials.tempPassword}</div>
+                <div className="text-sm space-y-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-bold text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-1.5">
+                      <Check className="h-4 w-4" /> Credentials Generated Successfully!
+                    </p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => copyToClipboard(`Email: ${credentials.email}\nPassword: ${credentials.tempPassword}`, "both")}
+                      className="h-8 text-xs font-semibold gap-1.5 border-emerald-500/30 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                    >
+                      {copiedTarget === "both" ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 text-emerald-500" /> Copied Both!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5" /> Copy Email & Password
+                        </>
+                      )}
+                    </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">The client will be prompted to change their password on first login.</p>
+                  
+                  <div className="bg-white dark:bg-slate-950 p-3 rounded-lg border border-slate-200 dark:border-slate-800 space-y-2.5 font-mono text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] text-muted-foreground font-sans uppercase font-bold block">Email</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">{credentials.email}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(credentials.email, "email")}
+                        className="h-7 px-2 text-xs font-sans gap-1"
+                      >
+                        {copiedTarget === "email" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                        <span>{copiedTarget === "email" ? "Copied" : "Copy Email"}</span>
+                      </Button>
+                    </div>
+                    
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-900">
+                      <div>
+                        <span className="text-[10px] text-muted-foreground font-sans uppercase font-bold block">Temporary Password</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">
+                          {showPassword ? credentials.tempPassword : "•".repeat(credentials.tempPassword.length)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="h-7 w-7 p-0"
+                          title={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(credentials.tempPassword, "password")}
+                          className="h-7 px-2 text-xs font-sans gap-1"
+                        >
+                          {copiedTarget === "password" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                          <span>{copiedTarget === "password" ? "Copied" : "Copy Password"}</span>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">The client will be prompted to update their password upon first login.</p>
                 </div>
               ) : hasPortalLogin ? (
                 <div className="space-y-4">

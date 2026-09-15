@@ -166,6 +166,24 @@ export function ProjectDetailClient({
     }
   }
 
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      const tabParam = params.get("tab")
+      if (tabParam) return tabParam
+    }
+    return "checklist"
+  })
+
+  const handleTabChange = (tabValue: string) => {
+    setActiveTab(tabValue)
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href)
+      url.searchParams.set("tab", tabValue)
+      window.history.replaceState({}, "", url.toString())
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -250,7 +268,7 @@ export function ProjectDetailClient({
         </Card>
       </div>
 
-      <Tabs defaultValue="checklist" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className="flex flex-wrap h-auto p-1 gap-1">
           <TabsTrigger value="checklist">Checklist</TabsTrigger>
           <TabsTrigger value="deliverables">Deliverables</TabsTrigger>

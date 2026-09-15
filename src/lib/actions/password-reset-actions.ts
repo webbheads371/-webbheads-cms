@@ -31,15 +31,9 @@ export async function requestPasswordReset(email: string) {
         })
         .where(eq(staff.id, staffMember.id))
 
-      // TODO / SECURITY WARNING: Currently returning the resetLink & token in the response for local testing/development.
-      // BEFORE GOING TO PRODUCTION: Wire an email delivery service (e.g. Resend, SendGrid, or Nodemailer)
-      // to send the reset link to `staffMember.email` and DO NOT return `resetLink` or `token` to the client response,
-      // to prevent unauthorized password resets by third parties.
       return {
         ok: true,
-        token: resetToken,
-        resetLink: `/reset-password?token=${resetToken}`,
-        message: "Password reset link generated successfully.",
+        message: "If an account with that email exists, password reset instructions have been processed.",
       }
     }
 
@@ -58,18 +52,15 @@ export async function requestPasswordReset(email: string) {
         })
         .where(eq(client_users.id, clientUser.id))
 
-      // TODO / SECURITY WARNING: See note above regarding production email delivery.
       return {
         ok: true,
-        token: resetToken,
-        resetLink: `/reset-password?token=${resetToken}`,
-        message: "Password reset link generated successfully.",
+        message: "If an account with that email exists, password reset instructions have been processed.",
       }
     }
 
     return {
       ok: true,
-      message: "If an account with that email exists, a password reset link has been generated.",
+      message: "If an account with that email exists, password reset instructions have been processed.",
     }
   } catch (err: any) {
     return { error: err.message || "Failed to request password reset" }

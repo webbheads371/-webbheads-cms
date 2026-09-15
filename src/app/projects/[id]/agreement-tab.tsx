@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { uploadAgreementPdf, saveAgreementText } from "@/lib/actions/admin-portal-actions"
 import type { Agreement } from "@/types"
 
@@ -10,7 +11,8 @@ interface AgreementTabProps {
 }
 
 export function AgreementTab({ projectId, agreement }: AgreementTabProps) {
-  const [currentAgreement] = useState(agreement)
+  const router = useRouter()
+  const currentAgreement = agreement
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -33,7 +35,7 @@ export function AgreementTab({ projectId, agreement }: AgreementTabProps) {
     } else {
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
-      window.location.reload()
+      router.refresh()
     }
   }
 
@@ -47,7 +49,7 @@ export function AgreementTab({ projectId, agreement }: AgreementTabProps) {
     } else {
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
-      window.location.reload()
+      router.refresh()
     }
   }
 
