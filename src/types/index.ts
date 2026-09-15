@@ -59,6 +59,7 @@ export interface Project {
   timeline_dev_name?: string | null
   timeline_review_name?: string | null
   deliverables_content?: string | null
+  deliverables_pdf_url?: string | null
   deliverables_approved?: boolean
   deliverables_approved_at?: string | null
 }

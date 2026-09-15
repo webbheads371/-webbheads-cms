@@ -269,19 +269,30 @@ export function ProjectDetailClient({
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-        <TabsList className="flex flex-wrap h-auto p-1 gap-1">
-          <TabsTrigger value="checklist">Checklist</TabsTrigger>
-          <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
-          <TabsTrigger value="agreement">Agreement</TabsTrigger>
-          <TabsTrigger value="payments">Payments & Requests</TabsTrigger>
-          <TabsTrigger value="updates">Work Updates</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="timeline">Activity Timeline</TabsTrigger>
-          <TabsTrigger value="content_schedule">Content Schedule</TabsTrigger>
-          <TabsTrigger value="forms">Client Form</TabsTrigger>
-          <TabsTrigger value="portal">Client Portal Link</TabsTrigger>
-          {isAdmin && <TabsTrigger value="edit_details">Edit Details</TabsTrigger>}
-        </TabsList>
+        {(() => {
+          const clientType = project.client?.client_type ?? "both"
+          let scheduleTabLabel = "Schedule"
+          if (clientType === "content") scheduleTabLabel = "Content Schedule"
+          else if (clientType === "tech") scheduleTabLabel = "Tech Schedule"
+          else if (clientType === "sales") scheduleTabLabel = "Sales Schedule"
+          else scheduleTabLabel = "Content & Tech Schedule"
+
+          return (
+            <TabsList className="flex flex-wrap h-auto p-1 gap-1">
+              <TabsTrigger value="checklist">Checklist</TabsTrigger>
+              <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
+              <TabsTrigger value="agreement">Agreement</TabsTrigger>
+              <TabsTrigger value="payments">Payments & Requests</TabsTrigger>
+              <TabsTrigger value="updates">Work Updates</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
+              <TabsTrigger value="timeline">Activity Timeline</TabsTrigger>
+              <TabsTrigger value="content_schedule">{scheduleTabLabel}</TabsTrigger>
+              <TabsTrigger value="forms">Client Form</TabsTrigger>
+              <TabsTrigger value="portal">Client Portal Link</TabsTrigger>
+              {isAdmin && <TabsTrigger value="edit_details">Edit Details</TabsTrigger>}
+            </TabsList>
+          )
+        })()}
 
         <TabsContent value="checklist">
           <ChecklistPanel

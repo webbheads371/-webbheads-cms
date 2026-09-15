@@ -244,13 +244,28 @@ export async function saveAgreementText(projectId: string, contentText: string) 
 
 // ─── Save Project Deliverables (admin) ────────────────────────────────────────
 
-export async function saveProjectDeliverables(projectId: string, content: string) {
+export async function saveProjectDeliverables(projectId: string, formData: FormData) {
   const session = await getServerSession(authOptions)
 
+  const content = (formData.get("content") as string) || ""
+  const file = formData.get("file") as File | null
+  const removePdf = formData.get("removePdf") === "true"
+
   try {
+    const updateData: Record<string, any> = {
+      deliverables_content: content,
+    }
+
+    if (file && file.size > 0) {
+      const publicUrl = await uploadToCloudinary(file, "webbheads_cms/deliverables")
+      updateData.deliverables_pdf_url = publicUrl
+    } else if (removePdf) {
+      updateData.deliverables_pdf_url = null
+    }
+
     await db
       .update(projects)
-      .set({ deliverables_content: content })
+      .set(updateData)
       .where(eq(projects.id, projectId))
 
     if (session?.user?.id) {

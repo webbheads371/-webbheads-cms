@@ -315,10 +315,15 @@ export async function updateProjectDetailsAction(projectId: string, clientId: st
   if (!session?.user?.id) return { error: "Unauthorized" }
 
   try {
+    const startDate = (formData.get("expected_start_date") as string) || null
+    const closeDate = (formData.get("expected_close_date") as string) || null
+
     const projectData = {
       name: formData.get("name") as string,
       project_value: (formData.get("project_value") as string) || null,
       advance_percent: formData.get("advance_percent") ? String(formData.get("advance_percent")) : "50",
+      expected_start_date: startDate,
+      expected_close_date: closeDate,
       tech_lead_id: parseLeadId(formData.get("tech_lead_id")),
       content_lead_id: parseLeadId(formData.get("content_lead_id")),
       sales_lead_id: parseLeadId(formData.get("sales_lead_id")),
@@ -327,8 +332,10 @@ export async function updateProjectDetailsAction(projectId: string, clientId: st
     await db.update(projects).set(projectData).where(eq(projects.id, projectId))
 
     if (clientId) {
+      const clientType = (formData.get("client_type") as string) || "both"
       const clientData = {
         company_name: formData.get("company_name") as string,
+        client_type: clientType,
         contact_name: (formData.get("contact_name") as string) || null,
         email: (formData.get("email") as string) || null,
         phone: (formData.get("phone") as string) || null,
@@ -337,6 +344,9 @@ export async function updateProjectDetailsAction(projectId: string, clientId: st
     }
 
     revalidatePath(`/projects/${projectId}`)
+    revalidatePath("/portal")
+    revalidatePath("/portal/dashboard")
+    revalidatePath("/clients")
     return { error: null }
   } catch (err: any) {
     return { error: err.message || "Failed to update project details" }

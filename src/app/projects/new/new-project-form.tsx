@@ -12,6 +12,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
 import { createProjectAction } from "@/lib/actions/actions"
 
+import { Calendar } from "lucide-react"
+
 interface Props {
   clients: { id: string; company_name: string }[]
   staff: { id: string; full_name: string; role: string }[]
@@ -20,6 +22,7 @@ interface Props {
 
 export function NewProjectForm({ clients, staff, preselectedClientId }: Props) {
   const [loading, setLoading] = useState(false)
+  const [showDates, setShowDates] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
@@ -123,19 +126,37 @@ export function NewProjectForm({ clients, staff, preselectedClientId }: Props) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="project_value">Project Value (INR)</Label>
                 <Input id="project_value" name="project_value" type="number" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="expected_start_date">Expected Start Date</Label>
-                <Input id="expected_start_date" name="expected_start_date" type="date" />
+
+              <div className="pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-xs flex items-center gap-1.5"
+                  onClick={() => setShowDates(!showDates)}
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>{showDates ? "Hide Timeline Dates" : "+ Set Onboarding & Closing Dates (Optional)"}</span>
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="expected_close_date">Expected Close Date</Label>
-                <Input id="expected_close_date" name="expected_close_date" type="date" />
-              </div>
+
+              {showDates && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-slate-50/50 dark:bg-slate-900/40">
+                  <div className="space-y-2">
+                    <Label htmlFor="expected_start_date">Expected Start / Onboarding Date</Label>
+                    <Input id="expected_start_date" name="expected_start_date" type="date" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="expected_close_date">Expected Close Date</Label>
+                    <Input id="expected_close_date" name="expected_close_date" type="date" />
+                  </div>
+                </div>
+              )}
             </div>
 
             {error && <p className="text-sm text-destructive">{error}</p>}

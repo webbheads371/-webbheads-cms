@@ -8,9 +8,10 @@ import { signOut } from "next-auth/react"
 
 interface PortalSidebarProps {
   showSchedule?: boolean
+  clientType?: string
 }
 
-export function PortalSidebar({ showSchedule = false }: PortalSidebarProps) {
+export function PortalSidebar({ showSchedule = false, clientType }: PortalSidebarProps) {
   const { activeTab, setActiveTab, hideMobileNav } = usePortalTab()
 
   const baseItems = [
@@ -21,7 +22,12 @@ export function PortalSidebar({ showSchedule = false }: PortalSidebarProps) {
     { tabName: "support" as const, icon: LifeBuoy, label: "Support" },
   ]
 
-  const scheduleItem = { tabName: "schedule" as const, icon: CalendarDays, label: "Schedule" }
+  let scheduleLabel = "Schedule"
+  if (clientType === "content") scheduleLabel = "Content Schedule"
+  else if (clientType === "tech") scheduleLabel = "Tech Schedule"
+  else if (clientType === "sales") scheduleLabel = "Sales Schedule"
+
+  const scheduleItem = { tabName: "schedule" as const, icon: CalendarDays, label: scheduleLabel }
 
   const items = showSchedule ? [...baseItems, scheduleItem] : baseItems
 

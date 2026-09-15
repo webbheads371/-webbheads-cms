@@ -17,8 +17,8 @@ export default async function PortalLayout({ children }: { children: ReactNode }
     .leftJoin(clients, eq(projects.client_id, clients.id))
     .where(eq(projects.client_id, clientUser.client_id))
 
-  const clientType = row?.client_type ?? "tech"
-  const showSchedule = clientType === "content" || clientType === "both"
+  const clientType = row?.client_type ?? "both"
+  const showSchedule = true
 
   return (
     <PortalTabProvider>
@@ -33,7 +33,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
         </div>
 
         <div className="w-full max-w-[1400px] mx-auto flex flex-col gap-0 items-start relative z-10 flex-1">
-          <PortalSidebar showSchedule={showSchedule} />
+          <PortalSidebar showSchedule={showSchedule} clientType={clientType} />
 
           <div className="w-full flex-1 flex flex-col min-w-0 pt-1 md:pt-4">
             <main className="w-full flex-1 pb-24 md:pb-8" style={{ paddingBottom: 'max(96px, calc(80px + env(safe-area-inset-bottom)))' }}>

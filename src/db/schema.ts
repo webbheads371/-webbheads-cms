@@ -87,6 +87,7 @@ export const projects = pgTable("projects", {
   handles_collected: boolean("handles_collected").default(false),
   handles_collected_at: timestamp("handles_collected_at", { withTimezone: true }),
   deliverables_content: text("deliverables_content"),
+  deliverables_pdf_url: text("deliverables_pdf_url"),
   deliverables_approved: boolean("deliverables_approved").default(false),
   deliverables_approved_at: timestamp("deliverables_approved_at", { withTimezone: true }),
   ai_escalated: boolean("ai_escalated").default(false),

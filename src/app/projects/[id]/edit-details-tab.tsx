@@ -18,6 +18,8 @@ export function EditDetailsTab({ project, staffList }: EditDetailsTabProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [startDate, setStartDate] = useState<string>(project.expected_start_date || "")
+  const [closeDate, setCloseDate] = useState<string>(project.expected_close_date || "")
   const router = useRouter()
 
   const techLeads = staffList.filter((s) => s.role === "tech_lead" || s.role === "admin")
@@ -133,6 +135,51 @@ export function EditDetailsTab({ project, staffList }: EditDetailsTabProps) {
             </div>
           </div>
 
+          {/* Timeline Dates Section */}
+          <div className="space-y-4 pt-4 border-t">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Project Timeline Dates</h3>
+              {(startDate || closeDate) && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-red-600 hover:text-red-700"
+                  onClick={() => {
+                    setStartDate("")
+                    setCloseDate("")
+                  }}
+                >
+                  Clear Timeline Dates
+                </Button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="expected_start_date">Expected Start / Onboarding Date</Label>
+                <Input
+                  id="expected_start_date"
+                  name="expected_start_date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="expected_close_date">Expected Close Date</Label>
+                <Input
+                  id="expected_close_date"
+                  name="expected_close_date"
+                  type="date"
+                  value={closeDate}
+                  onChange={(e) => setCloseDate(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Client Details Section */}
           <div className="space-y-4 pt-4 border-t">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Client Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -144,6 +191,20 @@ export function EditDetailsTab({ project, staffList }: EditDetailsTabProps) {
                   defaultValue={project.client?.company_name ?? ""}
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="client_type">Client Type *</Label>
+                <select
+                  id="client_type"
+                  name="client_type"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-medium"
+                  defaultValue={project.client?.client_type ?? "both"}
+                >
+                  <option value="both">Both (Tech & Content)</option>
+                  <option value="tech">Tech Only</option>
+                  <option value="content">Content Only</option>
+                </select>
               </div>
 
               <div className="space-y-2">
