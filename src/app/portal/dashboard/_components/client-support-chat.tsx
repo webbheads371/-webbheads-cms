@@ -2,21 +2,33 @@
 
 import { useState, useEffect, useRef } from "react"
 import { getProjectMessages, sendMessage } from "@/lib/actions/message-actions"
-import { ArrowLeft, Send, User, ShieldAlert, Laptop, FileSignature, Landmark, Loader2 } from "lucide-react"
+import { ArrowLeft, Send, User, ShieldAlert, Laptop, FileSignature, Landmark, Loader2, X } from "lucide-react"
 import { usePortalTab } from "../../portal-tab-context"
 
 interface ClientSupportChatProps {
   projectId: string
   project: any
   onBack: () => void
+  isModalMode?: boolean
 }
 
 type ChatChannel = "admin" | "tech_lead" | "content_lead" | "sales"
 
-export function ClientSupportChat({ projectId, project, onBack }: ClientSupportChatProps) {
+export function ClientSupportChat({ projectId, project, onBack, isModalMode = false }: ClientSupportChatProps) {
   const { setHideMobileNav } = usePortalTab()
-  const [activeChannel, setActiveChannel] = useState<ChatChannel>("admin")
-  const [viewMode, setViewMode] = useState<"list" | "chat">("list")
+  
+  // Default channel based on client type and assignments
+  const getInitialChannel = (): ChatChannel => {
+    const clientType = project.client?.client_type
+    if (clientType === "tech" && project.tech_lead_id) return "tech_lead"
+    if (clientType === "content" && project.content_lead_id) return "content_lead"
+    if (project.tech_lead_id) return "tech_lead"
+    if (project.content_lead_id) return "content_lead"
+    return "admin"
+  }
+
+  const [activeChannel, setActiveChannel] = useState<ChatChannel>(getInitialChannel)
+  const [viewMode, setViewMode] = useState<"list" | "chat">("chat")
   const [messages, setMessages] = useState<any[]>([])
   const [inputText, setInputText] = useState("")
   const [loading, setLoading] = useState(true)
@@ -24,6 +36,17 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onBack()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [onBack])
 
   useEffect(() => {
     const isMobile = window.innerWidth < 768
@@ -170,20 +193,50 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
     },
   ]
 
-  return (
-    <div className="fixed inset-x-0 top-0 bottom-0 h-[100dvh] z-50 bg-slate-50 dark:bg-slate-950 p-4 flex flex-col gap-4 md:relative md:inset-auto md:z-auto md:bg-transparent md:p-0 md:w-full md:flex md:flex-col md:gap-6 animate-fade-in">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-slate-800/60 shrink-0">
-        <button
-          onClick={onBack}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to contact info
-        </button>
-        <span className="text-xs bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-bold px-3 py-1 rounded-full">
-          Live Chat Support
-        </span>
-      </div>
+  const contentNode = (
+    <div 
+      role="dialog"
+      aria-modal="true"
+      aria-label="Live Chat Support with assigned leads"
+      className={
+        isModalMode
+          ? "fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md p-3 sm:p-4 md:p-6 flex flex-col justify-center items-center animate-fade-in"
+          : "fixed inset-x-0 top-0 bottom-0 h-[100dvh] z-50 bg-slate-50 dark:bg-slate-950 p-4 flex flex-col gap-4 md:relative md:inset-auto md:z-auto md:bg-transparent md:p-0 md:w-full md:flex md:flex-col md:gap-6 animate-fade-in"
+      }
+    >
+      <div 
+        className={
+          isModalMode 
+            ? "w-full max-w-4xl h-[90vh] md:h-[600px] bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-4 shadow-2xl overflow-hidden relative" 
+            : "w-full flex flex-col gap-4"
+        }
+      >
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-slate-800/60 shrink-0">
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Close chat"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {isModalMode ? "Close Chat" : "Back to contact info"}
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-xs bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-bold px-3 py-1 rounded-full">
+              Live Chat Support
+            </span>
+            {isModalMode && (
+              <button
+                type="button"
+                onClick={onBack}
+                aria-label="Close chat dialog"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        </div>
 
       <div className="grid md:grid-cols-[240px_1fr] border border-slate-200/60 dark:border-slate-800/60 rounded-2xl overflow-hidden flex-1 min-h-0 md:h-[450px] md:max-h-[70vh] bg-white dark:bg-slate-900 md:bg-white/40 md:dark:bg-slate-900/40 backdrop-blur-md">
         <div
@@ -360,5 +413,8 @@ export function ClientSupportChat({ projectId, project, onBack }: ClientSupportC
         </div>
       </div>
     </div>
+  </div>
   )
+
+  return contentNode
 }

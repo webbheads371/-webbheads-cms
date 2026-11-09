@@ -90,7 +90,8 @@ export function Sidebar() {
   }
 
   async function handleLogout() {
-    await signOut({ callbackUrl: "/login" })
+    await signOut({ redirect: false })
+    window.location.href = "/login"
   }
 
   return (

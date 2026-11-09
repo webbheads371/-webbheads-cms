@@ -9,6 +9,7 @@ import { HandlesSection } from "./handles-section"
 import { ClientGreeting } from "./client-greeting"
 import { ScheduleContentTab } from "./schedule-content-tab"
 import { ClientSupportChat } from "./client-support-chat"
+import { FloatingChatButton } from "./floating-chat-button"
 import type { Project, PaymentRequest, BankSettings, ProjectStatusUpdate, FormTemplate, FormResponse, ContentSchedule } from "@/types"
 import { 
   Home, KeyRound, UserCheck, Rocket, FileText, Calendar, Settings, 
@@ -631,14 +632,7 @@ export function DashboardClientTabs({
 
         {/* ==================== SUPPORT TAB ==================== */}
         {activeTopTab === "support" && (
-          showChat ? (
-            <ClientSupportChat
-              projectId={project.id}
-              project={project}
-              onBack={() => setShowChat(false)}
-            />
-          ) : (
-            <div className="grid md:grid-cols-2 gap-8 items-stretch animate-fade-in">
+          <div className="grid md:grid-cols-2 gap-8 items-stretch animate-fade-in">
               {/* Assigned Project Leads */}
               <div className="p-6 rounded-2xl glass-card-silver flex flex-col gap-4 h-full">
                 <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
@@ -777,7 +771,6 @@ export function DashboardClientTabs({
                 </div>
               </div>
             </div>
-          )
         )}
 
         {/* ==================== SCHEDULE TAB ==================== */}
@@ -789,6 +782,25 @@ export function DashboardClientTabs({
           />
         )}
       </div>
+
+      {/* Persistent Bottom-Right Accessible Floating Chat Widget */}
+      <FloatingChatButton
+        isOpen={showChat}
+        onClick={() => setShowChat((prev) => !prev)}
+        techLeadName={project.tech_lead?.full_name}
+        contentLeadName={project.content_lead?.full_name}
+        clientType={project.client?.client_type}
+      />
+
+      {/* Global Accessible Support Chat Dialog Modal */}
+      {showChat && (
+        <ClientSupportChat
+          projectId={project.id}
+          project={project}
+          onBack={() => setShowChat(false)}
+          isModalMode={true}
+        />
+      )}
     </div>
   )
 }

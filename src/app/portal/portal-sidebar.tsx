@@ -75,7 +75,10 @@ export function PortalSidebar({ showSchedule = false, clientType }: PortalSideba
           <ChangePasswordForm />
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={async () => {
+              await signOut({ redirect: false })
+              window.location.href = "/login"
+            }}
             className="flex items-center justify-center h-11 px-4 gap-2 rounded-[14px] text-black dark:text-slate-300 hover:text-red-600 hover:bg-red-50/60 dark:hover:bg-red-950/40 transition-all duration-300 group"
             title="Sign out"
           >

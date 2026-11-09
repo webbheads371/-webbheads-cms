@@ -100,6 +100,19 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     },
+    async redirect({ url, baseUrl }) {
+      // Allows relative callback URLs to stay relative
+      if (url.startsWith("/")) return url
+      try {
+        const parsedUrl = new URL(url)
+        // Allow same origin or same host (e.g. running on port 3001 or other ports on localhost)
+        if (parsedUrl.origin === baseUrl) return url
+        if (parsedUrl.hostname === "localhost" || parsedUrl.hostname === "127.0.0.1") {
+          return url
+        }
+      } catch {}
+      return baseUrl
+    },
   },
   pages: {
     signIn: "/login",
